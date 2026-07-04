@@ -43,6 +43,7 @@ enum LicenseSortOption: String, CaseIterable, Identifiable {
 
 struct ContentView: View {
   @State private var store = LicenseStore()
+  @State private var auditLog = AuditLogStore()
 
   @State private var selectedFilter: LicenseSidebarFilter = .all
   @State private var selectedLicense: LicenseRecord?
@@ -63,6 +64,7 @@ struct ContentView: View {
 
   @State private var showingPaddleFulfillmentSheet = false
   @State private var showingPendingPurchases = false
+  @State private var showingAuditLog = false
 
   var body: some View {
     NavigationSplitView {
@@ -80,7 +82,10 @@ struct ContentView: View {
       if let selectedLicense {
         LicenseDetailView(
           license: selectedLicense,
-          onSave: updateLicense,
+          auditEvents: auditLog.events(for: selectedLicense),
+          onSave: { license in
+            updateLicense(license)
+          },
           onCopySerial: {
             LicenseService.copySerial(selectedLicense.serial)
           },
@@ -124,6 +129,9 @@ struct ContentView: View {
         onExportAndEmailLicenseFile: exportAndEmailLicenseFile,
         onShowPendingPurchases: {
           showingPendingPurchases = true
+        },
+        onShowAuditLog: {
+          showingAuditLog = true
         }
       )
 
@@ -133,6 +141,11 @@ struct ContentView: View {
     .sheet(isPresented: $showingNewLicenseSheet) {
       NewLicenseSheet { license in
         store.add(license)
+        recordAudit(
+          .licenseCreated,
+          license: license,
+          message: "Created \(license.type.rawValue.lowercased()) license."
+        )
         selectedFilter = .all
         selectedLicense = license
       }
@@ -145,6 +158,11 @@ struct ContentView: View {
         },
         onCreate: { license in
           store.add(license)
+          recordAudit(
+            .paddleFulfilled,
+            license: license,
+            message: "Created commercial license from Paddle purchase."
+          )
           selectedFilter = .all
           selectedLicense = license
         },
@@ -169,9 +187,20 @@ struct ContentView: View {
         },
         onFulfillPurchase: { license in
           store.add(license)
+          recordAudit(
+            .paddleFulfilled,
+            license: license,
+            message: "Created commercial license from pending Paddle purchase."
+          )
           selectedFilter = .all
           selectedLicense = license
         }
+      )
+    }
+    .sheet(isPresented: $showingAuditLog) {
+      AuditLogView(
+        events: auditLog.events,
+        onExport: exportAuditLog
       )
     }
 
@@ -202,6 +231,11 @@ struct ContentView: View {
     guard let lastDeletedLicense else { return }
 
     store.add(lastDeletedLicense)
+    recordAudit(
+      .licenseRestored,
+      license: lastDeletedLicense,
+      message: "Restored deleted license."
+    )
     selectedFilter = .all
     selectedLicense = lastDeletedLicense
     self.lastDeletedLicense = nil
@@ -284,10 +318,21 @@ struct ContentView: View {
     }
   }
 
-  private func updateLicense(_ updated: LicenseRecord) {
+  private func updateLicense(_ updated: LicenseRecord, auditChanges: Bool = true) {
     guard let index = store.licenses.firstIndex(where: { $0.id == updated.id }) else { return }
+    let original = store.licenses[index]
     store.licenses[index] = updated
     selectedLicense = updated
+
+    if auditChanges && original != updated {
+      recordAudit(
+        updated.isRevoked && !original.isRevoked ? .licenseRevoked : .licenseUpdated,
+        license: updated,
+        message: updated.isRevoked && !original.isRevoked
+          ? "Revoked license."
+          : "Updated license details."
+      )
+    }
   }
 
   private func refreshFulfillmentArchive(for license: LicenseRecord) async throws -> LicenseRecord {
@@ -296,7 +341,12 @@ struct ContentView: View {
       settings: NetworkSettings()
     )
 
-    updateLicense(updatedLicense)
+    updateLicense(updatedLicense, auditChanges: false)
+    recordAudit(
+      .fulfillmentChecked,
+      license: updatedLicense,
+      message: "Checked website fulfillment status: \(updatedLicense.fulfillmentArchiveStatus.rawValue)."
+    )
 
     return updatedLicense
   }
@@ -308,7 +358,12 @@ struct ContentView: View {
         store: store
       )
 
-      updateLicense(updatedLicense)
+      updateLicense(updatedLicense, auditChanges: false)
+      recordAudit(
+        .emailDraftPrepared,
+        license: updatedLicense,
+        message: "Prepared Mail draft for \(updatedLicense.email)."
+      )
 
       return updatedLicense
     } catch {
@@ -316,7 +371,12 @@ struct ContentView: View {
       failedLicense.emailDeliveryStatus = .failed
       failedLicense.emailDeliveryAttemptedAt = Date()
       failedLicense.emailDeliveryError = error.localizedDescription
-      updateLicense(failedLicense)
+      updateLicense(failedLicense, auditChanges: false)
+      recordAudit(
+        .emailDraftFailed,
+        license: failedLicense,
+        message: "Email draft failed: \(error.localizedDescription)"
+      )
 
       throw error
     }
@@ -326,6 +386,11 @@ struct ContentView: View {
     guard let selectedLicense else { return }
     let duplicate = LicenseService.duplicateLicense(selectedLicense)
     store.add(duplicate)
+    recordAudit(
+      .licenseDuplicated,
+      license: duplicate,
+      message: "Duplicated license from \(selectedLicense.serial)."
+    )
     selectedFilter = .all
     self.selectedLicense = duplicate
   }
@@ -341,6 +406,11 @@ struct ContentView: View {
 
     lastDeletedLicense = license
     store.delete([license])
+    recordAudit(
+      .licenseDeleted,
+      license: license,
+      message: "Deleted license."
+    )
 
     if selectedLicense?.id == license.id {
       selectedLicense = nil
@@ -357,6 +427,10 @@ struct ContentView: View {
     if panel.runModal() == .OK, let url = panel.url {
       do {
         try store.exportJSON(to: url)
+        recordAudit(
+          .licenseExported,
+          message: "Exported license database JSON to \(url.lastPathComponent)."
+        )
       } catch {
         exportError = error.localizedDescription
         showingExportError = true
@@ -374,6 +448,10 @@ struct ContentView: View {
     if panel.runModal() == .OK, let url = panel.url {
       do {
         try store.exportCSV(to: url)
+        recordAudit(
+          .licenseExported,
+          message: "Exported license CSV to \(url.lastPathComponent)."
+        )
       } catch {
         exportError = error.localizedDescription
         showingExportError = true
@@ -415,6 +493,11 @@ struct ContentView: View {
           store: store,
           folderURL: folderURL
         )
+        recordAudit(
+          .licenseExported,
+          license: selectedLicense,
+          message: "Exported and revealed license file."
+        )
       } catch {
         exportError = error.localizedDescription
         showingExportError = true
@@ -450,6 +533,11 @@ struct ContentView: View {
           store: store,
           to: url
         )
+        recordAudit(
+          .licenseExported,
+          license: selectedLicense,
+          message: "Exported license file to \(url.lastPathComponent)."
+        )
       } catch {
         exportError = error.localizedDescription
         showingExportError = true
@@ -457,4 +545,34 @@ struct ContentView: View {
     }
   }
 
- }
+  private func exportAuditLog() {
+    let panel = NSSavePanel()
+    panel.allowedContentTypes = [.json]
+    panel.nameFieldStringValue = "updock-license-manager-audit-log.json"
+
+    if panel.runModal() == .OK, let url = panel.url {
+      do {
+        try auditLog.exportJSON(to: url)
+      } catch {
+        exportError = error.localizedDescription
+        showingExportError = true
+      }
+    }
+  }
+
+  private func recordAudit(
+    _ kind: AuditEventKind,
+    license: LicenseRecord? = nil,
+    message: String,
+    paddleTransactionID: String = ""
+  ) {
+    auditLog.record(
+      AuditEvent(
+        kind: kind,
+        message: message,
+        license: license,
+        paddleTransactionID: paddleTransactionID
+      )
+    )
+  }
+}

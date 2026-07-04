@@ -14,6 +14,7 @@ struct LicenseDetailView: View {
   @State private var isPreparingEmailDelivery = false
   @State private var fulfillmentArchiveError: String?
 
+  let auditEvents: [AuditEvent]
   let onSave: (LicenseRecord) -> Void
   let onCopySerial: () -> Void
   let onRevoke: () -> Void
@@ -22,6 +23,7 @@ struct LicenseDetailView: View {
 
   init(
     license: LicenseRecord,
+    auditEvents: [AuditEvent],
     onSave: @escaping (LicenseRecord) -> Void,
     onCopySerial: @escaping () -> Void,
     onRevoke: @escaping () -> Void,
@@ -30,6 +32,7 @@ struct LicenseDetailView: View {
   ) {
     self._editableLicense = State(initialValue: license)
     self._originalLicense = State(initialValue: license)
+    self.auditEvents = auditEvents
     self.onSave = onSave
     self.onCopySerial = onCopySerial
     self.onRevoke = onRevoke
@@ -217,6 +220,42 @@ struct LicenseDetailView: View {
             TextField("Notes", text: $editableLicense.notes, axis: .vertical)
               .textFieldStyle(.roundedBorder)
               .lineLimit(4...8)
+          }
+        }
+
+        card {
+          VStack(alignment: .leading, spacing: 14) {
+            Text("Recent History")
+              .font(.headline)
+
+            if auditEvents.isEmpty {
+              Text("No audit events recorded for this license yet.")
+                .foregroundStyle(.secondary)
+            } else {
+              ForEach(auditEvents.prefix(6)) { event in
+                HStack(alignment: .top, spacing: 10) {
+                  Image(systemName: event.kind.symbol)
+                    .frame(width: 20)
+                    .foregroundStyle(.tint)
+
+                  VStack(alignment: .leading, spacing: 3) {
+                    Text(event.kind.rawValue)
+                      .font(.subheadline.bold())
+
+                    Text(event.message)
+                      .font(.callout)
+
+                    Text(event.createdAt.formatted(date: .abbreviated, time: .shortened))
+                      .font(.caption)
+                      .foregroundStyle(.secondary)
+                  }
+                }
+
+                if event.id != auditEvents.prefix(6).last?.id {
+                  Divider()
+                }
+              }
+            }
           }
         }
       }

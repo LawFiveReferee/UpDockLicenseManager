@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		833807F52FF9A70000C438F /* AuditEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833807F22FF9A70000C438F /* AuditEvent.swift */; };
+		833807F62FF9A70000C438F /* AuditLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833807F32FF9A70000C438F /* AuditLogStore.swift */; };
+		833807F72FF9A70000C438F /* AuditLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833807F42FF9A70000C438F /* AuditLogView.swift */; };
 		833808292FF989F1000C438F /* LicenseDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808082FF989F1000C438F /* LicenseDashboardView.swift */; };
 		8338082A2FF989F1000C438F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808042FF989F1000C438F /* ContentView.swift */; };
 		8338082B2FF989F1000C438F /* ServerSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338081F2FF989F1000C438F /* ServerSettingsView.swift */; };
@@ -53,6 +56,9 @@
 
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* UpDockLicenseManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UpDockLicenseManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		833807F22FF9A70000C438F /* AuditEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditEvent.swift; sourceTree = "<group>"; };
+		833807F32FF9A70000C438F /* AuditLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditLogStore.swift; sourceTree = "<group>"; };
+		833807F42FF9A70000C438F /* AuditLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditLogView.swift; sourceTree = "<group>"; };
 		833807FD2FF989F1000C438F /* FulfillmentCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FulfillmentCoordinator.swift; sourceTree = "<group>"; };
 		833807FF2FF989F1000C438F /* HealthResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthResponse.swift; sourceTree = "<group>"; };
 		833808002FF989F1000C438F /* HealthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthService.swift; sourceTree = "<group>"; };
@@ -155,6 +161,9 @@
 			children = (
 				833807FC2FF989F1000C438F /* Models */,
 				833808032FF989F1000C438F /* Services */,
+				833807F22FF9A70000C438F /* AuditEvent.swift */,
+				833807F32FF9A70000C438F /* AuditLogStore.swift */,
+				833807F42FF9A70000C438F /* AuditLogView.swift */,
 				833808042FF989F1000C438F /* ContentView.swift */,
 				833808052FF989F1000C438F /* GeneralSettings.swift */,
 				833808062FF989F1000C438F /* ImportedLicenseInspection.swift */,
@@ -260,6 +269,9 @@
 		000000000000000120000000 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
+				833807F52FF9A70000C438F /* AuditEvent.swift in Sources */,
+				833807F62FF9A70000C438F /* AuditLogStore.swift in Sources */,
+				833807F72FF9A70000C438F /* AuditLogView.swift in Sources */,
 				833808292FF989F1000C438F /* LicenseDashboardView.swift in Sources */,
 				8338082A2FF989F1000C438F /* ContentView.swift in Sources */,
 				8338082B2FF989F1000C438F /* ServerSettingsView.swift in Sources */,
@@ -442,7 +454,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 2JJNKVL7R4;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
@@ -475,7 +487,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 0.9.8;
+				MARKETING_VERSION = 0.9.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.stockly.updock-license-manager";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -496,7 +508,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 2JJNKVL7R4;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
@@ -529,7 +541,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 0.9.8;
+				MARKETING_VERSION = 0.9.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.stockly.updock-license-manager";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

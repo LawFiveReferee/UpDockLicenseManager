@@ -1,5 +1,12 @@
 # UpDock License Manager
 
+## v0.9.9 — Fulfillment History
+- Bumped app version to 0.9.9 build 4.
+- Added a persistent audit log stored separately from the license database.
+- Added an Audit Log window with search and JSON export.
+- Added recent per-license history in the license detail view.
+- Recorded audit events for creation, edits, deletion/restore, revocation, Paddle fulfillment, fulfillment checks, email draft attempts, and exports.
+
 ## v0.9.8 — Email Delivery
 - Bumped app version to 0.9.8 build 3.
 - Added persistent email delivery status to license records.
