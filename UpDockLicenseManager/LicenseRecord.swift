@@ -35,6 +35,14 @@ enum FulfillmentArchiveStatus: String, Codable, CaseIterable, Identifiable {
   var id: String { rawValue }
 }
 
+enum EmailDeliveryStatus: String, Codable, CaseIterable, Identifiable {
+  case notPrepared = "Not Prepared"
+  case draftPrepared = "Draft Prepared"
+  case failed = "Failed"
+
+  var id: String { rawValue }
+}
+
 struct LicenseRecord: Identifiable, Codable, Hashable {
   var id: UUID
   var serial: String
@@ -57,6 +65,9 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
   var fulfilledAt: Date?
   var fulfillmentArchiveStatus: FulfillmentArchiveStatus
   var fulfillmentArchiveCheckedAt: Date?
+  var emailDeliveryStatus: EmailDeliveryStatus
+  var emailDeliveryAttemptedAt: Date?
+  var emailDeliveryError: String
 
   init(
     id: UUID = UUID(),
@@ -77,7 +88,10 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     paddleStatus: String = "",
     fulfilledAt: Date? = nil,
     fulfillmentArchiveStatus: FulfillmentArchiveStatus = .unknown,
-    fulfillmentArchiveCheckedAt: Date? = nil
+    fulfillmentArchiveCheckedAt: Date? = nil,
+    emailDeliveryStatus: EmailDeliveryStatus = .notPrepared,
+    emailDeliveryAttemptedAt: Date? = nil,
+    emailDeliveryError: String = ""
   ) {
     self.id = id
     self.serial = serial
@@ -98,6 +112,9 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     self.fulfilledAt = fulfilledAt
     self.fulfillmentArchiveStatus = fulfillmentArchiveStatus
     self.fulfillmentArchiveCheckedAt = fulfillmentArchiveCheckedAt
+    self.emailDeliveryStatus = emailDeliveryStatus
+    self.emailDeliveryAttemptedAt = emailDeliveryAttemptedAt
+    self.emailDeliveryError = emailDeliveryError
   }
 
   var status: LicenseStatus {
@@ -120,6 +137,12 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     return .active
   }
 
+  var needsEmailDelivery: Bool {
+    !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      && emailDeliveryStatus != .draftPrepared
+      && !isRevoked
+  }
+
   private enum CodingKeys: String, CodingKey {
     case id
     case serial
@@ -140,6 +163,9 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     case fulfilledAt
     case fulfillmentArchiveStatus
     case fulfillmentArchiveCheckedAt
+    case emailDeliveryStatus
+    case emailDeliveryAttemptedAt
+    case emailDeliveryError
   }
 
   init(from decoder: Decoder) throws {
@@ -171,5 +197,17 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
       Date.self,
       forKey: .fulfillmentArchiveCheckedAt
     )
+    emailDeliveryStatus = try container.decodeIfPresent(
+      EmailDeliveryStatus.self,
+      forKey: .emailDeliveryStatus
+    ) ?? .notPrepared
+    emailDeliveryAttemptedAt = try container.decodeIfPresent(
+      Date.self,
+      forKey: .emailDeliveryAttemptedAt
+    )
+    emailDeliveryError = try container.decodeIfPresent(
+      String.self,
+      forKey: .emailDeliveryError
+    ) ?? ""
   }
 }

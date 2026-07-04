@@ -1,5 +1,12 @@
 # UpDock License Manager
 
+## v0.9.8 — Email Delivery
+- Bumped app version to 0.9.8 build 3.
+- Added persistent email delivery status to license records.
+- Added a license detail Email Delivery card with Prepare Email and Retry Email actions.
+- Added a Needs Email sidebar queue for licenses that still need email attention.
+- Email retries reuse the existing license record and exported license file generation path instead of creating a new license.
+
 ## v0.9.7 — Batch Fulfillment
 - Bumped app version to 0.9.7 build 2.
 - Pending Purchases now supports multi-selection.

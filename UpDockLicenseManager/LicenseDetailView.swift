@@ -11,11 +11,13 @@ struct LicenseDetailView: View {
   @State private var editableLicense: LicenseRecord
   @State private var originalLicense: LicenseRecord
   @State private var isCheckingFulfillmentArchive = false
+  @State private var isPreparingEmailDelivery = false
   @State private var fulfillmentArchiveError: String?
 
   let onSave: (LicenseRecord) -> Void
   let onCopySerial: () -> Void
   let onRevoke: () -> Void
+  let onPrepareEmailDelivery: (LicenseRecord) throws -> LicenseRecord
   let onRefreshFulfillmentArchive: (LicenseRecord) async throws -> LicenseRecord
 
   init(
@@ -23,6 +25,7 @@ struct LicenseDetailView: View {
     onSave: @escaping (LicenseRecord) -> Void,
     onCopySerial: @escaping () -> Void,
     onRevoke: @escaping () -> Void,
+    onPrepareEmailDelivery: @escaping (LicenseRecord) throws -> LicenseRecord,
     onRefreshFulfillmentArchive: @escaping (LicenseRecord) async throws -> LicenseRecord
   ) {
     self._editableLicense = State(initialValue: license)
@@ -30,6 +33,7 @@ struct LicenseDetailView: View {
     self.onSave = onSave
     self.onCopySerial = onCopySerial
     self.onRevoke = onRevoke
+    self.onPrepareEmailDelivery = onPrepareEmailDelivery
     self.onRefreshFulfillmentArchive = onRefreshFulfillmentArchive
   }
 
@@ -119,6 +123,40 @@ struct LicenseDetailView: View {
               }
               .disabled(isCheckingFulfillmentArchive)
             }
+          }
+        }
+
+        card {
+          VStack(alignment: .leading, spacing: 14) {
+            Text("Email Delivery")
+              .font(.headline)
+
+            Label(emailDeliveryTitle, systemImage: emailDeliverySymbol)
+              .foregroundStyle(emailDeliveryStyle)
+
+            detailRow("Recipient", editableLicense.email)
+
+            if let attemptedAt = editableLicense.emailDeliveryAttemptedAt {
+              detailRow("Last Attempt", attemptedAt.formatted(date: .abbreviated, time: .shortened))
+            } else {
+              detailRow("Last Attempt", "Never")
+            }
+
+            if !editableLicense.emailDeliveryError.isEmpty {
+              Label(editableLicense.emailDeliveryError, systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.red)
+            }
+
+            Button {
+              prepareEmailDelivery()
+            } label: {
+              if isPreparingEmailDelivery {
+                ProgressView()
+              } else {
+                Label(emailDeliveryButtonTitle, systemImage: "envelope")
+              }
+            }
+            .disabled(isPreparingEmailDelivery || editableLicense.email.isEmpty)
           }
         }
 
@@ -226,6 +264,48 @@ struct LicenseDetailView: View {
     }
   }
 
+  private var emailDeliveryTitle: String {
+    switch editableLicense.emailDeliveryStatus {
+    case .notPrepared:
+      return "No email draft prepared"
+    case .draftPrepared:
+      return "Mail draft prepared"
+    case .failed:
+      return "Email draft failed"
+    }
+  }
+
+  private var emailDeliverySymbol: String {
+    switch editableLicense.emailDeliveryStatus {
+    case .notPrepared:
+      return "envelope"
+    case .draftPrepared:
+      return "envelope.badge"
+    case .failed:
+      return "exclamationmark.triangle"
+    }
+  }
+
+  private var emailDeliveryStyle: AnyShapeStyle {
+    switch editableLicense.emailDeliveryStatus {
+    case .notPrepared:
+      return AnyShapeStyle(.secondary)
+    case .draftPrepared:
+      return AnyShapeStyle(.green)
+    case .failed:
+      return AnyShapeStyle(.red)
+    }
+  }
+
+  private var emailDeliveryButtonTitle: String {
+    switch editableLicense.emailDeliveryStatus {
+    case .notPrepared:
+      return "Prepare Email"
+    case .draftPrepared, .failed:
+      return "Retry Email"
+    }
+  }
+
   private func refreshFulfillmentArchive() async {
     isCheckingFulfillmentArchive = true
     fulfillmentArchiveError = nil
@@ -242,6 +322,27 @@ struct LicenseDetailView: View {
     }
 
     isCheckingFulfillmentArchive = false
+  }
+
+  private func prepareEmailDelivery() {
+    isPreparingEmailDelivery = true
+
+    do {
+      let updatedLicense = try onPrepareEmailDelivery(originalLicense)
+
+      editableLicense.emailDeliveryStatus = updatedLicense.emailDeliveryStatus
+      editableLicense.emailDeliveryAttemptedAt = updatedLicense.emailDeliveryAttemptedAt
+      editableLicense.emailDeliveryError = updatedLicense.emailDeliveryError
+      originalLicense = updatedLicense
+    } catch {
+      editableLicense.emailDeliveryStatus = .failed
+      editableLicense.emailDeliveryAttemptedAt = Date()
+      editableLicense.emailDeliveryError = error.localizedDescription
+      onSave(editableLicense)
+      originalLicense = editableLicense
+    }
+
+    isPreparingEmailDelivery = false
   }
 
   private func saveChanges() {

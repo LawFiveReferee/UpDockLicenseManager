@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 enum LicenseSidebarFilter: String, CaseIterable, Identifiable {
   case all = "All Licenses"
+  case needsEmail = "Needs Email"
   case active = "Active"
   case activeBeta = "Active Beta"
   case activeTrial = "Active Trial"
@@ -16,6 +17,7 @@ enum LicenseSidebarFilter: String, CaseIterable, Identifiable {
   var symbol: String {
     switch self {
     case .all: return "key"
+    case .needsEmail: return "envelope.badge"
     case .active: return "checkmark.circle"
     case .activeBeta: return "testtube.2"
     case .activeTrial: return "hourglass"
@@ -84,6 +86,9 @@ struct ContentView: View {
           },
           onRevoke: {
             updateLicense(LicenseService.revokeLicense(selectedLicense))
+          },
+          onPrepareEmailDelivery: { license in
+            try prepareEmailDelivery(for: license)
           },
           onRefreshFulfillmentArchive: { license in
             try await refreshFulfillmentArchive(for: license)
@@ -209,6 +214,8 @@ struct ContentView: View {
       switch selectedFilter {
       case .all:
         matchesFilter = true
+      case .needsEmail:
+        matchesFilter = license.needsEmailDelivery
       case .active:
         matchesFilter = license.status == .active
       case .activeBeta:
@@ -292,6 +299,27 @@ struct ContentView: View {
     updateLicense(updatedLicense)
 
     return updatedLicense
+  }
+
+  private func prepareEmailDelivery(for license: LicenseRecord) throws -> LicenseRecord {
+    do {
+      let updatedLicense = try LicenseDistributionService.exportAndEmailLicenseFile(
+        record: license,
+        store: store
+      )
+
+      updateLicense(updatedLicense)
+
+      return updatedLicense
+    } catch {
+      var failedLicense = license
+      failedLicense.emailDeliveryStatus = .failed
+      failedLicense.emailDeliveryAttemptedAt = Date()
+      failedLicense.emailDeliveryError = error.localizedDescription
+      updateLicense(failedLicense)
+
+      throw error
+    }
   }
 
   private func duplicateSelectedLicense() {
@@ -398,10 +426,7 @@ struct ContentView: View {
     guard let selectedLicense else { return }
 
     do {
-      try LicenseDistributionService.exportAndEmailLicenseFile(
-        record: selectedLicense,
-        store: store
-      )
+      _ = try prepareEmailDelivery(for: selectedLicense)
     } catch {
       exportError = error.localizedDescription
       showingExportError = true
