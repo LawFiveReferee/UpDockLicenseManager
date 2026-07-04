@@ -1,6 +1,7 @@
 # UpDock License Manager
 
 ## v0.9.7 — Batch Fulfillment
+- Bumped app version to 0.9.7 build 2.
 - Pending Purchases now supports multi-selection.
 - Added sequential batch fulfillment with progress reporting.
 - Added a batch review panel for selected purchases.
