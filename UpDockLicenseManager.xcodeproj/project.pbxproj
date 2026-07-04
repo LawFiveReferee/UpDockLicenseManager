@@ -1,0 +1,571 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 90;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		833808292FF989F1000C438F /* LicenseDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808082FF989F1000C438F /* LicenseDashboardView.swift */; };
+		8338082A2FF989F1000C438F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808042FF989F1000C438F /* ContentView.swift */; };
+		8338082B2FF989F1000C438F /* ServerSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338081F2FF989F1000C438F /* ServerSettingsView.swift */; };
+		8338082C2FF989F1000C438F /* LicenseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808142FF989F1000C438F /* LicenseService.swift */; };
+		8338082D2FF989F1000C438F /* SigningSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808232FF989F1000C438F /* SigningSettingsView.swift */; };
+		8338082E2FF989F1000C438F /* ImportedLicenseInspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808062FF989F1000C438F /* ImportedLicenseInspection.swift */; };
+		8338082F2FF989F1000C438F /* ToolbarContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808252FF989F1000C438F /* ToolbarContent.swift */; };
+		833808302FF989F1000C438F /* PaddleSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338081B2FF989F1000C438F /* PaddleSettingsView.swift */; };
+		833808312FF989F1000C438F /* FulfillmentCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833807FD2FF989F1000C438F /* FulfillmentCoordinator.swift */; };
+		833808322FF989F1000C438F /* NewLicenseSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808182FF989F1000C438F /* NewLicenseSheet.swift */; };
+		833808332FF989F1000C438F /* HealthResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833807FF2FF989F1000C438F /* HealthResponse.swift */; };
+		833808342FF989F1000C438F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808202FF989F1000C438F /* SettingsView.swift */; };
+		833808352FF989F1000C438F /* TokenGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808242FF989F1000C438F /* TokenGenerator.swift */; };
+		833808362FF989F1000C438F /* LicenseFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338080C2FF989F1000C438F /* LicenseFile.swift */; };
+		833808372FF989F1000C438F /* KeychainSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808072FF989F1000C438F /* KeychainSettingsStore.swift */; };
+		833808382FF989F1000C438F /* PaddleFulfillmentSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808192FF989F1000C438F /* PaddleFulfillmentSheet.swift */; };
+		833808392FF989F1000C438F /* ServerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808022FF989F1000C438F /* ServerService.swift */; };
+		8338083A2FF989F1000C438F /* LicenseDistributionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338080A2FF989F1000C438F /* LicenseDistributionService.swift */; };
+		8338083B2FF989F1000C438F /* LicenseInspectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808102FF989F1000C438F /* LicenseInspectionView.swift */; };
+		8338083C2FF989F1000C438F /* PendingPurchasesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338081D2FF989F1000C438F /* PendingPurchasesService.swift */; };
+		8338083D2FF989F1000C438F /* LicenseSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808152FF989F1000C438F /* LicenseSidebar.swift */; };
+		8338083E2FF989F1000C438F /* PendingPurchasesResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338081C2FF989F1000C438F /* PendingPurchasesResponse.swift */; };
+		8338083F2FF989F1000C438F /* GeneralSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808052FF989F1000C438F /* GeneralSettings.swift */; };
+		833808402FF989F1000C438F /* LicenseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808092FF989F1000C438F /* LicenseDetailView.swift */; };
+		833808412FF989F1000C438F /* LicenseRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808122FF989F1000C438F /* LicenseRecord.swift */; };
+		833808422FF989F1000C438F /* SigningIdentityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808222FF989F1000C438F /* SigningIdentityView.swift */; };
+		833808432FF989F1000C438F /* HealthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808002FF989F1000C438F /* HealthService.swift */; };
+		833808442FF989F1000C438F /* PendingPurchasesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338081E2FF989F1000C438F /* PendingPurchasesView.swift */; };
+		833808452FF989F1000C438F /* LicenseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808162FF989F1000C438F /* LicenseStore.swift */; };
+		833808462FF989F1000C438F /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808012FF989F1000C438F /* NetworkService.swift */; };
+		833808472FF989F1000C438F /* LicenseEmailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338080B2FF989F1000C438F /* LicenseEmailService.swift */; };
+		833808482FF989F1000C438F /* LicenseListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808112FF989F1000C438F /* LicenseListView.swift */; };
+		833808492FF989F1000C438F /* UpDockLicense.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808262FF989F1000C438F /* UpDockLicense.swift */; };
+		8338084A2FF989F1000C438F /* LicenseSecurityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808132FF989F1000C438F /* LicenseSecurityService.swift */; };
+		8338084B2FF989F1000C438F /* NetworkSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808172FF989F1000C438F /* NetworkSettings.swift */; };
+		8338084C2FF989F1000C438F /* LicenseInspectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338080F2FF989F1000C438F /* LicenseInspectionService.swift */; };
+		8338084D2FF989F1000C438F /* SigningIdentityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808212FF989F1000C438F /* SigningIdentityStore.swift */; };
+		8338084E2FF989F1000C438F /* UpDockLicenseManagerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808272FF989F1000C438F /* UpDockLicenseManagerApp.swift */; };
+		8338084F2FF989F1000C438F /* LicenseFileNameService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338080D2FF989F1000C438F /* LicenseFileNameService.swift */; };
+		833808502FF989F1000C438F /* LicenseGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338080E2FF989F1000C438F /* LicenseGenerator.swift */; };
+		833808512FF989F1000C438F /* PaddleSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338081A2FF989F1000C438F /* PaddleSettings.swift */; };
+		834D87502FF83E1000D8788F /* CHANGELOG.md in Resources */ = {isa = PBXBuildFile; fileRef = 834D874F2FF83E1000D8788F /* CHANGELOG.md */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		000000000000000000000120 /* UpDockLicenseManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UpDockLicenseManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		833807FD2FF989F1000C438F /* FulfillmentCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FulfillmentCoordinator.swift; sourceTree = "<group>"; };
+		833807FF2FF989F1000C438F /* HealthResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthResponse.swift; sourceTree = "<group>"; };
+		833808002FF989F1000C438F /* HealthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthService.swift; sourceTree = "<group>"; };
+		833808012FF989F1000C438F /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
+		833808022FF989F1000C438F /* ServerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerService.swift; sourceTree = "<group>"; };
+		833808042FF989F1000C438F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		833808052FF989F1000C438F /* GeneralSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettings.swift; sourceTree = "<group>"; };
+		833808062FF989F1000C438F /* ImportedLicenseInspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedLicenseInspection.swift; sourceTree = "<group>"; };
+		833808072FF989F1000C438F /* KeychainSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainSettingsStore.swift; sourceTree = "<group>"; };
+		833808082FF989F1000C438F /* LicenseDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseDashboardView.swift; sourceTree = "<group>"; };
+		833808092FF989F1000C438F /* LicenseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseDetailView.swift; sourceTree = "<group>"; };
+		8338080A2FF989F1000C438F /* LicenseDistributionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseDistributionService.swift; sourceTree = "<group>"; };
+		8338080B2FF989F1000C438F /* LicenseEmailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseEmailService.swift; sourceTree = "<group>"; };
+		8338080C2FF989F1000C438F /* LicenseFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseFile.swift; sourceTree = "<group>"; };
+		8338080D2FF989F1000C438F /* LicenseFileNameService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseFileNameService.swift; sourceTree = "<group>"; };
+		8338080E2FF989F1000C438F /* LicenseGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseGenerator.swift; sourceTree = "<group>"; };
+		8338080F2FF989F1000C438F /* LicenseInspectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseInspectionService.swift; sourceTree = "<group>"; };
+		833808102FF989F1000C438F /* LicenseInspectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseInspectionView.swift; sourceTree = "<group>"; };
+		833808112FF989F1000C438F /* LicenseListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseListView.swift; sourceTree = "<group>"; };
+		833808122FF989F1000C438F /* LicenseRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseRecord.swift; sourceTree = "<group>"; };
+		833808132FF989F1000C438F /* LicenseSecurityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseSecurityService.swift; sourceTree = "<group>"; };
+		833808142FF989F1000C438F /* LicenseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseService.swift; sourceTree = "<group>"; };
+		833808152FF989F1000C438F /* LicenseSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseSidebar.swift; sourceTree = "<group>"; };
+		833808162FF989F1000C438F /* LicenseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseStore.swift; sourceTree = "<group>"; };
+		833808172FF989F1000C438F /* NetworkSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkSettings.swift; sourceTree = "<group>"; };
+		833808182FF989F1000C438F /* NewLicenseSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewLicenseSheet.swift; sourceTree = "<group>"; };
+		833808192FF989F1000C438F /* PaddleFulfillmentSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaddleFulfillmentSheet.swift; sourceTree = "<group>"; };
+		8338081A2FF989F1000C438F /* PaddleSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaddleSettings.swift; sourceTree = "<group>"; };
+		8338081B2FF989F1000C438F /* PaddleSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaddleSettingsView.swift; sourceTree = "<group>"; };
+		8338081C2FF989F1000C438F /* PendingPurchasesResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingPurchasesResponse.swift; sourceTree = "<group>"; };
+		8338081D2FF989F1000C438F /* PendingPurchasesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingPurchasesService.swift; sourceTree = "<group>"; };
+		8338081E2FF989F1000C438F /* PendingPurchasesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingPurchasesView.swift; sourceTree = "<group>"; };
+		8338081F2FF989F1000C438F /* ServerSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSettingsView.swift; sourceTree = "<group>"; };
+		833808202FF989F1000C438F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		833808212FF989F1000C438F /* SigningIdentityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SigningIdentityStore.swift; sourceTree = "<group>"; };
+		833808222FF989F1000C438F /* SigningIdentityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SigningIdentityView.swift; sourceTree = "<group>"; };
+		833808232FF989F1000C438F /* SigningSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SigningSettingsView.swift; sourceTree = "<group>"; };
+		833808242FF989F1000C438F /* TokenGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenGenerator.swift; sourceTree = "<group>"; };
+		833808252FF989F1000C438F /* ToolbarContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarContent.swift; sourceTree = "<group>"; };
+		833808262FF989F1000C438F /* UpDockLicense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpDockLicense.swift; sourceTree = "<group>"; };
+		833808272FF989F1000C438F /* UpDockLicenseManagerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpDockLicenseManagerApp.swift; sourceTree = "<group>"; };
+		834D874F2FF83E1000D8788F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		000000000000000130000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		000000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				834D874F2FF83E1000D8788F /* CHANGELOG.md */,
+				833808282FF989F1000C438F /* UpDockLicenseManager */,
+				000000000000000000000020 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		000000000000000000000020 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000120 /* UpDockLicenseManager.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		833807FC2FF989F1000C438F /* Models */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		833807FE2FF989F1000C438F /* Licensing */ = {
+			isa = PBXGroup;
+			children = (
+				833807FD2FF989F1000C438F /* FulfillmentCoordinator.swift */,
+			);
+			path = Licensing;
+			sourceTree = "<group>";
+		};
+		833808032FF989F1000C438F /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				833807FE2FF989F1000C438F /* Licensing */,
+				833807FF2FF989F1000C438F /* HealthResponse.swift */,
+				833808002FF989F1000C438F /* HealthService.swift */,
+				833808012FF989F1000C438F /* NetworkService.swift */,
+				833808022FF989F1000C438F /* ServerService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		833808282FF989F1000C438F /* UpDockLicenseManager */ = {
+			isa = PBXGroup;
+			children = (
+				833807FC2FF989F1000C438F /* Models */,
+				833808032FF989F1000C438F /* Services */,
+				833808042FF989F1000C438F /* ContentView.swift */,
+				833808052FF989F1000C438F /* GeneralSettings.swift */,
+				833808062FF989F1000C438F /* ImportedLicenseInspection.swift */,
+				833808072FF989F1000C438F /* KeychainSettingsStore.swift */,
+				833808082FF989F1000C438F /* LicenseDashboardView.swift */,
+				833808092FF989F1000C438F /* LicenseDetailView.swift */,
+				8338080A2FF989F1000C438F /* LicenseDistributionService.swift */,
+				8338080B2FF989F1000C438F /* LicenseEmailService.swift */,
+				8338080C2FF989F1000C438F /* LicenseFile.swift */,
+				8338080D2FF989F1000C438F /* LicenseFileNameService.swift */,
+				8338080E2FF989F1000C438F /* LicenseGenerator.swift */,
+				8338080F2FF989F1000C438F /* LicenseInspectionService.swift */,
+				833808102FF989F1000C438F /* LicenseInspectionView.swift */,
+				833808112FF989F1000C438F /* LicenseListView.swift */,
+				833808122FF989F1000C438F /* LicenseRecord.swift */,
+				833808132FF989F1000C438F /* LicenseSecurityService.swift */,
+				833808142FF989F1000C438F /* LicenseService.swift */,
+				833808152FF989F1000C438F /* LicenseSidebar.swift */,
+				833808162FF989F1000C438F /* LicenseStore.swift */,
+				833808172FF989F1000C438F /* NetworkSettings.swift */,
+				833808182FF989F1000C438F /* NewLicenseSheet.swift */,
+				833808192FF989F1000C438F /* PaddleFulfillmentSheet.swift */,
+				8338081A2FF989F1000C438F /* PaddleSettings.swift */,
+				8338081B2FF989F1000C438F /* PaddleSettingsView.swift */,
+				8338081C2FF989F1000C438F /* PendingPurchasesResponse.swift */,
+				8338081D2FF989F1000C438F /* PendingPurchasesService.swift */,
+				8338081E2FF989F1000C438F /* PendingPurchasesView.swift */,
+				8338081F2FF989F1000C438F /* ServerSettingsView.swift */,
+				833808202FF989F1000C438F /* SettingsView.swift */,
+				833808212FF989F1000C438F /* SigningIdentityStore.swift */,
+				833808222FF989F1000C438F /* SigningIdentityView.swift */,
+				833808232FF989F1000C438F /* SigningSettingsView.swift */,
+				833808242FF989F1000C438F /* TokenGenerator.swift */,
+				833808252FF989F1000C438F /* ToolbarContent.swift */,
+				833808262FF989F1000C438F /* UpDockLicense.swift */,
+				833808272FF989F1000C438F /* UpDockLicenseManagerApp.swift */,
+			);
+			path = UpDockLicenseManager;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		000000000000000100000000 /* UpDockLicenseManager */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "UpDockLicenseManager" */;
+			buildPhases = (
+				000000000000000120000000 /* Sources */,
+				000000000000000130000000 /* Frameworks */,
+				000000000000000140000000 /* Resources */,
+			);
+			buildRules = (
+			);
+			name = UpDockLicenseManager;
+			productName = MyApp;
+			productReference = 000000000000000000000120 /* UpDockLicenseManager.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		000000000000000000000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2630;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					000000000000000100000000 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+				};
+			};
+			buildConfigurationList = 000000000000000010000000 /* Build configuration list for PBXProject "UpDockLicenseManager" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 000000000000000000000001;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 90;
+			productRefGroup = 000000000000000000000020 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				000000000000000100000000 /* UpDockLicenseManager */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		000000000000000140000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+				834D87502FF83E1000D8788F /* CHANGELOG.md in Resources */,
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		000000000000000120000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				833808292FF989F1000C438F /* LicenseDashboardView.swift in Sources */,
+				8338082A2FF989F1000C438F /* ContentView.swift in Sources */,
+				8338082B2FF989F1000C438F /* ServerSettingsView.swift in Sources */,
+				8338082C2FF989F1000C438F /* LicenseService.swift in Sources */,
+				8338082D2FF989F1000C438F /* SigningSettingsView.swift in Sources */,
+				8338082E2FF989F1000C438F /* ImportedLicenseInspection.swift in Sources */,
+				8338082F2FF989F1000C438F /* ToolbarContent.swift in Sources */,
+				833808302FF989F1000C438F /* PaddleSettingsView.swift in Sources */,
+				833808312FF989F1000C438F /* FulfillmentCoordinator.swift in Sources */,
+				833808322FF989F1000C438F /* NewLicenseSheet.swift in Sources */,
+				833808332FF989F1000C438F /* HealthResponse.swift in Sources */,
+				833808342FF989F1000C438F /* SettingsView.swift in Sources */,
+				833808352FF989F1000C438F /* TokenGenerator.swift in Sources */,
+				833808362FF989F1000C438F /* LicenseFile.swift in Sources */,
+				833808372FF989F1000C438F /* KeychainSettingsStore.swift in Sources */,
+				833808382FF989F1000C438F /* PaddleFulfillmentSheet.swift in Sources */,
+				833808392FF989F1000C438F /* ServerService.swift in Sources */,
+				8338083A2FF989F1000C438F /* LicenseDistributionService.swift in Sources */,
+				8338083B2FF989F1000C438F /* LicenseInspectionView.swift in Sources */,
+				8338083C2FF989F1000C438F /* PendingPurchasesService.swift in Sources */,
+				8338083D2FF989F1000C438F /* LicenseSidebar.swift in Sources */,
+				8338083E2FF989F1000C438F /* PendingPurchasesResponse.swift in Sources */,
+				8338083F2FF989F1000C438F /* GeneralSettings.swift in Sources */,
+				833808402FF989F1000C438F /* LicenseDetailView.swift in Sources */,
+				833808412FF989F1000C438F /* LicenseRecord.swift in Sources */,
+				833808422FF989F1000C438F /* SigningIdentityView.swift in Sources */,
+				833808432FF989F1000C438F /* HealthService.swift in Sources */,
+				833808442FF989F1000C438F /* PendingPurchasesView.swift in Sources */,
+				833808452FF989F1000C438F /* LicenseStore.swift in Sources */,
+				833808462FF989F1000C438F /* NetworkService.swift in Sources */,
+				833808472FF989F1000C438F /* LicenseEmailService.swift in Sources */,
+				833808482FF989F1000C438F /* LicenseListView.swift in Sources */,
+				833808492FF989F1000C438F /* UpDockLicense.swift in Sources */,
+				8338084A2FF989F1000C438F /* LicenseSecurityService.swift in Sources */,
+				8338084B2FF989F1000C438F /* NetworkSettings.swift in Sources */,
+				8338084C2FF989F1000C438F /* LicenseInspectionService.swift in Sources */,
+				8338084D2FF989F1000C438F /* SigningIdentityStore.swift in Sources */,
+				8338084E2FF989F1000C438F /* UpDockLicenseManagerApp.swift in Sources */,
+				8338084F2FF989F1000C438F /* LicenseFileNameService.swift in Sources */,
+				833808502FF989F1000C438F /* LicenseGenerator.swift in Sources */,
+				833808512FF989F1000C438F /* PaddleSettings.swift in Sources */,
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		000000000000000011000000 /* Debug configuration for PBXProject "UpDockLicenseManager" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				APPLETVOS_DEPLOYMENT_TARGET = 27.0;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DRIVERKIT_DEPLOYMENT_TARGET = 27.0;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PROJECT_UNIQUE_VALUE = C7P0771N;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		000000000000000012000000 /* Release configuration for PBXProject "UpDockLicenseManager" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				APPLETVOS_DEPLOYMENT_TARGET = 27.0;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DRIVERKIT_DEPLOYMENT_TARGET = 27.0;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PROJECT_UNIQUE_VALUE = C7P0771N;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		000000000000000111000000 /* Debug configuration for PBXNativeTarget "UpDockLicenseManager" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2JJNKVL7R4;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "UpDock License Manager";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "UpDock License Manager needs permission to create reviewable Apple Mail drafts with license attachments.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 0.9.5;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.stockly.updock-license-manager";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = "$(RECOMMENDED_XROS_DEPLOYMENT_TARGET)";
+			};
+			name = Debug;
+		};
+		000000000000000112000000 /* Release configuration for PBXNativeTarget "UpDockLicenseManager" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2JJNKVL7R4;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "UpDock License Manager";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "UpDock License Manager needs permission to create reviewable Apple Mail drafts with license attachments.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 0.9.5;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.stockly.updock-license-manager";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = "$(RECOMMENDED_XROS_DEPLOYMENT_TARGET)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		000000000000000010000000 /* Build configuration list for PBXProject "UpDockLicenseManager" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000011000000 /* Debug configuration for PBXProject "UpDockLicenseManager" */,
+				000000000000000012000000 /* Release configuration for PBXProject "UpDockLicenseManager" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		000000000000000110000000 /* Build configuration list for PBXNativeTarget "UpDockLicenseManager" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000111000000 /* Debug configuration for PBXNativeTarget "UpDockLicenseManager" */,
+				000000000000000112000000 /* Release configuration for PBXNativeTarget "UpDockLicenseManager" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 000000000000000000000000 /* Project object */;
+}
