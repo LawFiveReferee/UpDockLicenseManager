@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v0.9.7 — Batch Fulfillment
+- Pending Purchases now supports multi-selection.
+- Added sequential batch fulfillment with progress reporting.
+- Added a batch review panel for selected purchases.
+- Batch fulfillment creates licenses, archives transactions, refreshes the queue, and keeps failures visible.
+
 ## v0.9.6 — Workflow Polish
 - Moved active development from ChatGPT handoff into Bitrig/GitHub.
 - Cleaned repository metadata and ignored machine-local Finder/Xcode files.

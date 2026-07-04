@@ -15,19 +15,24 @@ struct PendingPurchasesView: View {
 
   @State private var networkSettings = NetworkSettings()
   @State private var purchases: [PendingPaddlePurchase] = []
-  @State private var selectedPurchaseID: PendingPaddlePurchase.ID?
+  @State private var selectedPurchaseIDs: Set<PendingPaddlePurchase.ID> = []
 
   @State private var isLoading = false
   @State private var fulfillingTransactionID: String?
+  @State private var batchProgress: BatchFulfillmentProgress?
   @State private var errorMessage: String?
   @State private var statusMessage: String?
 
+  private var selectedPurchases: [PendingPaddlePurchase] {
+    purchases.filter { selectedPurchaseIDs.contains($0.id) }
+  }
+
   private var selectedPurchase: PendingPaddlePurchase? {
-    purchases.first { $0.id == selectedPurchaseID }
+    selectedPurchases.count == 1 ? selectedPurchases.first : nil
   }
 
   private var isWorking: Bool {
-    isLoading || fulfillingTransactionID != nil
+    isLoading || fulfillingTransactionID != nil || batchProgress != nil
   }
 
   var body: some View {
@@ -79,6 +84,13 @@ struct PendingPurchasesView: View {
         .disabled(isWorking)
 
         Button {
+          Task { await fulfillSelectedPurchases() }
+        } label: {
+          Label("Fulfill Selected", systemImage: "checkmark.seal")
+        }
+        .disabled(isWorking || selectedPurchaseIDs.isEmpty)
+
+        Button {
           Task { await refresh() }
         } label: {
           Label("Refresh", systemImage: "arrow.clockwise")
@@ -108,7 +120,19 @@ struct PendingPurchasesView: View {
           .padding(.horizontal)
       }
 
-      if let statusMessage {
+      if let batchProgress {
+        VStack(alignment: .leading, spacing: 6) {
+          ProgressView(
+            value: Double(batchProgress.completedCount),
+            total: Double(batchProgress.totalCount)
+          )
+
+          Text(batchProgress.statusText)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal)
+      } else if let statusMessage {
         Label(statusMessage, systemImage: "checkmark.circle")
           .foregroundStyle(.green)
           .padding(.horizontal)
@@ -119,7 +143,14 @@ struct PendingPurchasesView: View {
           .padding(.horizontal)
       }
 
-      List(selection: $selectedPurchaseID) {
+      if selectedPurchaseIDs.count > 1 {
+        Text("\(selectedPurchaseIDs.count) selected")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .padding(.horizontal)
+      }
+
+      List(selection: $selectedPurchaseIDs) {
         ForEach(purchases) { purchase in
           VStack(alignment: .leading, spacing: 5) {
             Text(purchase.payload.data?.customer?.email ?? "Unknown Customer")
@@ -151,7 +182,17 @@ struct PendingPurchasesView: View {
 
   private var purchaseDetail: some View {
     Group {
-      if let selectedPurchase {
+      if selectedPurchases.count > 1 {
+        BatchFulfillmentDetailView(
+          selectedCount: selectedPurchases.count,
+          progress: batchProgress,
+          onFulfillSelected: {
+            Task {
+              await fulfillSelectedPurchases()
+            }
+          }
+        )
+      } else if let selectedPurchase {
         PendingPurchaseDetailView(
           purchase: selectedPurchase,
           isFulfilling: fulfillingTransactionID == selectedPurchase.transactionID,
@@ -166,7 +207,7 @@ struct PendingPurchasesView: View {
         ContentUnavailableView(
           "No Purchase Selected",
           systemImage: "creditcard",
-          description: Text("Select a pending purchase to review it.")
+          description: Text("Select one purchase to review it, or select multiple purchases to fulfill a batch.")
         )
       }
     }
@@ -178,7 +219,7 @@ struct PendingPurchasesView: View {
 
     do {
       try await fetchPurchases(
-        preferredSelectionID: selectedPurchaseID,
+        preferredSelectionIDs: selectedPurchaseIDs,
         selectFirstIfNeeded: selectFirstIfNeeded
       )
     } catch {
@@ -270,7 +311,7 @@ struct PendingPurchasesView: View {
     statusMessage = "Fulfilling \(purchase.payload.data?.customer?.email ?? purchase.transactionID)…"
 
     do {
-      let nextSelectionID = preferredSelectionID(afterRemoving: purchase)
+      let nextSelectionIDs = preferredSelectionIDs(afterRemoving: [purchase])
       let result = try await FulfillmentCoordinator.shared.fulfillPendingPurchase(
         purchase,
         settings: networkSettings,
@@ -281,13 +322,11 @@ struct PendingPurchasesView: View {
         onFulfillPurchase(result.license)
       }
 
-      purchases.removeAll {
-        $0.transactionID == purchase.transactionID
-      }
+      removePurchases([purchase])
+      selectedPurchaseIDs = nextSelectionIDs
 
-      selectedPurchaseID = nextSelectionID
       try await fetchPurchases(
-        preferredSelectionID: nextSelectionID,
+        preferredSelectionIDs: nextSelectionIDs,
         selectFirstIfNeeded: true
       )
       statusMessage = result.statusMessage
@@ -298,39 +337,218 @@ struct PendingPurchasesView: View {
     fulfillingTransactionID = nil
   }
 
+  private func fulfillSelectedPurchases() async {
+    let purchasesToFulfill = selectedPurchases
+
+    guard !purchasesToFulfill.isEmpty else {
+      return
+    }
+
+    batchProgress = BatchFulfillmentProgress(
+      completedCount: 0,
+      totalCount: purchasesToFulfill.count,
+      currentLabel: nil
+    )
+    errorMessage = nil
+    statusMessage = nil
+
+    var createdCount = 0
+    var existingCount = 0
+    var completedPurchases: [PendingPaddlePurchase] = []
+
+    for purchase in purchasesToFulfill {
+      fulfillingTransactionID = purchase.transactionID
+      batchProgress?.currentLabel = purchase.payload.data?.customer?.email ?? purchase.transactionID
+
+      do {
+        let result = try await FulfillmentCoordinator.shared.fulfillPendingPurchase(
+          purchase,
+          settings: networkSettings,
+          existingLicenseForTransactionID: existingLicenseForTransactionID
+        )
+
+        if result.didCreateLicense {
+          createdCount += 1
+          onFulfillPurchase(result.license)
+        } else {
+          existingCount += 1
+        }
+
+        completedPurchases.append(purchase)
+        removePurchases([purchase])
+        batchProgress?.completedCount = completedPurchases.count
+      } catch {
+        errorMessage = "Stopped after \(completedPurchases.count) of \(purchasesToFulfill.count): \(error.localizedDescription)"
+        break
+      }
+    }
+
+    fulfillingTransactionID = nil
+    selectedPurchaseIDs.subtract(completedPurchases.map(\.id))
+
+    do {
+      try await fetchPurchases(
+        preferredSelectionIDs: selectedPurchaseIDs,
+        selectFirstIfNeeded: true
+      )
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+
+    if errorMessage == nil {
+      statusMessage = batchStatusMessage(
+        createdCount: createdCount,
+        existingCount: existingCount
+      )
+    }
+
+    batchProgress = nil
+  }
+
   private func fetchPurchases(
-    preferredSelectionID: PendingPaddlePurchase.ID? = nil,
+    preferredSelectionIDs: Set<PendingPaddlePurchase.ID> = [],
     selectFirstIfNeeded: Bool = false
   ) async throws {
     let response = try await PendingPurchasesService.shared
       .fetchPendingPurchases(settings: networkSettings)
+    let availableIDs = Set(response.items.map(\.id))
+    let retainedSelection = selectedPurchaseIDs.union(preferredSelectionIDs)
+      .filter { availableIDs.contains($0) }
 
     purchases = response.items
 
-    if let preferredSelectionID,
-       purchases.contains(where: { $0.id == preferredSelectionID }) {
-      selectedPurchaseID = preferredSelectionID
-    } else if selectFirstIfNeeded || selectedPurchaseID == nil {
-      selectedPurchaseID = purchases.first?.id
-    } else if !purchases.contains(where: { $0.id == selectedPurchaseID }) {
-      selectedPurchaseID = purchases.first?.id
+    if !retainedSelection.isEmpty {
+      selectedPurchaseIDs = retainedSelection
+    } else if selectFirstIfNeeded, let firstID = purchases.first?.id {
+      selectedPurchaseIDs = [firstID]
+    } else {
+      selectedPurchaseIDs = []
     }
   }
 
-  private func preferredSelectionID(
-    afterRemoving purchase: PendingPaddlePurchase
-  ) -> PendingPaddlePurchase.ID? {
-    guard let index = purchases.firstIndex(where: { $0.id == purchase.id }) else {
-      return selectedPurchaseID
+  private func preferredSelectionIDs(
+    afterRemoving removedPurchases: [PendingPaddlePurchase]
+  ) -> Set<PendingPaddlePurchase.ID> {
+    let removedIDs = Set(removedPurchases.map(\.id))
+    let remainingSelectedIDs = selectedPurchaseIDs.subtracting(removedIDs)
+
+    if !remainingSelectedIDs.isEmpty {
+      return remainingSelectedIDs
     }
 
-    let remainingPurchases = purchases.filter { $0.id != purchase.id }
+    guard let firstRemovedIndex = purchases.firstIndex(where: { removedIDs.contains($0.id) }) else {
+      return []
+    }
+
+    let remainingPurchases = purchases.filter { !removedIDs.contains($0.id) }
 
     guard !remainingPurchases.isEmpty else {
-      return nil
+      return []
     }
 
-    return remainingPurchases[min(index, remainingPurchases.count - 1)].id
+    return [remainingPurchases[min(firstRemovedIndex, remainingPurchases.count - 1)].id]
+  }
+
+  private func removePurchases(_ removedPurchases: [PendingPaddlePurchase]) {
+    let removedIDs = Set(removedPurchases.map(\.id))
+
+    purchases.removeAll {
+      removedIDs.contains($0.id)
+    }
+  }
+
+  private func batchStatusMessage(
+    createdCount: Int,
+    existingCount: Int
+  ) -> String {
+    let totalCount = createdCount + existingCount
+
+    if existingCount == 0 {
+      return "Fulfilled \(totalCount) purchase\(totalCount == 1 ? "" : "s")."
+    }
+
+    return "Fulfilled \(totalCount) purchases: \(createdCount) new, \(existingCount) already existed."
+  }
+}
+
+struct BatchFulfillmentProgress {
+  var completedCount: Int
+  var totalCount: Int
+  var currentLabel: String?
+
+  var statusText: String {
+    if let currentLabel {
+      return "Fulfilling \(completedCount + 1) of \(totalCount): \(currentLabel)"
+    }
+
+    return "Preparing \(totalCount) purchase\(totalCount == 1 ? "" : "s")…"
+  }
+}
+
+struct BatchFulfillmentDetailView: View {
+  let selectedCount: Int
+  let progress: BatchFulfillmentProgress?
+  let onFulfillSelected: () -> Void
+
+  var body: some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 20) {
+        Text("Batch Fulfillment")
+          .font(.largeTitle.bold())
+
+        detailCard("Selected Purchases") {
+          row("Count", "\(selectedCount)")
+          row("Mode", "Sequential fulfillment")
+        }
+
+        if let progress {
+          detailCard("Progress") {
+            ProgressView(
+              value: Double(progress.completedCount),
+              total: Double(progress.totalCount)
+            )
+
+            Text(progress.statusText)
+              .foregroundStyle(.secondary)
+          }
+        }
+
+        Button("Fulfill Selected Purchases") {
+          onFulfillSelected()
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(progress != nil)
+      }
+      .padding(24)
+      .frame(maxWidth: 720, alignment: .leading)
+    }
+  }
+
+  private func detailCard<Content: View>(
+    _ title: String,
+    @ViewBuilder content: () -> Content
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text(title)
+        .font(.headline)
+
+      content()
+    }
+    .padding(18)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(.regularMaterial)
+    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+  }
+
+  private func row(_ label: String, _ value: String) -> some View {
+    HStack(alignment: .firstTextBaseline) {
+      Text(label)
+        .foregroundStyle(.secondary)
+        .frame(width: 140, alignment: .leading)
+
+      Text(value.isEmpty ? "—" : value)
+        .textSelection(.enabled)
+    }
   }
 }
 
