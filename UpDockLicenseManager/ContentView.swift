@@ -84,6 +84,9 @@ struct ContentView: View {
           },
           onRevoke: {
             updateLicense(LicenseService.revokeLicense(selectedLicense))
+          },
+          onRefreshFulfillmentArchive: { license in
+            try await refreshFulfillmentArchive(for: license)
           }
         )
         .id(selectedLicense.id)
@@ -278,6 +281,17 @@ struct ContentView: View {
     guard let index = store.licenses.firstIndex(where: { $0.id == updated.id }) else { return }
     store.licenses[index] = updated
     selectedLicense = updated
+  }
+
+  private func refreshFulfillmentArchive(for license: LicenseRecord) async throws -> LicenseRecord {
+    let updatedLicense = try await FulfillmentCoordinator.shared.verifyFulfillmentArchive(
+      for: license,
+      settings: NetworkSettings()
+    )
+
+    updateLicense(updatedLicense)
+
+    return updatedLicense
   }
 
   private func duplicateSelectedLicense() {

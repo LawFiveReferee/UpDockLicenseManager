@@ -45,8 +45,13 @@ final class FulfillmentCoordinator {
     )
 
     if let existingLicense = existingLicenseForTransactionID(purchase.transactionID) {
+      var updatedLicense = existingLicense
+      updatedLicense.fulfillmentArchiveStatus = .archived
+      updatedLicense.fulfillmentArchiveCheckedAt = Date()
+      updatedLicense.fulfilledAt = updatedLicense.fulfilledAt ?? Date()
+
       return PendingPurchaseFulfillmentResult(
-        license: existingLicense,
+        license: updatedLicense,
         didCreateLicense: false,
         serverResponse: serverResponse
       )
@@ -57,6 +62,34 @@ final class FulfillmentCoordinator {
       didCreateLicense: true,
       serverResponse: serverResponse
     )
+  }
+
+  func verifyFulfillmentArchive(
+    for license: LicenseRecord,
+    settings: NetworkSettings
+  ) async throws -> LicenseRecord {
+    let transactionID = license.paddleTransactionID.trimmingCharacters(
+      in: .whitespacesAndNewlines
+    )
+
+    guard !transactionID.isEmpty else {
+      return license
+    }
+
+    let verification = try await PendingPurchasesService.shared.verifyFulfillmentArchive(
+      settings: settings,
+      transactionID: transactionID
+    )
+    var updatedLicense = license
+
+    updatedLicense.fulfillmentArchiveStatus = verification.status
+    updatedLicense.fulfillmentArchiveCheckedAt = verification.checkedAt
+
+    if verification.status == .archived {
+      updatedLicense.fulfilledAt = updatedLicense.fulfilledAt ?? verification.checkedAt
+    }
+
+    return updatedLicense
   }
 
   func makeCommercialLicenseRecord(
@@ -82,7 +115,9 @@ final class FulfillmentCoordinator {
       paddleProductID: item?.product?.id ?? "",
       paddlePriceID: item?.price?.id ?? "",
       paddleStatus: transaction?.status ?? "",
-      fulfilledAt: Date()
+      fulfilledAt: Date(),
+      fulfillmentArchiveStatus: .archived,
+      fulfillmentArchiveCheckedAt: Date()
     )
   }
 }

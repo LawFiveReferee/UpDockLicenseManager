@@ -43,4 +43,44 @@ final class PendingPurchasesService {
       transactionID: transactionID
     )
   }
+
+  func verifyFulfillmentArchive(
+    settings: NetworkSettings,
+    transactionID: String
+  ) async throws -> FulfillmentArchiveVerification {
+    let pendingResponse = try await fetchPendingPurchases(settings: settings)
+
+    if pendingResponse.items.contains(where: { $0.transactionID == transactionID }) {
+      return FulfillmentArchiveVerification(
+        status: .pending,
+        checkedAt: Date(),
+        message: "Transaction is still in the pending queue."
+      )
+    }
+
+    do {
+      let response = try await markFulfilled(
+        settings: settings,
+        transactionID: transactionID
+      )
+
+      return FulfillmentArchiveVerification(
+        status: .archived,
+        checkedAt: Date(),
+        message: response.message ?? "Transaction is in the fulfilled archive."
+      )
+    } catch NetworkServiceError.serverError(404) {
+      return FulfillmentArchiveVerification(
+        status: .notFound,
+        checkedAt: Date(),
+        message: "Transaction was not found in pending or fulfilled records."
+      )
+    }
+  }
+}
+
+struct FulfillmentArchiveVerification: Hashable {
+  var status: FulfillmentArchiveStatus
+  var checkedAt: Date
+  var message: String
 }
