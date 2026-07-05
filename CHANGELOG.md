@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.0 Beta — Workflow Diagnostics
+- Bumped app version to 1.0.0 build 5.
+- Added license-level workflow diagnostics for local license state, Paddle transaction linkage, web archive status, email draft readiness, and audit trail coverage.
+- Added clear complete, warning, failed, and not-applicable states so operators can see what still needs attention before customer delivery.
+
 ## v0.9.9 — Fulfillment History
 - Bumped app version to 0.9.9 build 4.
 - Added a persistent audit log stored separately from the license database.

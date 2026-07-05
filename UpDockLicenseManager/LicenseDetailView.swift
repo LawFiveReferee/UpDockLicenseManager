@@ -91,6 +91,20 @@ struct LicenseDetailView: View {
           }
         }
 
+        card {
+          VStack(alignment: .leading, spacing: 14) {
+            Text("Workflow Diagnostics")
+              .font(.headline)
+
+            Label(workflowDiagnosticsTitle, systemImage: workflowDiagnosticsSymbol)
+              .foregroundStyle(workflowDiagnosticsStyle)
+
+            ForEach(workflowDiagnosticItems) { item in
+              workflowDiagnosticRow(item)
+            }
+          }
+        }
+
         if hasPaddleTransaction {
           card {
             VStack(alignment: .leading, spacing: 14) {
@@ -345,6 +359,186 @@ struct LicenseDetailView: View {
     }
   }
 
+  private var workflowDiagnosticsTitle: String {
+    if workflowDiagnosticItems.contains(where: { $0.state == .failed }) {
+      return "Needs operator attention"
+    }
+
+    if workflowDiagnosticItems.contains(where: { $0.state == .warning }) {
+      return "Ready with open checks"
+    }
+
+    return "Workflow looks complete"
+  }
+
+  private var workflowDiagnosticsSymbol: String {
+    if workflowDiagnosticItems.contains(where: { $0.state == .failed }) {
+      return "exclamationmark.triangle"
+    }
+
+    if workflowDiagnosticItems.contains(where: { $0.state == .warning }) {
+      return "checkmark.circle.trianglebadge.exclamationmark"
+    }
+
+    return "checkmark.seal"
+  }
+
+  private var workflowDiagnosticsStyle: AnyShapeStyle {
+    if workflowDiagnosticItems.contains(where: { $0.state == .failed }) {
+      return AnyShapeStyle(.red)
+    }
+
+    if workflowDiagnosticItems.contains(where: { $0.state == .warning }) {
+      return AnyShapeStyle(.orange)
+    }
+
+    return AnyShapeStyle(.green)
+  }
+
+  private var workflowDiagnosticItems: [WorkflowDiagnosticItem] {
+    [
+      localLicenseDiagnostic,
+      paddleTransactionDiagnostic,
+      webArchiveDiagnostic,
+      emailDiagnostic,
+      auditTrailDiagnostic
+    ]
+  }
+
+  private var localLicenseDiagnostic: WorkflowDiagnosticItem {
+    if editableLicense.isRevoked {
+      return WorkflowDiagnosticItem(
+        title: "Local License",
+        detail: "License is revoked.",
+        state: .failed
+      )
+    }
+
+    if editableLicense.serial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      return WorkflowDiagnosticItem(
+        title: "Local License",
+        detail: "No serial number is stored.",
+        state: .failed
+      )
+    }
+
+    return WorkflowDiagnosticItem(
+      title: "Local License",
+      detail: "\(editableLicense.type.rawValue) license exists locally.",
+      state: .complete
+    )
+  }
+
+  private var paddleTransactionDiagnostic: WorkflowDiagnosticItem {
+    if hasPaddleTransaction {
+      return WorkflowDiagnosticItem(
+        title: "Paddle Transaction",
+        detail: editableLicense.paddleTransactionID,
+        state: .complete
+      )
+    }
+
+    if editableLicense.type == .commercial {
+      return WorkflowDiagnosticItem(
+        title: "Paddle Transaction",
+        detail: "Commercial license is not linked to a Paddle transaction.",
+        state: .warning
+      )
+    }
+
+    return WorkflowDiagnosticItem(
+      title: "Paddle Transaction",
+      detail: "Not required for \(editableLicense.type.rawValue.lowercased()) licenses.",
+      state: .notApplicable
+    )
+  }
+
+  private var webArchiveDiagnostic: WorkflowDiagnosticItem {
+    guard hasPaddleTransaction else {
+      return WorkflowDiagnosticItem(
+        title: "Web Archive",
+        detail: "No Paddle transaction to verify.",
+        state: .notApplicable
+      )
+    }
+
+    switch editableLicense.fulfillmentArchiveStatus {
+    case .archived:
+      return WorkflowDiagnosticItem(
+        title: "Web Archive",
+        detail: "Transaction is in the fulfilled directory.",
+        state: .complete
+      )
+    case .pending:
+      return WorkflowDiagnosticItem(
+        title: "Web Archive",
+        detail: "Transaction is still pending on the website.",
+        state: .warning
+      )
+    case .unknown:
+      return WorkflowDiagnosticItem(
+        title: "Web Archive",
+        detail: "Status has not been verified.",
+        state: .warning
+      )
+    case .notFound:
+      return WorkflowDiagnosticItem(
+        title: "Web Archive",
+        detail: "Transaction was not found on the website.",
+        state: .failed
+      )
+    }
+  }
+
+  private var emailDiagnostic: WorkflowDiagnosticItem {
+    if editableLicense.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      return WorkflowDiagnosticItem(
+        title: "Email Draft",
+        detail: "No recipient email is stored.",
+        state: .failed
+      )
+    }
+
+    switch editableLicense.emailDeliveryStatus {
+    case .draftPrepared:
+      return WorkflowDiagnosticItem(
+        title: "Email Draft",
+        detail: "Mail draft has been prepared.",
+        state: .complete
+      )
+    case .failed:
+      return WorkflowDiagnosticItem(
+        title: "Email Draft",
+        detail: editableLicense.emailDeliveryError.isEmpty
+          ? "Last draft attempt failed."
+          : editableLicense.emailDeliveryError,
+        state: .failed
+      )
+    case .notPrepared:
+      return WorkflowDiagnosticItem(
+        title: "Email Draft",
+        detail: "Mail draft has not been prepared.",
+        state: .warning
+      )
+    }
+  }
+
+  private var auditTrailDiagnostic: WorkflowDiagnosticItem {
+    if auditEvents.isEmpty {
+      return WorkflowDiagnosticItem(
+        title: "Audit Trail",
+        detail: "No audit events are linked to this license.",
+        state: .warning
+      )
+    }
+
+    return WorkflowDiagnosticItem(
+      title: "Audit Trail",
+      detail: "\(auditEvents.count) linked event\(auditEvents.count == 1 ? "" : "s").",
+      state: .complete
+    )
+  }
+
   private func refreshFulfillmentArchive() async {
     isCheckingFulfillmentArchive = true
     fulfillmentArchiveError = nil
@@ -400,6 +594,24 @@ struct LicenseDetailView: View {
     }
   }
 
+  private func workflowDiagnosticRow(_ item: WorkflowDiagnosticItem) -> some View {
+    HStack(alignment: .top, spacing: 10) {
+      Image(systemName: item.state.symbol)
+        .frame(width: 20)
+        .foregroundStyle(item.state.style)
+
+      VStack(alignment: .leading, spacing: 3) {
+        Text(item.title)
+          .font(.subheadline.bold())
+
+        Text(item.detail)
+          .font(.callout)
+          .foregroundStyle(.secondary)
+          .textSelection(.enabled)
+      }
+    }
+  }
+
   private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
     VStack(alignment: .leading, spacing: 12) {
       content()
@@ -409,4 +621,36 @@ struct LicenseDetailView: View {
     .background(.regularMaterial)
     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
   }
+}
+
+private enum WorkflowDiagnosticState: Equatable {
+  case complete
+  case warning
+  case failed
+  case notApplicable
+
+  var symbol: String {
+    switch self {
+    case .complete: return "checkmark.circle"
+    case .warning: return "exclamationmark.triangle"
+    case .failed: return "xmark.circle"
+    case .notApplicable: return "minus.circle"
+    }
+  }
+
+  var style: AnyShapeStyle {
+    switch self {
+    case .complete: return AnyShapeStyle(.green)
+    case .warning: return AnyShapeStyle(.orange)
+    case .failed: return AnyShapeStyle(.red)
+    case .notApplicable: return AnyShapeStyle(.secondary)
+    }
+  }
+}
+
+private struct WorkflowDiagnosticItem: Identifiable {
+  var id: String { title }
+  var title: String
+  var detail: String
+  var state: WorkflowDiagnosticState
 }
