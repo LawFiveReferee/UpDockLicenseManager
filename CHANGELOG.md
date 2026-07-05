@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.1 — Recovery Report
+- Bumped app version to 1.0.1 build 6.
+- Added a Recovery Report window for scanning all licenses for workflow mismatches.
+- Detects duplicate serials, duplicate Paddle transactions, missing Paddle IDs, unconfirmed archive status, missing or failed email draft readiness, Paddle email mismatches, and missing audit trails.
+- Recovery issues can jump directly back to the affected license.
+
 ## v1.0.0 Beta — Workflow Diagnostics
 - Bumped app version to 1.0.0 build 5.
 - Added license-level workflow diagnostics for local license state, Paddle transaction linkage, web archive status, email draft readiness, and audit trail coverage.

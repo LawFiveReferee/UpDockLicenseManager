@@ -25,6 +25,7 @@ struct LicenseToolbarContent: ToolbarContent {
   let onExportAndEmailLicenseFile: () -> Void
   let onShowPendingPurchases: () -> Void
   let onShowAuditLog: () -> Void
+  let onShowRecoveryReport: () -> Void
 
   var body: some ToolbarContent {
     ToolbarItemGroup {
@@ -51,6 +52,12 @@ struct LicenseToolbarContent: ToolbarContent {
         onShowAuditLog()
       } label: {
         Label("Audit Log", systemImage: "clock.badge")
+      }
+
+      Button {
+        onShowRecoveryReport()
+      } label: {
+        Label("Recovery Report", systemImage: "wrench.and.screwdriver")
       }
 
       Button {

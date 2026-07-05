@@ -65,6 +65,7 @@ struct ContentView: View {
   @State private var showingPaddleFulfillmentSheet = false
   @State private var showingPendingPurchases = false
   @State private var showingAuditLog = false
+  @State private var showingRecoveryReport = false
 
   var body: some View {
     NavigationSplitView {
@@ -132,6 +133,9 @@ struct ContentView: View {
         },
         onShowAuditLog: {
           showingAuditLog = true
+        },
+        onShowRecoveryReport: {
+          showingRecoveryReport = true
         }
       )
 
@@ -201,6 +205,14 @@ struct ContentView: View {
       AuditLogView(
         events: auditLog.events,
         onExport: exportAuditLog
+      )
+    }
+    .sheet(isPresented: $showingRecoveryReport) {
+      RecoveryReportView(
+        issues: recoveryIssues,
+        onSelectLicense: { licenseID in
+          selectLicense(id: licenseID)
+        }
       )
     }
 
@@ -289,6 +301,117 @@ struct ContentView: View {
     return sorted(filtered)
   }
 
+  private var recoveryIssues: [RecoveryIssue] {
+    var issues: [RecoveryIssue] = []
+    let duplicateSerials = duplicateValues(store.licenses.map(\.serial))
+    let duplicateTransactions = duplicateValues(
+      store.licenses.map(\.paddleTransactionID)
+    )
+
+    for license in store.licenses {
+      let trimmedSerial = license.serial.trimmingCharacters(in: .whitespacesAndNewlines)
+      let trimmedTransactionID = license.paddleTransactionID.trimmingCharacters(
+        in: .whitespacesAndNewlines
+      )
+
+      if duplicateSerials.contains(trimmedSerial) {
+        issues.append(
+          RecoveryIssue(
+            severity: .failure,
+            title: "Duplicate Serial",
+            detail: "More than one local license has this serial number.",
+            license: license
+          )
+        )
+      }
+
+      if !trimmedTransactionID.isEmpty && duplicateTransactions.contains(trimmedTransactionID) {
+        issues.append(
+          RecoveryIssue(
+            severity: .failure,
+            title: "Duplicate Paddle Transaction",
+            detail: "More than one local license is linked to this Paddle transaction.",
+            license: license
+          )
+        )
+      }
+
+      if license.type == .commercial && trimmedTransactionID.isEmpty {
+        issues.append(
+          RecoveryIssue(
+            severity: .warning,
+            title: "Commercial License Missing Paddle ID",
+            detail: "Commercial licenses should normally link back to a Paddle transaction.",
+            license: license
+          )
+        )
+      }
+
+      if !trimmedTransactionID.isEmpty && license.fulfillmentArchiveStatus != .archived {
+        issues.append(
+          RecoveryIssue(
+            severity: license.fulfillmentArchiveStatus == .notFound ? .failure : .warning,
+            title: "Fulfillment Archive Not Confirmed",
+            detail: "Current web archive status is \(license.fulfillmentArchiveStatus.rawValue).",
+            license: license
+          )
+        )
+      }
+
+      if license.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        issues.append(
+          RecoveryIssue(
+            severity: .failure,
+            title: "Missing Customer Email",
+            detail: "No customer email is stored for this license.",
+            license: license
+          )
+        )
+      } else if license.emailDeliveryStatus != .draftPrepared {
+        issues.append(
+          RecoveryIssue(
+            severity: license.emailDeliveryStatus == .failed ? .failure : .warning,
+            title: "Email Draft Not Ready",
+            detail: "Current email status is \(license.emailDeliveryStatus.rawValue).",
+            license: license
+          )
+        )
+      }
+
+      if !license.paddleEmail.isEmpty
+        && !license.email.isEmpty
+        && license.paddleEmail.localizedCaseInsensitiveCompare(license.email) != .orderedSame {
+        issues.append(
+          RecoveryIssue(
+            severity: .warning,
+            title: "Paddle Email Mismatch",
+            detail: "Paddle email and license email do not match.",
+            license: license
+          )
+        )
+      }
+
+      if auditLog.events(for: license).isEmpty {
+        issues.append(
+          RecoveryIssue(
+            severity: .warning,
+            title: "Missing Audit Trail",
+            detail: "No audit events are linked to this license.",
+            license: license
+          )
+        )
+      }
+    }
+
+    return issues.sorted {
+      if $0.severity != $1.severity {
+        return $0.severity == .failure
+      }
+
+      return $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+    }
+  }
+
   private func sorted(_ licenses: [LicenseRecord]) -> [LicenseRecord] {
     switch sortOption {
     case .newestFirst:
@@ -316,6 +439,36 @@ struct ContentView: View {
         $0.status.rawValue.localizedCaseInsensitiveCompare($1.status.rawValue) == .orderedAscending
       }
     }
+  }
+
+  private func duplicateValues(_ values: [String]) -> Set<String> {
+    var seen: Set<String> = []
+    var duplicates: Set<String> = []
+
+    for value in values {
+      let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+
+      guard !trimmed.isEmpty else {
+        continue
+      }
+
+      if seen.contains(trimmed) {
+        duplicates.insert(trimmed)
+      } else {
+        seen.insert(trimmed)
+      }
+    }
+
+    return duplicates
+  }
+
+  private func selectLicense(id: UUID) {
+    guard let license = store.licenses.first(where: { $0.id == id }) else {
+      return
+    }
+
+    selectedFilter = .all
+    selectedLicense = license
   }
 
   private func updateLicense(_ updated: LicenseRecord, auditChanges: Bool = true) {
