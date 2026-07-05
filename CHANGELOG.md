@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.3 — Recovery Export
+- Bumped app version to 1.0.3 build 8.
+- Added CSV export to the Recovery Report.
+- Exported reports preserve grouped transaction, customer, license, failure, and warning context.
+
 ## v1.0.2 — Grouped Recovery Report
 - Bumped app version to 1.0.2 build 7.
 - Grouped Recovery Report rows by transaction, license, or customer so repeated issues appear under one record.

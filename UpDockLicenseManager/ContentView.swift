@@ -212,6 +212,9 @@ struct ContentView: View {
         issues: recoveryIssues,
         onSelectLicense: { licenseID in
           selectLicense(id: licenseID)
+        },
+        onExport: {
+          exportRecoveryReportCSV()
         }
       )
     }
@@ -711,6 +714,84 @@ struct ContentView: View {
         showingExportError = true
       }
     }
+  }
+
+  private func exportRecoveryReportCSV() {
+    let panel = NSSavePanel()
+    panel.allowedContentTypes = [
+      UTType(filenameExtension: "csv") ?? .plainText
+    ]
+    panel.nameFieldStringValue = "updock-license-manager-recovery-report.csv"
+
+    if panel.runModal() == .OK, let url = panel.url {
+      do {
+        try makeRecoveryReportCSV().write(to: url, atomically: true, encoding: .utf8)
+      } catch {
+        exportError = error.localizedDescription
+        showingExportError = true
+      }
+    }
+  }
+
+  private func makeRecoveryReportCSV() -> String {
+    let header = [
+      "Group Type",
+      "Group",
+      "Group Failures",
+      "Group Warnings",
+      "Issue Severity",
+      "Issue Title",
+      "Issue Detail",
+      "Transaction ID",
+      "Customer Email",
+      "License Serial",
+      "License ID"
+    ]
+
+    let rows = RecoveryIssueGroup.makeGroups(from: recoveryIssues).flatMap { group in
+      group.issues.map { issue in
+        [
+          recoveryGroupType(for: group),
+          group.title,
+          "\(group.failureCount)",
+          "\(group.warningCount)",
+          issue.severity.rawValue,
+          issue.title,
+          issue.detail,
+          issue.paddleTransactionID,
+          issue.customerEmail,
+          issue.licenseSerial,
+          issue.licenseID?.uuidString ?? ""
+        ]
+      }
+    }
+
+    return ([header] + rows)
+      .map { row in
+        row.map(csvEscape).joined(separator: ",")
+      }
+      .joined(separator: "\n")
+  }
+
+  private func recoveryGroupType(for group: RecoveryIssueGroup) -> String {
+    if !group.paddleTransactionID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      return "Transaction"
+    }
+
+    if !group.licenseSerial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      return "License"
+    }
+
+    if !group.customerEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      return "Customer"
+    }
+
+    return "Issue"
+  }
+
+  private func csvEscape(_ value: String) -> String {
+    let escaped = value.replacingOccurrences(of: "\"", with: "\"\"")
+    return "\"\(escaped)\""
   }
 
   private func recordAudit(

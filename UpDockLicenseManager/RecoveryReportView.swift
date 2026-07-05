@@ -5,11 +5,12 @@ struct RecoveryReportView: View {
 
   let issues: [RecoveryIssue]
   let onSelectLicense: (UUID) -> Void
+  let onExport: () -> Void
 
   @State private var searchText = ""
 
   private var issueGroups: [RecoveryIssueGroup] {
-    makeGroups(from: issues)
+    RecoveryIssueGroup.makeGroups(from: issues)
   }
 
   private var filteredGroups: [RecoveryIssueGroup] {
@@ -91,7 +92,14 @@ struct RecoveryReportView: View {
       .navigationTitle("Recovery Report")
       .searchable(text: $searchText, prompt: "Search recovery report")
       .toolbar {
-        ToolbarItem {
+        ToolbarItemGroup {
+          Button {
+            onExport()
+          } label: {
+            Label("Export CSV", systemImage: "square.and.arrow.up")
+          }
+          .disabled(issues.isEmpty)
+
           Button("Close") {
             dismiss()
           }
@@ -165,7 +173,13 @@ struct RecoveryReportView: View {
     }
   }
 
-  private func makeGroups(from issues: [RecoveryIssue]) -> [RecoveryIssueGroup] {
+}
+
+struct RecoveryIssueGroup: Identifiable {
+  var id: String { groupKey }
+  var issues: [RecoveryIssue]
+
+  static func makeGroups(from issues: [RecoveryIssue]) -> [RecoveryIssueGroup] {
     let grouped = Dictionary(grouping: issues) { issue in
       let transactionID = issue.paddleTransactionID.trimmingCharacters(in: .whitespacesAndNewlines)
       let licenseID = issue.licenseID?.uuidString ?? ""
@@ -197,11 +211,6 @@ struct RecoveryReportView: View {
       return first.title.localizedCaseInsensitiveCompare(second.title) == .orderedAscending
     }
   }
-}
-
-struct RecoveryIssueGroup: Identifiable {
-  var id: String { groupKey }
-  var issues: [RecoveryIssue]
 
   var groupKey: String {
     let first = issues.first
