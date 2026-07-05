@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.7 — Paddle Customer Fallbacks
+- Bumped app version to 1.0.7 build 12.
+- Added cardholder name fallback for Paddle purchases when the customer record has no name.
+- Fulfillment now uses the fallback name for commercial licenses created from Paddle purchases.
+
 ## v1.0.6 — Real Paddle Payloads
 - Bumped app version to 1.0.6 build 11.
 - Added parsing for product details from real Paddle transaction webhook payloads.

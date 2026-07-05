@@ -616,8 +616,8 @@ struct PendingPurchaseDetailView: View {
         }
 
         detailCard("Customer") {
-          row("Name", customer?.name ?? "—")
-          row("Email", customer?.email ?? "—")
+          row("Name", transaction?.customerName ?? "—")
+          row("Email", transaction?.customerEmail ?? "—")
           row("Customer ID", transaction?.customerID ?? customer?.id ?? "—")
         }
 

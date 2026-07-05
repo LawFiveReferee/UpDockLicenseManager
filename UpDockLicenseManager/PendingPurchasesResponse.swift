@@ -47,6 +47,7 @@ struct PaddleTransactionData: Codable, Hashable {
   let customer: PaddleCustomerData?
   let items: [PaddleTransactionItem]?
   let details: PaddleTransactionDetails?
+  let payments: [PaddlePayment]?
 
   enum CodingKeys: String, CodingKey {
     case id
@@ -55,6 +56,23 @@ struct PaddleTransactionData: Codable, Hashable {
     case customer
     case items
     case details
+    case payments
+  }
+
+  var customerName: String {
+    let customerName = customer?.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+    if !customerName.isEmpty {
+      return customerName
+    }
+
+    return payments?
+      .compactMap { $0.methodDetails?.card?.cardholderName?.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .first { !$0.isEmpty } ?? ""
+  }
+
+  var customerEmail: String {
+    customer?.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
   }
 
   var primaryItem: PaddleTransactionItem? {
@@ -76,6 +94,26 @@ struct PaddleCustomerData: Codable, Hashable {
   let id: String?
   let email: String?
   let name: String?
+}
+
+struct PaddlePayment: Codable, Hashable {
+  let methodDetails: PaddlePaymentMethodDetails?
+
+  enum CodingKeys: String, CodingKey {
+    case methodDetails = "method_details"
+  }
+}
+
+struct PaddlePaymentMethodDetails: Codable, Hashable {
+  let card: PaddleCardPaymentDetails?
+}
+
+struct PaddleCardPaymentDetails: Codable, Hashable {
+  let cardholderName: String?
+
+  enum CodingKeys: String, CodingKey {
+    case cardholderName = "cardholder_name"
+  }
 }
 
 struct PaddleTransactionItem: Codable, Hashable {

@@ -99,8 +99,8 @@ final class FulfillmentCoordinator {
     let customer = transaction?.customer
     let item = transaction?.primaryItem
 
-    let name = customer?.name ?? ""
-    let email = customer?.email ?? ""
+    let name = transaction?.customerName ?? ""
+    let email = transaction?.customerEmail ?? ""
 
     return LicenseRecord(
       serial: LicenseGenerator.makeSerial(type: .commercial),
