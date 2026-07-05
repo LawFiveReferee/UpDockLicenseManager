@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.2 — Grouped Recovery Report
+- Bumped app version to 1.0.2 build 7.
+- Grouped Recovery Report rows by transaction, license, or customer so repeated issues appear under one record.
+- Added affected transaction and customer counts to the Recovery Report summary.
+
 ## v1.0.1 — Recovery Report
 - Bumped app version to 1.0.1 build 6.
 - Added a Recovery Report window for scanning all licenses for workflow mismatches.
