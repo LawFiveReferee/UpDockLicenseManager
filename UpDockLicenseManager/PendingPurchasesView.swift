@@ -22,6 +22,8 @@ struct PendingPurchasesView: View {
   @State private var batchProgress: BatchFulfillmentProgress?
   @State private var errorMessage: String?
   @State private var statusMessage: String?
+  @State private var webhookLogEntries: [WebhookLogEntry] = []
+  @State private var showingWebhookLog = false
 
   private var selectedPurchases: [PendingPaddlePurchase] {
     purchases.filter { selectedPurchaseIDs.contains($0.id) }
@@ -78,6 +80,14 @@ struct PendingPurchasesView: View {
               Task { await clearAllTests() }
             }
           }
+
+          Divider()
+
+          Section("Diagnostics") {
+            Button("Check Webhook Log") {
+              Task { await checkWebhookLog() }
+            }
+          }
         } label: {
           Label("Developer", systemImage: "hammer")
         }
@@ -104,6 +114,9 @@ struct PendingPurchasesView: View {
     }
     .task {
       await refresh(selectFirstIfNeeded: true)
+    }
+    .sheet(isPresented: $showingWebhookLog) {
+      WebhookLogView(entries: webhookLogEntries)
     }
   }
 
@@ -298,6 +311,25 @@ struct PendingPurchasesView: View {
 
       try await fetchPurchases(selectFirstIfNeeded: true)
       statusMessage = "Cleared all test purchases."
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+
+    isLoading = false
+  }
+
+  private func checkWebhookLog() async {
+    isLoading = true
+    errorMessage = nil
+    statusMessage = nil
+
+    do {
+      let response = try await ServerService.shared.fetchWebhookLog(settings: networkSettings)
+      webhookLogEntries = response.entries
+      showingWebhookLog = true
+      statusMessage = response.entries.isEmpty
+        ? "Webhook log is empty."
+        : "Loaded \(response.entries.count) webhook log entr\(response.entries.count == 1 ? "y" : "ies")."
     } catch {
       errorMessage = error.localizedDescription
     }
@@ -649,6 +681,94 @@ struct PendingPurchaseDetailView: View {
 
       Text(value.isEmpty ? "—" : value)
         .textSelection(.enabled)
+    }
+  }
+}
+
+struct WebhookLogView: View {
+  @Environment(\.dismiss) private var dismiss
+
+  let entries: [WebhookLogEntry]
+
+  var body: some View {
+    NavigationStack {
+      List {
+        if entries.isEmpty {
+          ContentUnavailableView(
+            "No Webhook Events",
+            systemImage: "tray",
+            description: Text("Paddle has not reached the webhook since diagnostics were deployed.")
+          )
+        } else {
+          ForEach(entries.reversed()) { entry in
+            VStack(alignment: .leading, spacing: 8) {
+              HStack(alignment: .firstTextBaseline) {
+                Label(entry.status.capitalized, systemImage: symbol(for: entry.status))
+                  .foregroundStyle(style(for: entry.status))
+
+                Spacer()
+
+                Text(entry.time)
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                  .textSelection(.enabled)
+              }
+
+              Text(entry.message)
+                .font(.headline)
+
+              if let context = entry.context, !context.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                  ForEach(context.sorted(by: { $0.key < $1.key }), id: \.key) { key, value in
+                    HStack(alignment: .top) {
+                      Text(key)
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                        .frame(width: 110, alignment: .leading)
+
+                      Text(value)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                    }
+                  }
+                }
+              }
+            }
+            .padding(.vertical, 6)
+          }
+        }
+      }
+      .navigationTitle("Webhook Log")
+      .toolbar {
+        ToolbarItem {
+          Button("Close") {
+            dismiss()
+          }
+        }
+      }
+    }
+    .frame(width: 720, height: 520)
+  }
+
+  private func symbol(for status: String) -> String {
+    switch status.lowercased() {
+    case "stored":
+      return "checkmark.circle"
+    case "ignored":
+      return "minus.circle"
+    default:
+      return "exclamationmark.triangle"
+    }
+  }
+
+  private func style(for status: String) -> Color {
+    switch status.lowercased() {
+    case "stored":
+      return .green
+    case "ignored":
+      return .secondary
+    default:
+      return .red
     }
   }
 }

@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.5 — Webhook Diagnostics
+- Bumped app version to 1.0.5 build 10.
+- Added a Pending Purchases developer action for checking the protected Paddle webhook log.
+- Added a Webhook Log viewer for stored, ignored, and failed webhook events.
+
 ## v1.0.4 — Actionable Recovery
 - Bumped app version to 1.0.4 build 9.
 - Added a Refresh Archive action to Recovery Report rows with unconfirmed web fulfillment archive status.
