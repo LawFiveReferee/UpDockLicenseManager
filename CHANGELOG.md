@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.4 — Actionable Recovery
+- Bumped app version to 1.0.4 build 9.
+- Added a Refresh Archive action to Recovery Report rows with unconfirmed web fulfillment archive status.
+- Recovery Report rows now show per-action success or error feedback after refresh attempts.
+
 ## v1.0.3 — Recovery Export
 - Bumped app version to 1.0.3 build 8.
 - Added CSV export to the Recovery Report.

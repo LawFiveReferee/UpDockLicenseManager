@@ -6,8 +6,11 @@ struct RecoveryReportView: View {
   let issues: [RecoveryIssue]
   let onSelectLicense: (UUID) -> Void
   let onExport: () -> Void
+  let onRefreshFulfillmentArchive: (UUID) async throws -> String
 
   @State private var searchText = ""
+  @State private var refreshingGroupIDs: Set<String> = []
+  @State private var actionMessages: [String: RecoveryReportActionMessage] = [:]
 
   private var issueGroups: [RecoveryIssueGroup] {
     RecoveryIssueGroup.makeGroups(from: issues)
@@ -72,12 +75,20 @@ struct RecoveryReportView: View {
         summary
 
         List(filteredGroups) { group in
-          RecoveryIssueGroupRow(group: group) {
-            if let licenseID = group.primaryLicenseID {
-              onSelectLicense(licenseID)
-              dismiss()
+          RecoveryIssueGroupRow(
+            group: group,
+            isRefreshingArchive: refreshingGroupIDs.contains(group.id),
+            actionMessage: actionMessages[group.id],
+            onSelect: {
+              if let licenseID = group.primaryLicenseID {
+                onSelectLicense(licenseID)
+                dismiss()
+              }
+            },
+            onRefreshFulfillmentArchive: {
+              refreshFulfillmentArchive(for: group)
             }
-          }
+          )
         }
         .overlay {
           if filteredGroups.isEmpty {
@@ -107,6 +118,32 @@ struct RecoveryReportView: View {
       }
     }
     .frame(width: 900, height: 640)
+  }
+
+  private func refreshFulfillmentArchive(for group: RecoveryIssueGroup) {
+    guard let licenseID = group.primaryLicenseID else {
+      return
+    }
+
+    refreshingGroupIDs.insert(group.id)
+    actionMessages[group.id] = nil
+
+    Task {
+      do {
+        let message = try await onRefreshFulfillmentArchive(licenseID)
+        actionMessages[group.id] = RecoveryReportActionMessage(
+          text: message,
+          isError: false
+        )
+      } catch {
+        actionMessages[group.id] = RecoveryReportActionMessage(
+          text: error.localizedDescription,
+          isError: true
+        )
+      }
+
+      refreshingGroupIDs.remove(group.id)
+    }
   }
 
   private var summary: some View {
@@ -274,6 +311,10 @@ struct RecoveryIssueGroup: Identifiable {
     issues.compactMap(\.licenseID).first
   }
 
+  var canRefreshFulfillmentArchive: Bool {
+    primaryLicenseID != nil && issues.contains { $0.title == "Fulfillment Archive Not Confirmed" }
+  }
+
   var paddleTransactionID: String {
     issues.first?.paddleTransactionID ?? ""
   }
@@ -301,9 +342,17 @@ struct RecoveryIssueGroup: Identifiable {
   }
 }
 
+struct RecoveryReportActionMessage {
+  var text: String
+  var isError: Bool
+}
+
 struct RecoveryIssueGroupRow: View {
   let group: RecoveryIssueGroup
+  let isRefreshingArchive: Bool
+  let actionMessage: RecoveryReportActionMessage?
   let onSelect: () -> Void
+  let onRefreshFulfillmentArchive: () -> Void
 
   var body: some View {
     HStack(alignment: .top, spacing: 12) {
@@ -347,11 +396,37 @@ struct RecoveryIssueGroupRow: View {
           }
         }
 
-        if group.primaryLicenseID != nil {
-          Button("Show License") {
-            onSelect()
+        if let actionMessage {
+          Label(
+            actionMessage.text,
+            systemImage: actionMessage.isError ? "exclamationmark.triangle" : "checkmark.circle"
+          )
+          .font(.caption)
+          .foregroundStyle(actionMessage.isError ? .red : .green)
+        }
+
+        HStack {
+          if group.primaryLicenseID != nil {
+            Button("Show License") {
+              onSelect()
+            }
+            .buttonStyle(.link)
           }
-          .buttonStyle(.link)
+
+          if group.canRefreshFulfillmentArchive {
+            Button {
+              onRefreshFulfillmentArchive()
+            } label: {
+              if isRefreshingArchive {
+                ProgressView()
+                  .controlSize(.small)
+              } else {
+                Label("Refresh Archive", systemImage: "arrow.clockwise")
+              }
+            }
+            .disabled(isRefreshingArchive)
+            .buttonStyle(.link)
+          }
         }
       }
     }

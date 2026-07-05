@@ -41,6 +41,17 @@ enum LicenseSortOption: String, CaseIterable, Identifiable {
   var id: String { rawValue }
 }
 
+enum RecoveryReportActionError: LocalizedError {
+  case missingLicense
+
+  var errorDescription: String? {
+    switch self {
+    case .missingLicense:
+      return "The linked license could not be found."
+    }
+  }
+}
+
 struct ContentView: View {
   @State private var store = LicenseStore()
   @State private var auditLog = AuditLogStore()
@@ -215,6 +226,9 @@ struct ContentView: View {
         },
         onExport: {
           exportRecoveryReportCSV()
+        },
+        onRefreshFulfillmentArchive: { licenseID in
+          try await refreshFulfillmentArchiveForRecoveryReport(licenseID: licenseID)
         }
       )
     }
@@ -505,6 +519,15 @@ struct ContentView: View {
     )
 
     return updatedLicense
+  }
+
+  private func refreshFulfillmentArchiveForRecoveryReport(licenseID: UUID) async throws -> String {
+    guard let license = store.licenses.first(where: { $0.id == licenseID }) else {
+      throw RecoveryReportActionError.missingLicense
+    }
+
+    let updatedLicense = try await refreshFulfillmentArchive(for: license)
+    return "Website archive status: \(updatedLicense.fulfillmentArchiveStatus.rawValue)."
   }
 
   private func prepareEmailDelivery(for license: LicenseRecord) throws -> LicenseRecord {
