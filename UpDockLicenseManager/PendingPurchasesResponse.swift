@@ -46,6 +46,7 @@ struct PaddleTransactionData: Codable, Hashable {
   let customerID: String?
   let customer: PaddleCustomerData?
   let items: [PaddleTransactionItem]?
+  let details: PaddleTransactionDetails?
 
   enum CodingKeys: String, CodingKey {
     case id
@@ -53,6 +54,21 @@ struct PaddleTransactionData: Codable, Hashable {
     case customerID = "customer_id"
     case customer
     case items
+    case details
+  }
+
+  var primaryItem: PaddleTransactionItem? {
+    guard var item = items?.first else {
+      return nil
+    }
+
+    if item.product == nil {
+      item.product = details?.lineItems?.first { lineItem in
+        lineItem.priceID == item.price?.id
+      }?.product
+    }
+
+    return item
   }
 }
 
@@ -64,16 +80,40 @@ struct PaddleCustomerData: Codable, Hashable {
 
 struct PaddleTransactionItem: Codable, Hashable {
   let price: PaddlePriceData?
-  let product: PaddleProductData?
+  var product: PaddleProductData?
 }
 
 struct PaddlePriceData: Codable, Hashable {
   let id: String?
+  let productID: String?
+
+  enum CodingKeys: String, CodingKey {
+    case id
+    case productID = "product_id"
+  }
 }
 
 struct PaddleProductData: Codable, Hashable {
   let id: String?
   let name: String?
+}
+
+struct PaddleTransactionDetails: Codable, Hashable {
+  let lineItems: [PaddleLineItem]?
+
+  enum CodingKeys: String, CodingKey {
+    case lineItems = "line_items"
+  }
+}
+
+struct PaddleLineItem: Codable, Hashable {
+  let priceID: String?
+  let product: PaddleProductData?
+
+  enum CodingKeys: String, CodingKey {
+    case priceID = "price_id"
+    case product
+  }
 }
 
 struct FulfilledPurchaseResponse: Decodable, Hashable {

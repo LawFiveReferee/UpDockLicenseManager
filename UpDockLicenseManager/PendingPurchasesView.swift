@@ -599,7 +599,7 @@ struct PendingPurchaseDetailView: View {
   }
 
   private var item: PaddleTransactionItem? {
-    transaction?.items?.first
+    transaction?.primaryItem
   }
 
   var body: some View {
@@ -630,7 +630,7 @@ struct PendingPurchaseDetailView: View {
 
         detailCard("Product") {
           row("Product", item?.product?.name ?? "—")
-          row("Product ID", item?.product?.id ?? "—")
+          row("Product ID", item?.product?.id ?? item?.price?.productID ?? "—")
           row("Price ID", item?.price?.id ?? "—")
         }
 

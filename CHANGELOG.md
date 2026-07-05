@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.6 — Real Paddle Payloads
+- Bumped app version to 1.0.6 build 11.
+- Added parsing for product details from real Paddle transaction webhook payloads.
+- Fulfillment now preserves product IDs from Paddle price metadata when product objects are absent.
+
 ## v1.0.5 — Webhook Diagnostics
 - Bumped app version to 1.0.5 build 10.
 - Added a Pending Purchases developer action for checking the protected Paddle webhook log.

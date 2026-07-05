@@ -97,7 +97,7 @@ final class FulfillmentCoordinator {
   ) -> LicenseRecord {
     let transaction = purchase.payload.data
     let customer = transaction?.customer
-    let item = transaction?.items?.first
+    let item = transaction?.primaryItem
 
     let name = customer?.name ?? ""
     let email = customer?.email ?? ""
@@ -112,7 +112,7 @@ final class FulfillmentCoordinator {
       paddleCustomerID: transaction?.customerID ?? customer?.id ?? "",
       paddleTransactionID: purchase.transactionID,
       paddleEmail: email,
-      paddleProductID: item?.product?.id ?? "",
+      paddleProductID: item?.product?.id ?? item?.price?.productID ?? "",
       paddlePriceID: item?.price?.id ?? "",
       paddleStatus: transaction?.status ?? "",
       fulfilledAt: Date(),
