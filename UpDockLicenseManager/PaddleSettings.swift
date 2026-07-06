@@ -69,7 +69,9 @@ final class PaddleFulfillmentPolicyStore {
     let productID = item?.product?.id ?? item?.price?.productID ?? ""
     let priceID = item?.price?.id ?? ""
     let siteProductIDs = normalizedIDSet(from: siteLicenseProductIDs)
+      .union(siteLicensePricingProductIDs())
     let sitePriceIDs = normalizedIDSet(from: siteLicensePriceIDs)
+      .union(siteLicensePricingPriceIDs())
     let isSiteLicense = siteProductIDs.contains(productID.lowercased())
       || sitePriceIDs.contains(priceID.lowercased())
 
@@ -90,6 +92,24 @@ final class PaddleFulfillmentPolicyStore {
     return Set(
       text
         .components(separatedBy: separators)
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+      .filter { !$0.isEmpty }
+    )
+  }
+
+  private func siteLicensePricingPriceIDs() -> Set<String> {
+    Set(
+      SiteLicensePricingStore().tiers
+        .map(\.priceID)
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        .filter { !$0.isEmpty }
+    )
+  }
+
+  private func siteLicensePricingProductIDs() -> Set<String> {
+    Set(
+      SiteLicensePricingStore().tiers
+        .map(\.productID)
         .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         .filter { !$0.isEmpty }
     )
@@ -137,6 +157,8 @@ struct SiteLicensePricingTier: Identifiable, Codable, Hashable {
   var id: UUID
   var minimumSeats: Int
   var maximumSeats: Int?
+  var priceID: String
+  var productID: String
   var discountPercent: Double
   var discountAmount: Double
   var unitPrice: Double
@@ -145,6 +167,8 @@ struct SiteLicensePricingTier: Identifiable, Codable, Hashable {
     id: UUID = UUID(),
     minimumSeats: Int,
     maximumSeats: Int?,
+    priceID: String = "",
+    productID: String = "",
     discountPercent: Double,
     discountAmount: Double,
     unitPrice: Double
@@ -152,9 +176,35 @@ struct SiteLicensePricingTier: Identifiable, Codable, Hashable {
     self.id = id
     self.minimumSeats = minimumSeats
     self.maximumSeats = maximumSeats
+    self.priceID = priceID
+    self.productID = productID
     self.discountPercent = discountPercent
     self.discountAmount = discountAmount
     self.unitPrice = unitPrice
+  }
+
+  enum CodingKeys: String, CodingKey {
+    case id
+    case minimumSeats
+    case maximumSeats
+    case priceID
+    case productID
+    case discountPercent
+    case discountAmount
+    case unitPrice
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+
+    id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+    minimumSeats = try container.decode(Int.self, forKey: .minimumSeats)
+    maximumSeats = try container.decodeIfPresent(Int.self, forKey: .maximumSeats)
+    priceID = try container.decodeIfPresent(String.self, forKey: .priceID) ?? ""
+    productID = try container.decodeIfPresent(String.self, forKey: .productID) ?? ""
+    discountPercent = try container.decode(Double.self, forKey: .discountPercent)
+    discountAmount = try container.decode(Double.self, forKey: .discountAmount)
+    unitPrice = try container.decode(Double.self, forKey: .unitPrice)
   }
 
   var rangeLabel: String {

@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.15 — Pricing Tier Paddle IDs
+- Bumped app version to 1.0.15 build 20.
+- Added editable Price ID and Product ID columns to the Site License Pricing table.
+- Fulfillment policy matching now recognizes site-license IDs entered directly in pricing tiers.
+
 ## v1.0.14 — Site License Pricing Preview
 - Bumped app version to 1.0.14 build 19.
 - Pending purchase review now shows the matched site-license pricing tier for site-license purchases.

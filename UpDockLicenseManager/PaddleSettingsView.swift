@@ -88,72 +88,82 @@ struct PaddleSettingsView: View {
       }
 
       Section("Site License Pricing") {
-        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-          GridRow {
-            Text("Min")
-            Text("Max")
-            Text("Discount")
-            Text("Discount Amount")
-            Text("New Price")
-          }
-          .font(.caption)
-          .foregroundStyle(.secondary)
-
-          ForEach(siteLicensePricing.tiers.indices, id: \.self) { index in
+        ScrollView(.horizontal) {
+          Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
             GridRow {
-              TextField(
-                "Min",
-                value: $siteLicensePricing.tiers[index].minimumSeats,
-                format: .number
-              )
-              .frame(width: 56)
-
-              TextField(
-                "+",
-                text: maximumSeatsBinding(for: index)
-              )
-              .frame(width: 56)
-
-              HStack(spacing: 4) {
-                TextField(
-                  "Discount",
-                  value: $siteLicensePricing.tiers[index].discountPercent,
-                  format: .number.precision(.fractionLength(0...2))
-                )
-                .frame(width: 72)
-
-                Text("%")
-                  .foregroundStyle(.secondary)
-              }
-
-              HStack(spacing: 4) {
-                Text("$")
-                  .foregroundStyle(.secondary)
-
-                TextField(
-                  "Amount",
-                  value: $siteLicensePricing.tiers[index].discountAmount,
-                  format: .number.precision(.fractionLength(2))
-                )
-                .frame(width: 82)
-              }
-
-              HStack(spacing: 4) {
-                Text("$")
-                  .foregroundStyle(.secondary)
-
-                TextField(
-                  "Price",
-                  value: $siteLicensePricing.tiers[index].unitPrice,
-                  format: .number.precision(.fractionLength(2))
-                )
-                .frame(width: 82)
-              }
+              Text("Min")
+              Text("Max")
+              Text("Price ID")
+              Text("Product ID")
+              Text("Discount")
+              Text("Discount Amount")
+              Text("New Price")
             }
-            .textFieldStyle(.roundedBorder)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+            ForEach(siteLicensePricing.tiers.indices, id: \.self) { index in
+              GridRow {
+                TextField(
+                  "Min",
+                  value: $siteLicensePricing.tiers[index].minimumSeats,
+                  format: .number
+                )
+                .frame(width: 56)
+
+                TextField(
+                  "+",
+                  text: maximumSeatsBinding(for: index)
+                )
+                .frame(width: 56)
+
+                TextField("Price ID", text: $siteLicensePricing.tiers[index].priceID)
+                  .frame(width: 190)
+
+                TextField("Product ID", text: $siteLicensePricing.tiers[index].productID)
+                  .frame(width: 190)
+
+                HStack(spacing: 4) {
+                  TextField(
+                    "Discount",
+                    value: $siteLicensePricing.tiers[index].discountPercent,
+                    format: .number.precision(.fractionLength(0...2))
+                  )
+                  .frame(width: 72)
+
+                  Text("%")
+                    .foregroundStyle(.secondary)
+                }
+
+                HStack(spacing: 4) {
+                  Text("$")
+                    .foregroundStyle(.secondary)
+
+                  TextField(
+                    "Amount",
+                    value: $siteLicensePricing.tiers[index].discountAmount,
+                    format: .number.precision(.fractionLength(2))
+                  )
+                  .frame(width: 82)
+                }
+
+                HStack(spacing: 4) {
+                  Text("$")
+                    .foregroundStyle(.secondary)
+
+                  TextField(
+                    "Price",
+                    value: $siteLicensePricing.tiers[index].unitPrice,
+                    format: .number.precision(.fractionLength(2))
+                  )
+                  .frame(width: 82)
+                }
+              }
+              .textFieldStyle(.roundedBorder)
+            }
           }
+          .monospacedDigit()
         }
-        .monospacedDigit()
 
         HStack {
           Button("Restore Defaults") {
@@ -163,6 +173,9 @@ struct PaddleSettingsView: View {
           Text("Use a blank Max value for the open-ended final tier.")
             .foregroundStyle(.secondary)
         }
+
+        Text("Product ID may stay blank when all site-license tiers use the same product. A matching tier Price ID is enough to fulfill as a site license.")
+          .foregroundStyle(.secondary)
       }
 
       Section("Notification Secret") {
