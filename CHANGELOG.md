@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.9 — Quantity Fulfillment
+- Bumped app version to 1.0.9 build 14.
+- Added Paddle quantity parsing for pending purchases.
+- Fulfillment now creates one commercial license per purchased quantity while avoiding duplicates for already-created licenses.
+- Pending purchase review and license preview now show quantity and generated license count.
+
 ## v1.0.8 — Pending License Preview
 - Bumped app version to 1.0.8 build 13.
 - Enabled the Pending Purchases Preview License action.

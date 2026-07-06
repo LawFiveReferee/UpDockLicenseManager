@@ -45,13 +45,17 @@ final class LicenseStore {
   }
 
   func licenseForPaddleTransactionID(_ transactionID: String) -> LicenseRecord? {
+    licensesForPaddleTransactionID(transactionID).first
+  }
+
+  func licensesForPaddleTransactionID(_ transactionID: String) -> [LicenseRecord] {
     let trimmed = transactionID.trimmingCharacters(in: .whitespacesAndNewlines)
 
     guard !trimmed.isEmpty else {
-      return nil
+      return []
     }
 
-    return licenses.first {
+    return licenses.filter {
       $0.paddleTransactionID.localizedCaseInsensitiveCompare(trimmed) == .orderedSame
     }
   }
@@ -233,4 +237,3 @@ enum LicenseExportError: Error, LocalizedError {
     }
   }
 }
-

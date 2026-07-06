@@ -22,6 +22,10 @@ struct PendingPaddlePurchase: Codable, Identifiable, Hashable {
 
   var id: String { transactionID }
 
+  var licenseQuantity: Int {
+    max(payload.data?.primaryItem?.quantity ?? 1, 1)
+  }
+
   enum CodingKeys: String, CodingKey {
     case receivedAt = "received_at"
     case eventType = "event_type"
@@ -80,7 +84,17 @@ struct PaddleTransactionData: Codable, Hashable {
       return nil
     }
 
-    if item.product == nil {
+    if let lineItem = details?.lineItems?.first(where: { lineItem in
+      lineItem.priceID == item.price?.id
+    }) {
+      if item.product == nil {
+        item.product = lineItem.product
+      }
+
+      if item.quantity == nil {
+        item.quantity = lineItem.quantity
+      }
+    } else if item.product == nil {
       item.product = details?.lineItems?.first { lineItem in
         lineItem.priceID == item.price?.id
       }?.product
@@ -119,6 +133,7 @@ struct PaddleCardPaymentDetails: Codable, Hashable {
 struct PaddleTransactionItem: Codable, Hashable {
   let price: PaddlePriceData?
   var product: PaddleProductData?
+  var quantity: Int?
 }
 
 struct PaddlePriceData: Codable, Hashable {
@@ -147,10 +162,12 @@ struct PaddleTransactionDetails: Codable, Hashable {
 struct PaddleLineItem: Codable, Hashable {
   let priceID: String?
   let product: PaddleProductData?
+  let quantity: Int?
 
   enum CodingKeys: String, CodingKey {
     case priceID = "price_id"
     case product
+    case quantity
   }
 }
 

@@ -10,8 +10,8 @@ import SwiftUI
 struct PendingPurchasesView: View {
   @Environment(\.dismiss) private var dismiss
 
-  let existingLicenseForTransactionID: (String) -> LicenseRecord?
-  let onFulfillPurchase: (LicenseRecord) -> Void
+  let existingLicensesForTransactionID: (String) -> [LicenseRecord]
+  let onFulfillPurchase: ([LicenseRecord], [LicenseRecord]) -> Void
 
   @State private var networkSettings = NetworkSettings()
   @State private var purchases: [PendingPaddlePurchase] = []
@@ -347,12 +347,10 @@ struct PendingPurchasesView: View {
       let result = try await FulfillmentCoordinator.shared.fulfillPendingPurchase(
         purchase,
         settings: networkSettings,
-        existingLicenseForTransactionID: existingLicenseForTransactionID
+        existingLicensesForTransactionID: existingLicensesForTransactionID
       )
 
-      if result.didCreateLicense {
-        onFulfillPurchase(result.license)
-      }
+      onFulfillPurchase(result.createdLicenses, result.updatedExistingLicenses)
 
       removePurchases([purchase])
       selectedPurchaseIDs = nextSelectionIDs
@@ -384,8 +382,8 @@ struct PendingPurchasesView: View {
     errorMessage = nil
     statusMessage = nil
 
-    var createdCount = 0
-    var existingCount = 0
+    var createdLicenseCount = 0
+    var existingLicenseCount = 0
     var completedPurchases: [PendingPaddlePurchase] = []
 
     for purchase in purchasesToFulfill {
@@ -396,15 +394,12 @@ struct PendingPurchasesView: View {
         let result = try await FulfillmentCoordinator.shared.fulfillPendingPurchase(
           purchase,
           settings: networkSettings,
-          existingLicenseForTransactionID: existingLicenseForTransactionID
+          existingLicensesForTransactionID: existingLicensesForTransactionID
         )
 
-        if result.didCreateLicense {
-          createdCount += 1
-          onFulfillPurchase(result.license)
-        } else {
-          existingCount += 1
-        }
+        createdLicenseCount += result.createdLicenses.count
+        existingLicenseCount += result.updatedExistingLicenses.count
+        onFulfillPurchase(result.createdLicenses, result.updatedExistingLicenses)
 
         completedPurchases.append(purchase)
         removePurchases([purchase])
@@ -429,8 +424,9 @@ struct PendingPurchasesView: View {
 
     if errorMessage == nil {
       statusMessage = batchStatusMessage(
-        createdCount: createdCount,
-        existingCount: existingCount
+        createdLicenseCount: createdLicenseCount,
+        existingLicenseCount: existingLicenseCount,
+        purchaseCount: completedPurchases.count
       )
     }
 
@@ -490,16 +486,15 @@ struct PendingPurchasesView: View {
   }
 
   private func batchStatusMessage(
-    createdCount: Int,
-    existingCount: Int
+    createdLicenseCount: Int,
+    existingLicenseCount: Int,
+    purchaseCount: Int
   ) -> String {
-    let totalCount = createdCount + existingCount
-
-    if existingCount == 0 {
-      return "Fulfilled \(totalCount) purchase\(totalCount == 1 ? "" : "s")."
+    if existingLicenseCount == 0 {
+      return "Fulfilled \(purchaseCount) purchase\(purchaseCount == 1 ? "" : "s") and created \(createdLicenseCount) license\(createdLicenseCount == 1 ? "" : "s")."
     }
 
-    return "Fulfilled \(totalCount) purchases: \(createdCount) new, \(existingCount) already existed."
+    return "Fulfilled \(purchaseCount) purchase\(purchaseCount == 1 ? "" : "s"): \(createdLicenseCount) new license\(createdLicenseCount == 1 ? "" : "s"), \(existingLicenseCount) existing."
   }
 }
 
@@ -604,6 +599,10 @@ struct PendingPurchaseDetailView: View {
     transaction?.primaryItem
   }
 
+  private var licenseQuantity: Int {
+    purchase.licenseQuantity
+  }
+
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
@@ -632,14 +631,16 @@ struct PendingPurchaseDetailView: View {
 
         detailCard("Product") {
           row("Product", item?.product?.name ?? "—")
+          row("Quantity", "\(licenseQuantity)")
           row("Product ID", item?.product?.id ?? item?.price?.productID ?? "—")
           row("Price ID", item?.price?.id ?? "—")
         }
 
         detailCard("Fulfillment Preview") {
           row("License Type", "Commercial")
+          row("Licenses", "\(licenseQuantity)")
           row("Expiration", "None")
-          row("Result", "Create license and archive transaction")
+          row("Result", "Create \(licenseQuantity) license\(licenseQuantity == 1 ? "" : "s") and archive transaction")
         }
 
         HStack {
@@ -704,6 +705,10 @@ struct PendingLicensePreviewView: View {
     transaction?.primaryItem
   }
 
+  private var licenseQuantity: Int {
+    purchase.licenseQuantity
+  }
+
   var body: some View {
     NavigationStack {
       ScrollView {
@@ -711,7 +716,8 @@ struct PendingLicensePreviewView: View {
           previewCard("License") {
             row("Type", "Commercial")
             row("Product", item?.product?.name ?? "UpDock Pro")
-            row("Serial", "Generated during fulfillment")
+            row("Quantity", "\(licenseQuantity)")
+            row("Serials", "Generated during fulfillment")
             row("Expiration", "None")
           }
 
@@ -729,7 +735,7 @@ struct PendingLicensePreviewView: View {
           }
 
           previewCard("Fulfillment") {
-            row("Local Action", "Create commercial license")
+            row("Local Action", "Create \(licenseQuantity) commercial license\(licenseQuantity == 1 ? "" : "s")")
             row("Web Action", "Archive transaction")
             row("Email", "Prepared after license creation")
           }

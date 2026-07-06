@@ -8,24 +8,28 @@
 import Foundation
 
 struct PendingPurchaseFulfillmentResult {
-  var license: LicenseRecord
-  var didCreateLicense: Bool
+  var createdLicenses: [LicenseRecord]
+  var updatedExistingLicenses: [LicenseRecord]
   var serverResponse: FulfilledPurchaseResponse
 
-  var statusMessage: String {
-    if let message = serverResponse.message, !message.isEmpty {
-      return message
-    }
+  var didCreateLicense: Bool {
+    !createdLicenses.isEmpty
+  }
 
-    if serverResponse.alreadyFulfilled && !didCreateLicense {
-      return "Transaction was already archived. Showing the existing license."
+  var savedLicenses: [LicenseRecord] {
+    updatedExistingLicenses + createdLicenses
+  }
+
+  var statusMessage: String {
+    if serverResponse.alreadyFulfilled && createdLicenses.isEmpty {
+      return "Transaction was already archived. Showing existing license records."
     }
 
     if serverResponse.alreadyFulfilled {
-      return "Transaction was already archived. Created a local license record."
+      return "Transaction was already archived. Created \(createdLicenses.count) missing local license record\(createdLicenses.count == 1 ? "" : "s")."
     }
 
-    return "Purchase fulfilled and archived."
+    return "Purchase fulfilled and archived. Created \(createdLicenses.count) license\(createdLicenses.count == 1 ? "" : "s")."
   }
 }
 
@@ -37,29 +41,29 @@ final class FulfillmentCoordinator {
   func fulfillPendingPurchase(
     _ purchase: PendingPaddlePurchase,
     settings: NetworkSettings,
-    existingLicenseForTransactionID: (String) -> LicenseRecord?
+    existingLicensesForTransactionID: (String) -> [LicenseRecord]
   ) async throws -> PendingPurchaseFulfillmentResult {
     let serverResponse = try await PendingPurchasesService.shared.markFulfilled(
       settings: settings,
       transactionID: purchase.transactionID
     )
 
-    if let existingLicense = existingLicenseForTransactionID(purchase.transactionID) {
+    let existingLicenses = existingLicensesForTransactionID(purchase.transactionID)
+    let updatedExistingLicenses = existingLicenses.map { existingLicense in
       var updatedLicense = existingLicense
       updatedLicense.fulfillmentArchiveStatus = .archived
       updatedLicense.fulfillmentArchiveCheckedAt = Date()
       updatedLicense.fulfilledAt = updatedLicense.fulfilledAt ?? Date()
-
-      return PendingPurchaseFulfillmentResult(
-        license: updatedLicense,
-        didCreateLicense: false,
-        serverResponse: serverResponse
-      )
+      return updatedLicense
+    }
+    let missingLicenseCount = max(purchase.licenseQuantity - existingLicenses.count, 0)
+    let createdLicenses = (0..<missingLicenseCount).map { index in
+      makeCommercialLicenseRecord(from: purchase, seatNumber: index + existingLicenses.count + 1)
     }
 
     return PendingPurchaseFulfillmentResult(
-      license: makeCommercialLicenseRecord(from: purchase),
-      didCreateLicense: true,
+      createdLicenses: createdLicenses,
+      updatedExistingLicenses: updatedExistingLicenses,
       serverResponse: serverResponse
     )
   }
@@ -93,14 +97,17 @@ final class FulfillmentCoordinator {
   }
 
   func makeCommercialLicenseRecord(
-    from purchase: PendingPaddlePurchase
+    from purchase: PendingPaddlePurchase,
+    seatNumber: Int = 1
   ) -> LicenseRecord {
     let transaction = purchase.payload.data
     let customer = transaction?.customer
     let item = transaction?.primaryItem
+    let quantity = purchase.licenseQuantity
 
     let name = transaction?.customerName ?? ""
     let email = transaction?.customerEmail ?? ""
+    let seatNote = quantity > 1 ? " Seat \(seatNumber) of \(quantity)." : ""
 
     return LicenseRecord(
       serial: LicenseGenerator.makeSerial(type: .commercial),
@@ -108,7 +115,7 @@ final class FulfillmentCoordinator {
       name: name,
       email: email,
       expiresAt: nil,
-      notes: "Created from pending Paddle purchase.",
+      notes: "Created from pending Paddle purchase.\(seatNote)",
       paddleCustomerID: transaction?.customerID ?? customer?.id ?? "",
       paddleTransactionID: purchase.transactionID,
       paddleEmail: email,

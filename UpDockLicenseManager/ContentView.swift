@@ -197,18 +197,37 @@ struct ContentView: View {
     }
     .sheet(isPresented: $showingPendingPurchases) {
       PendingPurchasesView(
-        existingLicenseForTransactionID: { transactionID in
-          store.licenseForPaddleTransactionID(transactionID)
+        existingLicensesForTransactionID: { transactionID in
+          store.licensesForPaddleTransactionID(transactionID)
         },
-        onFulfillPurchase: { license in
-          store.add(license)
-          recordAudit(
-            .paddleFulfilled,
-            license: license,
-            message: "Created commercial license from pending Paddle purchase."
-          )
+        onFulfillPurchase: { createdLicenses, updatedExistingLicenses in
+          for license in updatedExistingLicenses {
+            updateLicense(license, auditChanges: false)
+          }
+
+          for license in createdLicenses {
+            store.add(license)
+            recordAudit(
+              .paddleFulfilled,
+              license: license,
+              message: "Created commercial license from pending Paddle purchase."
+            )
+          }
+
+          guard let selectedFulfilledLicense = createdLicenses.first ?? updatedExistingLicenses.first else {
+            return
+          }
+
+          if createdLicenses.isEmpty {
+            recordAudit(
+              .fulfillmentChecked,
+              license: selectedFulfilledLicense,
+              message: "Confirmed Paddle purchase fulfillment archive."
+            )
+          }
+
           selectedFilter = .all
-          selectedLicense = license
+          selectedLicense = selectedFulfilledLicense
         }
       )
     }
