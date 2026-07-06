@@ -1,5 +1,12 @@
 # UpDock License Manager
 
+## v1.0.16 — Site License Seat Tracking
+- Bumped app version to 1.0.16 build 21.
+- Added seat allowance and assigned-seat tracking to license records.
+- Site-license fulfillment now records purchased quantity as the seat allowance.
+- Added editable Seat Usage details and recovery checks for seat overages.
+- CSV license exports now include seat allowance and assigned-seat counts.
+
 ## v1.0.15 — Pricing Tier Paddle IDs
 - Bumped app version to 1.0.15 build 20.
 - Added editable Price ID and Product ID columns to the Site License Pricing table.

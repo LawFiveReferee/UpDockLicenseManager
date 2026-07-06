@@ -419,6 +419,29 @@ struct ContentView: View {
         )
       }
 
+      if isSiteLicenseLike(license) && license.seatAllowance == nil {
+        issues.append(
+          RecoveryIssue(
+            severity: .warning,
+            title: "Site License Missing Seat Allowance",
+            detail: "Set the purchased seat allowance in Seat Usage.",
+            license: license
+          )
+        )
+      }
+
+      if let seatAllowance = license.seatAllowance,
+         license.seatsAssigned > seatAllowance {
+        issues.append(
+          RecoveryIssue(
+            severity: .failure,
+            title: "Seat Assignment Over Limit",
+            detail: "Assigned seats exceed the site-license allowance.",
+            license: license
+          )
+        )
+      }
+
       if auditLog.events(for: license).isEmpty {
         issues.append(
           RecoveryIssue(
@@ -438,6 +461,17 @@ struct ContentView: View {
 
       return $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
     }
+  }
+
+  private func isSiteLicenseLike(_ license: LicenseRecord) -> Bool {
+    let searchable = [
+      license.product,
+      license.notes
+    ]
+      .joined(separator: " ")
+      .lowercased()
+
+    return searchable.contains("site license") || searchable.contains("site-license")
   }
 
   private func sorted(_ licenses: [LicenseRecord]) -> [LicenseRecord] {

@@ -54,6 +54,8 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
   var expiresAt: Date?
   var notes: String
   var isRevoked: Bool
+  var seatAllowance: Int?
+  var seatsAssigned: Int
 
   // Paddle metadata
   var paddleCustomerID: String
@@ -80,6 +82,8 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     expiresAt: Date? = nil,
     notes: String = "",
     isRevoked: Bool = false,
+    seatAllowance: Int? = nil,
+    seatsAssigned: Int = 0,
     paddleCustomerID: String = "",
     paddleTransactionID: String = "",
     paddleEmail: String = "",
@@ -103,6 +107,8 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     self.expiresAt = expiresAt
     self.notes = notes
     self.isRevoked = isRevoked
+    self.seatAllowance = seatAllowance
+    self.seatsAssigned = seatsAssigned
     self.paddleCustomerID = paddleCustomerID
     self.paddleTransactionID = paddleTransactionID
     self.paddleEmail = paddleEmail
@@ -154,6 +160,8 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     case expiresAt
     case notes
     case isRevoked
+    case seatAllowance
+    case seatsAssigned
     case paddleCustomerID
     case paddleTransactionID
     case paddleEmail
@@ -181,6 +189,8 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     expiresAt = try container.decodeIfPresent(Date.self, forKey: .expiresAt)
     notes = try container.decode(String.self, forKey: .notes)
     isRevoked = try container.decode(Bool.self, forKey: .isRevoked)
+    seatAllowance = try container.decodeIfPresent(Int.self, forKey: .seatAllowance)
+    seatsAssigned = try container.decodeIfPresent(Int.self, forKey: .seatsAssigned) ?? 0
 
     paddleCustomerID = try container.decodeIfPresent(String.self, forKey: .paddleCustomerID) ?? ""
     paddleTransactionID = try container.decodeIfPresent(String.self, forKey: .paddleTransactionID) ?? ""

@@ -141,6 +141,8 @@ final class FulfillmentCoordinator {
       email: email,
       expiresAt: nil,
       notes: note,
+      seatAllowance: seatAllowance(for: fulfillmentPolicy),
+      seatsAssigned: 0,
       paddleCustomerID: transaction?.customerID ?? customer?.id ?? "",
       paddleTransactionID: purchase.transactionID,
       paddleEmail: email,
@@ -166,6 +168,15 @@ final class FulfillmentCoordinator {
       return "Created from pending Paddle purchase.\(seatNote)"
     case .siteLicense:
       return "Created from pending Paddle site license purchase. Site license seat allowance: \(fulfillmentPolicy.purchasedQuantity)."
+    }
+  }
+
+  private func seatAllowance(for fulfillmentPolicy: PaddleFulfillmentPolicy) -> Int? {
+    switch fulfillmentPolicy.mode {
+    case .individualSeats:
+      return nil
+    case .siteLicense:
+      return fulfillmentPolicy.purchasedQuantity
     }
   }
 }

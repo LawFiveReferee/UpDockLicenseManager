@@ -93,6 +93,8 @@ final class LicenseStore {
       "Email",
       "Issued At",
       "Expires At",
+      "Seat Allowance",
+      "Seats Assigned",
       "Notes"
     ].joined(separator: ","))
 
@@ -105,6 +107,8 @@ final class LicenseStore {
         csvEscape(license.email),
         csvEscape(license.issuedAt.formatted(.iso8601)),
         csvEscape(license.expiresAt?.formatted(.iso8601) ?? ""),
+        csvEscape(license.seatAllowance.map(String.init) ?? ""),
+        csvEscape(String(license.seatsAssigned)),
         csvEscape(license.notes)
       ].joined(separator: ","))
     }

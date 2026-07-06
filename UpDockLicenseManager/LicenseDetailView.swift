@@ -54,6 +54,72 @@ struct LicenseDetailView: View {
     !editableLicense.paddleTransactionID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
   }
 
+  private var isSiteLicenseLike: Bool {
+    let searchable = [
+      editableLicense.product,
+      editableLicense.notes
+    ]
+      .joined(separator: " ")
+      .lowercased()
+
+    return searchable.contains("site license") || searchable.contains("site-license")
+  }
+
+  private var hasSeatTracking: Bool {
+    editableLicense.seatAllowance != nil || isSiteLicenseLike
+  }
+
+  private var remainingSeatText: String {
+    guard let seatAllowance = editableLicense.seatAllowance else {
+      return "—"
+    }
+
+    return "\(max(seatAllowance - editableLicense.seatsAssigned, 0))"
+  }
+
+  private var seatUsageWarningText: String? {
+    guard let seatAllowance = editableLicense.seatAllowance,
+          editableLicense.seatsAssigned > seatAllowance else {
+      return nil
+    }
+
+    return "Assigned seats exceed allowance."
+  }
+
+  private var seatAllowanceText: Binding<String> {
+    Binding(
+      get: {
+        editableLicense.seatAllowance.map(String.init) ?? ""
+      },
+      set: { newValue in
+        let trimmedValue = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedValue.isEmpty {
+          editableLicense.seatAllowance = nil
+        } else if let value = Int(trimmedValue) {
+          editableLicense.seatAllowance = max(value, 0)
+        }
+      }
+    )
+  }
+
+  private var seatsAssignedText: Binding<String> {
+    Binding(
+      get: {
+        String(editableLicense.seatsAssigned)
+      },
+      set: { newValue in
+        let trimmedValue = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedValue.isEmpty {
+          editableLicense.seatsAssigned = 0
+        } else if let value = Int(trimmedValue) {
+          editableLicense.seatsAssigned = max(value, 0)
+        }
+      }
+    )
+  }
+
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 22) {
@@ -149,6 +215,24 @@ struct LicenseDetailView: View {
                 }
               }
               .disabled(isCheckingFulfillmentArchive)
+            }
+          }
+        }
+
+        if hasSeatTracking {
+          card {
+            VStack(alignment: .leading, spacing: 14) {
+              Text("Seat Usage")
+                .font(.headline)
+
+              editableDetailRow("Allowance", text: seatAllowanceText, placeholder: "Not set")
+              editableDetailRow("Assigned", text: seatsAssignedText, placeholder: "0")
+              detailRow("Remaining", remainingSeatText)
+
+              if let seatUsageWarningText {
+                Label(seatUsageWarningText, systemImage: "exclamationmark.triangle")
+                  .foregroundStyle(.red)
+              }
             }
           }
         }
@@ -601,6 +685,22 @@ struct LicenseDetailView: View {
 
       Text(value.isEmpty ? "—" : value)
         .textSelection(.enabled)
+    }
+  }
+
+  private func editableDetailRow(
+    _ label: String,
+    text: Binding<String>,
+    placeholder: String
+  ) -> some View {
+    HStack(alignment: .firstTextBaseline) {
+      Text(label)
+        .foregroundStyle(.secondary)
+        .frame(width: 120, alignment: .leading)
+
+      TextField(placeholder, text: text)
+        .textFieldStyle(.roundedBorder)
+        .frame(width: 120)
     }
   }
 
