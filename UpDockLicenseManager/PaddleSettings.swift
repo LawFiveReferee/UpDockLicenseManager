@@ -273,6 +273,26 @@ final class SiteLicensePricingStore {
     tiers = SiteLicensePricingTier.defaults
   }
 
+  func tier(for seatCount: Int) -> SiteLicensePricingTier? {
+    let normalizedSeatCount = max(seatCount, 1)
+
+    return tiers
+      .sorted { first, second in
+        first.minimumSeats < second.minimumSeats
+      }
+      .first { tier in
+        guard normalizedSeatCount >= tier.minimumSeats else {
+          return false
+        }
+
+        if let maximumSeats = tier.maximumSeats {
+          return normalizedSeatCount <= maximumSeats
+        }
+
+        return true
+      }
+  }
+
   private func save() {
     guard let data = try? JSONEncoder().encode(tiers) else {
       return

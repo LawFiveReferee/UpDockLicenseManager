@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.14 — Site License Pricing Preview
+- Bumped app version to 1.0.14 build 19.
+- Pending purchase review now shows the matched site-license pricing tier for site-license purchases.
+- License preview now shows discount, per-seat price, and expected total before fulfillment.
+
 ## v1.0.13 — Site License Pricing Table
 - Bumped app version to 1.0.13 build 18.
 - Added an editable Site License Pricing table in Paddle Settings.

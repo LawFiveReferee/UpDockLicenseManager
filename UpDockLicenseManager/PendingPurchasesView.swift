@@ -5,6 +5,7 @@
 //  Created by Ed Stockly on 7/3/26.
 //
 
+import Foundation
 import SwiftUI
 
 struct PendingPurchasesView: View {
@@ -607,6 +608,14 @@ struct PendingPurchaseDetailView: View {
     PaddleFulfillmentPolicyStore().policy(for: purchase)
   }
 
+  private var siteLicensePricingTier: SiteLicensePricingTier? {
+    guard fulfillmentPolicy.mode == .siteLicense else {
+      return nil
+    }
+
+    return SiteLicensePricingStore().tier(for: fulfillmentPolicy.purchasedQuantity)
+  }
+
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
@@ -649,6 +658,16 @@ struct PendingPurchaseDetailView: View {
           }
           row("Expiration", "None")
           row("Result", fulfillmentResultText)
+        }
+
+        if let siteLicensePricingTier {
+          detailCard("Site License Pricing") {
+            row("Range", siteLicensePricingTier.rangeLabel)
+            row("Discount", percentText(siteLicensePricingTier.discountPercent))
+            row("Discount Amount", moneyText(siteLicensePricingTier.discountAmount))
+            row("Per Seat", moneyText(siteLicensePricingTier.unitPrice))
+            row("Expected Total", moneyText(siteLicensePricingTier.unitPrice * Double(fulfillmentPolicy.purchasedQuantity)))
+          }
         }
 
         HStack {
@@ -707,6 +726,18 @@ struct PendingPurchaseDetailView: View {
       return "Create one site license and archive transaction"
     }
   }
+
+  private func moneyText(_ value: Double) -> String {
+    String(format: "$%.2f", value)
+  }
+
+  private func percentText(_ value: Double) -> String {
+    if value.rounded() == value {
+      return "\(Int(value))%"
+    }
+
+    return "\(value)%"
+  }
 }
 
 struct PendingLicensePreviewView: View {
@@ -728,6 +759,14 @@ struct PendingLicensePreviewView: View {
 
   private var fulfillmentPolicy: PaddleFulfillmentPolicy {
     PaddleFulfillmentPolicyStore().policy(for: purchase)
+  }
+
+  private var siteLicensePricingTier: SiteLicensePricingTier? {
+    guard fulfillmentPolicy.mode == .siteLicense else {
+      return nil
+    }
+
+    return SiteLicensePricingStore().tier(for: fulfillmentPolicy.purchasedQuantity)
   }
 
   var body: some View {
@@ -757,6 +796,16 @@ struct PendingLicensePreviewView: View {
             row("Status", transaction?.status ?? "—")
             row("Product ID", item?.product?.id ?? item?.price?.productID ?? "—")
             row("Price ID", item?.price?.id ?? "—")
+          }
+
+          if let siteLicensePricingTier {
+            previewCard("Site License Pricing") {
+              row("Range", siteLicensePricingTier.rangeLabel)
+              row("Discount", percentText(siteLicensePricingTier.discountPercent))
+              row("Discount Amount", moneyText(siteLicensePricingTier.discountAmount))
+              row("Per Seat", moneyText(siteLicensePricingTier.unitPrice))
+              row("Expected Total", moneyText(siteLicensePricingTier.unitPrice * Double(fulfillmentPolicy.purchasedQuantity)))
+            }
           }
 
           previewCard("Fulfillment") {
@@ -813,6 +862,18 @@ struct PendingLicensePreviewView: View {
     case .siteLicense:
       return "Create one commercial site license"
     }
+  }
+
+  private func moneyText(_ value: Double) -> String {
+    String(format: "$%.2f", value)
+  }
+
+  private func percentText(_ value: Double) -> String {
+    if value.rounded() == value {
+      return "\(Int(value))%"
+    }
+
+    return "\(value)%"
   }
 }
 
