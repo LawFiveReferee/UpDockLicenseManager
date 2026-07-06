@@ -16,6 +16,9 @@ struct ServerSettingsView: View {
   @State private var healthError: String?
   @State private var lastCheckedAt: Date?
   @State private var isCheckingConnection = false
+  @State private var activationTestSerial = "TEST-SITE-001"
+  @State private var activationTestSteps: [ActivationTestStep] = []
+  @State private var isRunningActivationTest = false
 
   var body: some View {
     Form {
@@ -136,11 +139,116 @@ struct ServerSettingsView: View {
           LabeledContent("Fulfilled Folder") {
             writableLabel(healthResponse.fulfilledWritable)
           }
+
+          if let licensesWritable = healthResponse.licensesWritable {
+            LabeledContent("Licenses Folder") {
+              writableLabel(licensesWritable)
+            }
+          }
+
+          if let activationsWritable = healthResponse.activationsWritable {
+            LabeledContent("Activations Folder") {
+              writableLabel(activationsWritable)
+            }
+          }
         }
 
         if let healthError {
           Label(healthError, systemImage: "exclamationmark.triangle")
             .foregroundStyle(.red)
+        }
+      }
+
+      Section("Activation Test") {
+        TextField("Serial", text: $activationTestSerial)
+          .textFieldStyle(.roundedBorder)
+
+        LabeledContent("Seat Allowance") {
+          Text("2")
+        }
+
+        activationURLRow(
+          "Register",
+          settings.activationRegisterURL(
+            serial: activationTestSerial,
+            seatAllowance: 2
+          )
+        )
+
+        activationURLRow(
+          "Activate Mac 1",
+          settings.activationURL(
+            serial: activationTestSerial,
+            machineID: "mac-1",
+            machineName: "Mac 1"
+          )
+        )
+
+        activationURLRow(
+          "Activate Mac 2",
+          settings.activationURL(
+            serial: activationTestSerial,
+            machineID: "mac-2",
+            machineName: "Mac 2"
+          )
+        )
+
+        activationURLRow(
+          "Activate Mac 3",
+          settings.activationURL(
+            serial: activationTestSerial,
+            machineID: "mac-3",
+            machineName: "Mac 3"
+          )
+        )
+
+        activationURLRow(
+          "Deactivate Mac 1",
+          settings.deactivationURL(
+            serial: activationTestSerial,
+            machineID: "mac-1"
+          )
+        )
+
+        activationURLRow(
+          "Status",
+          settings.activationStatusURL(serial: activationTestSerial)
+        )
+
+        HStack {
+          Button {
+            Task {
+              await runActivationLimitTest()
+            }
+          } label: {
+            if isRunningActivationTest {
+              ProgressView()
+            } else {
+              Label("Run 2-Seat Test", systemImage: "checklist")
+            }
+          }
+          .disabled(isRunningActivationTest)
+
+          Text("The third activation should be rejected.")
+            .foregroundStyle(.secondary)
+        }
+
+        if !activationTestSteps.isEmpty {
+          ForEach(activationTestSteps) { step in
+            HStack {
+              Label(
+                step.title,
+                systemImage: step.passed ? "checkmark.circle" : "xmark.circle"
+              )
+              .foregroundStyle(step.passed ? AnyShapeStyle(.green) : AnyShapeStyle(.red))
+
+              Spacer()
+
+              Text("HTTP \(step.statusCode.map(String.init) ?? "—") / expected \(step.expectedStatusCode)")
+                .font(.caption.monospaced())
+                .foregroundStyle(.secondary)
+            }
+          }
         }
       }
     }
@@ -153,7 +261,7 @@ struct ServerSettingsView: View {
       return "Not Checked"
     }
 
-    guard healthResponse.transactionsWritable && healthResponse.fulfilledWritable else {
+    guard storageIsReady(healthResponse) else {
       return "Connected, but storage needs attention"
     }
 
@@ -167,7 +275,7 @@ struct ServerSettingsView: View {
       return "questionmark.circle"
     }
 
-    return healthResponse.transactionsWritable && healthResponse.fulfilledWritable
+    return storageIsReady(healthResponse)
       ? "checkmark.circle"
       : "exclamationmark.triangle"
   }
@@ -177,7 +285,7 @@ struct ServerSettingsView: View {
       return AnyShapeStyle(.secondary)
     }
 
-    return healthResponse.transactionsWritable && healthResponse.fulfilledWritable
+    return storageIsReady(healthResponse)
       ? AnyShapeStyle(.green)
       : AnyShapeStyle(.orange)
   }
@@ -198,6 +306,32 @@ struct ServerSettingsView: View {
     }
 
     isCheckingConnection = false
+  }
+
+  private func runActivationLimitTest() async {
+    isRunningActivationTest = true
+    activationTestSteps = await ServerService.shared.runActivationLimitTest(
+      settings: settings,
+      serial: activationTestSerial,
+      seatAllowance: 2
+    )
+    isRunningActivationTest = false
+  }
+
+  private func storageIsReady(_ healthResponse: HealthResponse) -> Bool {
+    healthResponse.transactionsWritable
+      && healthResponse.fulfilledWritable
+      && (healthResponse.licensesWritable ?? true)
+      && (healthResponse.activationsWritable ?? true)
+  }
+
+  private func activationURLRow(_ label: String, _ url: String) -> some View {
+    LabeledContent(label) {
+      Text(url)
+        .font(.caption.monospaced())
+        .foregroundStyle(.secondary)
+        .textSelection(.enabled)
+    }
   }
 
   private func writableLabel(_ isWritable: Bool) -> some View {

@@ -83,6 +83,103 @@ final class ServerService {
 
     return try JSONDecoder().decode(WebhookLogResponse.self, from: data)
   }
+
+  func runActivationLimitTest(
+    settings: NetworkSettings,
+    serial: String,
+    seatAllowance: Int
+  ) async -> [ActivationTestStep] {
+    let steps = [
+      ActivationTestRequest(
+        title: "Register License",
+        url: settings.activationRegisterURL(serial: serial, seatAllowance: seatAllowance),
+        expectedStatusCode: 200
+      ),
+      ActivationTestRequest(
+        title: "Activate Mac 1",
+        url: settings.activationURL(serial: serial, machineID: "mac-1", machineName: "Mac 1"),
+        expectedStatusCode: 200
+      ),
+      ActivationTestRequest(
+        title: "Activate Mac 2",
+        url: settings.activationURL(serial: serial, machineID: "mac-2", machineName: "Mac 2"),
+        expectedStatusCode: 200
+      ),
+      ActivationTestRequest(
+        title: "Reject Mac 3",
+        url: settings.activationURL(serial: serial, machineID: "mac-3", machineName: "Mac 3"),
+        expectedStatusCode: 409
+      ),
+      ActivationTestRequest(
+        title: "Status",
+        url: settings.activationStatusURL(serial: serial),
+        expectedStatusCode: 200
+      )
+    ]
+
+    var results: [ActivationTestStep] = []
+
+    for step in steps {
+      results.append(await runActivationTestStep(step))
+    }
+
+    return results
+  }
+
+  private func runActivationTestStep(_ request: ActivationTestRequest) async -> ActivationTestStep {
+    guard let url = URL(string: request.url) else {
+      return ActivationTestStep(
+        title: request.title,
+        statusCode: nil,
+        expectedStatusCode: request.expectedStatusCode,
+        responseSummary: "Invalid URL"
+      )
+    }
+
+    do {
+      let (_, response) = try await URLSession.shared.data(from: url)
+      guard let httpResponse = response as? HTTPURLResponse else {
+        return ActivationTestStep(
+          title: request.title,
+          statusCode: nil,
+          expectedStatusCode: request.expectedStatusCode,
+          responseSummary: "Invalid server response"
+        )
+      }
+
+      return ActivationTestStep(
+        title: request.title,
+        statusCode: httpResponse.statusCode,
+        expectedStatusCode: request.expectedStatusCode,
+        responseSummary: httpResponse.statusCode == request.expectedStatusCode ? "Expected" : "Unexpected"
+      )
+    } catch {
+      return ActivationTestStep(
+        title: request.title,
+        statusCode: nil,
+        expectedStatusCode: request.expectedStatusCode,
+        responseSummary: error.localizedDescription
+      )
+    }
+  }
+}
+
+private struct ActivationTestRequest {
+  let title: String
+  let url: String
+  let expectedStatusCode: Int
+}
+
+struct ActivationTestStep: Identifiable, Hashable {
+  let id = UUID()
+  let title: String
+  let statusCode: Int?
+  let expectedStatusCode: Int
+  let responseSummary: String
+
+  var passed: Bool {
+    statusCode == expectedStatusCode
+  }
 }
 
 struct WebhookLogResponse: Decodable {

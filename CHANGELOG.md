@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.17 — Activation Test Tools
+- Bumped app version to 1.0.17 build 22.
+- Added generated activation registry URLs to Server Settings.
+- Added a one-button two-seat activation limit test.
+- Server health now displays license and activation storage writability when available.
+
 ## v1.0.16 — Site License Seat Tracking
 - Bumped app version to 1.0.16 build 21.
 - Added seat allowance and assigned-seat tracking to license records.
