@@ -11,6 +11,7 @@ struct PendingPurchaseFulfillmentResult {
   var createdLicenses: [LicenseRecord]
   var updatedExistingLicenses: [LicenseRecord]
   var serverResponse: FulfilledPurchaseResponse
+  var fulfillmentPolicy: PaddleFulfillmentPolicy
 
   var didCreateLicense: Bool {
     !createdLicenses.isEmpty
@@ -27,6 +28,10 @@ struct PendingPurchaseFulfillmentResult {
 
     if serverResponse.alreadyFulfilled {
       return "Transaction was already archived. Created \(createdLicenses.count) missing local license record\(createdLicenses.count == 1 ? "" : "s")."
+    }
+
+    if fulfillmentPolicy.mode == .siteLicense {
+      return "Purchase fulfilled and archived. Created site license for \(fulfillmentPolicy.purchasedQuantity) seat\(fulfillmentPolicy.purchasedQuantity == 1 ? "" : "s")."
     }
 
     return "Purchase fulfilled and archived. Created \(createdLicenses.count) license\(createdLicenses.count == 1 ? "" : "s")."
@@ -48,6 +53,7 @@ final class FulfillmentCoordinator {
       transactionID: purchase.transactionID
     )
 
+    let fulfillmentPolicy = PaddleFulfillmentPolicyStore().policy(for: purchase)
     let existingLicenses = existingLicensesForTransactionID(purchase.transactionID)
     let updatedExistingLicenses = existingLicenses.map { existingLicense in
       var updatedLicense = existingLicense
@@ -56,15 +62,23 @@ final class FulfillmentCoordinator {
       updatedLicense.fulfilledAt = updatedLicense.fulfilledAt ?? Date()
       return updatedLicense
     }
-    let missingLicenseCount = max(purchase.licenseQuantity - existingLicenses.count, 0)
+    let missingLicenseCount = max(
+      fulfillmentPolicy.generatedLicenseCount - existingLicenses.count,
+      0
+    )
     let createdLicenses = (0..<missingLicenseCount).map { index in
-      makeCommercialLicenseRecord(from: purchase, seatNumber: index + existingLicenses.count + 1)
+      makeCommercialLicenseRecord(
+        from: purchase,
+        fulfillmentPolicy: fulfillmentPolicy,
+        seatNumber: index + existingLicenses.count + 1
+      )
     }
 
     return PendingPurchaseFulfillmentResult(
       createdLicenses: createdLicenses,
       updatedExistingLicenses: updatedExistingLicenses,
-      serverResponse: serverResponse
+      serverResponse: serverResponse,
+      fulfillmentPolicy: fulfillmentPolicy
     )
   }
 
@@ -98,6 +112,10 @@ final class FulfillmentCoordinator {
 
   func makeCommercialLicenseRecord(
     from purchase: PendingPaddlePurchase,
+    fulfillmentPolicy: PaddleFulfillmentPolicy = PaddleFulfillmentPolicy(
+      mode: .individualSeats,
+      purchasedQuantity: 1
+    ),
     seatNumber: Int = 1
   ) -> LicenseRecord {
     let transaction = purchase.payload.data
@@ -107,15 +125,22 @@ final class FulfillmentCoordinator {
 
     let name = transaction?.customerName ?? ""
     let email = transaction?.customerEmail ?? ""
-    let seatNote = quantity > 1 ? " Seat \(seatNumber) of \(quantity)." : ""
+    let note = licenseNote(
+      fulfillmentPolicy: fulfillmentPolicy,
+      seatNumber: seatNumber
+    )
+    let productName = item?.product?.name ?? (
+      fulfillmentPolicy.mode == .siteLicense ? "UpDock Pro Site License" : "UpDock Pro"
+    )
 
     return LicenseRecord(
       serial: LicenseGenerator.makeSerial(type: .commercial),
       type: .commercial,
+      product: productName,
       name: name,
       email: email,
       expiresAt: nil,
-      notes: "Created from pending Paddle purchase.\(seatNote)",
+      notes: note,
       paddleCustomerID: transaction?.customerID ?? customer?.id ?? "",
       paddleTransactionID: purchase.transactionID,
       paddleEmail: email,
@@ -126,5 +151,21 @@ final class FulfillmentCoordinator {
       fulfillmentArchiveStatus: .archived,
       fulfillmentArchiveCheckedAt: Date()
     )
+  }
+
+  private func licenseNote(
+    fulfillmentPolicy: PaddleFulfillmentPolicy,
+    seatNumber: Int
+  ) -> String {
+    switch fulfillmentPolicy.mode {
+    case .individualSeats:
+      let seatNote = fulfillmentPolicy.purchasedQuantity > 1
+        ? " Seat \(seatNumber) of \(fulfillmentPolicy.purchasedQuantity)."
+        : ""
+
+      return "Created from pending Paddle purchase.\(seatNote)"
+    case .siteLicense:
+      return "Created from pending Paddle site license purchase. Site license seat allowance: \(fulfillmentPolicy.purchasedQuantity)."
+    }
   }
 }

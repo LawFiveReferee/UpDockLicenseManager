@@ -603,6 +603,10 @@ struct PendingPurchaseDetailView: View {
     purchase.licenseQuantity
   }
 
+  private var fulfillmentPolicy: PaddleFulfillmentPolicy {
+    PaddleFulfillmentPolicyStore().policy(for: purchase)
+  }
+
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
@@ -637,10 +641,14 @@ struct PendingPurchaseDetailView: View {
         }
 
         detailCard("Fulfillment Preview") {
-          row("License Type", "Commercial")
-          row("Licenses", "\(licenseQuantity)")
+          row("Policy", fulfillmentPolicy.displayName)
+          row("License Type", fulfillmentPolicy.licenseTypeLabel)
+          row("Licenses", "\(fulfillmentPolicy.generatedLicenseCount)")
+          if fulfillmentPolicy.mode == .siteLicense {
+            row("Seat Allowance", "\(fulfillmentPolicy.purchasedQuantity)")
+          }
           row("Expiration", "None")
-          row("Result", "Create \(licenseQuantity) license\(licenseQuantity == 1 ? "" : "s") and archive transaction")
+          row("Result", fulfillmentResultText)
         }
 
         HStack {
@@ -690,6 +698,15 @@ struct PendingPurchaseDetailView: View {
         .textSelection(.enabled)
     }
   }
+
+  private var fulfillmentResultText: String {
+    switch fulfillmentPolicy.mode {
+    case .individualSeats:
+      return "Create \(fulfillmentPolicy.generatedLicenseCount) license\(fulfillmentPolicy.generatedLicenseCount == 1 ? "" : "s") and archive transaction"
+    case .siteLicense:
+      return "Create one site license and archive transaction"
+    }
+  }
 }
 
 struct PendingLicensePreviewView: View {
@@ -709,14 +726,22 @@ struct PendingLicensePreviewView: View {
     purchase.licenseQuantity
   }
 
+  private var fulfillmentPolicy: PaddleFulfillmentPolicy {
+    PaddleFulfillmentPolicyStore().policy(for: purchase)
+  }
+
   var body: some View {
     NavigationStack {
       ScrollView {
         VStack(alignment: .leading, spacing: 18) {
           previewCard("License") {
-            row("Type", "Commercial")
+            row("Policy", fulfillmentPolicy.displayName)
+            row("Type", fulfillmentPolicy.licenseTypeLabel)
             row("Product", item?.product?.name ?? "UpDock Pro")
             row("Quantity", "\(licenseQuantity)")
+            if fulfillmentPolicy.mode == .siteLicense {
+              row("Seat Allowance", "\(fulfillmentPolicy.purchasedQuantity)")
+            }
             row("Serials", "Generated during fulfillment")
             row("Expiration", "None")
           }
@@ -735,7 +760,7 @@ struct PendingLicensePreviewView: View {
           }
 
           previewCard("Fulfillment") {
-            row("Local Action", "Create \(licenseQuantity) commercial license\(licenseQuantity == 1 ? "" : "s")")
+            row("Local Action", localActionText)
             row("Web Action", "Archive transaction")
             row("Email", "Prepared after license creation")
           }
@@ -778,6 +803,15 @@ struct PendingLicensePreviewView: View {
 
       Text(value.isEmpty ? "—" : value)
         .textSelection(.enabled)
+    }
+  }
+
+  private var localActionText: String {
+    switch fulfillmentPolicy.mode {
+    case .individualSeats:
+      return "Create \(fulfillmentPolicy.generatedLicenseCount) commercial license\(fulfillmentPolicy.generatedLicenseCount == 1 ? "" : "s")"
+    case .siteLicense:
+      return "Create one commercial site license"
     }
   }
 }

@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.12 — Paddle Fulfillment Policies
+- Bumped app version to 1.0.12 build 17.
+- Added Paddle fulfillment policy settings for site-license product and price IDs.
+- Pending purchase review and preview now show whether a purchase will create individual seats or one site license.
+- Fulfillment can now create a single commercial site-license record with the purchased quantity as the seat allowance.
+
 ## v1.0.11 — Seat Position Badges
 - Bumped app version to 1.0.11 build 16.
 - Changed multi-seat license row badges from total seat count to "Seat x of y".
