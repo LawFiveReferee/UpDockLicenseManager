@@ -15,6 +15,7 @@ struct LicenseDetailView: View {
   @State private var fulfillmentArchiveError: String?
 
   let auditEvents: [AuditEvent]
+  let relatedPaddleLicenseCount: Int
   let onSave: (LicenseRecord) -> Void
   let onCopySerial: () -> Void
   let onRevoke: () -> Void
@@ -24,6 +25,7 @@ struct LicenseDetailView: View {
   init(
     license: LicenseRecord,
     auditEvents: [AuditEvent],
+    relatedPaddleLicenseCount: Int,
     onSave: @escaping (LicenseRecord) -> Void,
     onCopySerial: @escaping () -> Void,
     onRevoke: @escaping () -> Void,
@@ -33,6 +35,7 @@ struct LicenseDetailView: View {
     self._editableLicense = State(initialValue: license)
     self._originalLicense = State(initialValue: license)
     self.auditEvents = auditEvents
+    self.relatedPaddleLicenseCount = relatedPaddleLicenseCount
     self.onSave = onSave
     self.onCopySerial = onCopySerial
     self.onRevoke = onRevoke
@@ -115,6 +118,7 @@ struct LicenseDetailView: View {
                 .foregroundStyle(fulfillmentArchiveStyle)
 
               detailRow("Transaction ID", editableLicense.paddleTransactionID)
+              detailRow("Licenses for Transaction", "\(max(relatedPaddleLicenseCount, 1))")
 
               if let checkedAt = editableLicense.fulfillmentArchiveCheckedAt {
                 detailRow("Last Checked", checkedAt.formatted(date: .abbreviated, time: .shortened))

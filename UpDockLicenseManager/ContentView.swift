@@ -95,6 +95,7 @@ struct ContentView: View {
         LicenseDetailView(
           license: selectedLicense,
           auditEvents: auditLog.events(for: selectedLicense),
+          relatedPaddleLicenseCount: relatedPaddleLicenseCount(for: selectedLicense),
           onSave: { license in
             updateLicense(license)
           },
@@ -340,9 +341,6 @@ struct ContentView: View {
   private var recoveryIssues: [RecoveryIssue] {
     var issues: [RecoveryIssue] = []
     let duplicateSerials = duplicateValues(store.licenses.map(\.serial))
-    let duplicateTransactions = duplicateValues(
-      store.licenses.map(\.paddleTransactionID)
-    )
 
     for license in store.licenses {
       let trimmedSerial = license.serial.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -356,17 +354,6 @@ struct ContentView: View {
             severity: .failure,
             title: "Duplicate Serial",
             detail: "More than one local license has this serial number.",
-            license: license
-          )
-        )
-      }
-
-      if !trimmedTransactionID.isEmpty && duplicateTransactions.contains(trimmedTransactionID) {
-        issues.append(
-          RecoveryIssue(
-            severity: .failure,
-            title: "Duplicate Paddle Transaction",
-            detail: "More than one local license is linked to this Paddle transaction.",
             license: license
           )
         )
@@ -496,6 +483,16 @@ struct ContentView: View {
     }
 
     return duplicates
+  }
+
+  private func relatedPaddleLicenseCount(for license: LicenseRecord) -> Int {
+    let transactionID = license.paddleTransactionID.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !transactionID.isEmpty else {
+      return 1
+    }
+
+    return max(store.licensesForPaddleTransactionID(transactionID).count, 1)
   }
 
   private func selectLicense(id: UUID) {

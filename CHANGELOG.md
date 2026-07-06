@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.10 — Multi-Seat Visibility
+- Bumped app version to 1.0.10 build 15.
+- Added multi-seat badges to license rows when multiple licenses share a Paddle transaction.
+- Added license count visibility to the Web Fulfillment detail section.
+- Stopped flagging shared Paddle transaction IDs as recovery failures because they are valid for multi-seat purchases.
+
 ## v1.0.9 — Quantity Fulfillment
 - Bumped app version to 1.0.9 build 14.
 - Added Paddle quantity parsing for pending purchases.
