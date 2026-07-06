@@ -132,3 +132,152 @@ struct PaddleFulfillmentPolicy {
     }
   }
 }
+
+struct SiteLicensePricingTier: Identifiable, Codable, Hashable {
+  var id: UUID
+  var minimumSeats: Int
+  var maximumSeats: Int?
+  var discountPercent: Double
+  var discountAmount: Double
+  var unitPrice: Double
+
+  init(
+    id: UUID = UUID(),
+    minimumSeats: Int,
+    maximumSeats: Int?,
+    discountPercent: Double,
+    discountAmount: Double,
+    unitPrice: Double
+  ) {
+    self.id = id
+    self.minimumSeats = minimumSeats
+    self.maximumSeats = maximumSeats
+    self.discountPercent = discountPercent
+    self.discountAmount = discountAmount
+    self.unitPrice = unitPrice
+  }
+
+  var rangeLabel: String {
+    if let maximumSeats {
+      return "\(minimumSeats)-\(maximumSeats)"
+    }
+
+    return "\(minimumSeats)+"
+  }
+
+  static var defaults: [SiteLicensePricingTier] {
+    [
+      SiteLicensePricingTier(
+        minimumSeats: 1,
+        maximumSeats: 4,
+        discountPercent: 0,
+        discountAmount: 0,
+        unitPrice: 19.99
+      ),
+      SiteLicensePricingTier(
+        minimumSeats: 5,
+        maximumSeats: 9,
+        discountPercent: 5,
+        discountAmount: 1,
+        unitPrice: 18.99
+      ),
+      SiteLicensePricingTier(
+        minimumSeats: 10,
+        maximumSeats: 14,
+        discountPercent: 10,
+        discountAmount: 2,
+        unitPrice: 17.99
+      ),
+      SiteLicensePricingTier(
+        minimumSeats: 15,
+        maximumSeats: 19,
+        discountPercent: 15,
+        discountAmount: 3,
+        unitPrice: 16.99
+      ),
+      SiteLicensePricingTier(
+        minimumSeats: 20,
+        maximumSeats: 24,
+        discountPercent: 20,
+        discountAmount: 4,
+        unitPrice: 15.99
+      ),
+      SiteLicensePricingTier(
+        minimumSeats: 25,
+        maximumSeats: 29,
+        discountPercent: 25,
+        discountAmount: 5,
+        unitPrice: 14.99
+      ),
+      SiteLicensePricingTier(
+        minimumSeats: 30,
+        maximumSeats: 34,
+        discountPercent: 30,
+        discountAmount: 6,
+        unitPrice: 13.99
+      ),
+      SiteLicensePricingTier(
+        minimumSeats: 35,
+        maximumSeats: 39,
+        discountPercent: 35,
+        discountAmount: 7,
+        unitPrice: 12.99
+      ),
+      SiteLicensePricingTier(
+        minimumSeats: 40,
+        maximumSeats: 44,
+        discountPercent: 40,
+        discountAmount: 8,
+        unitPrice: 11.99
+      ),
+      SiteLicensePricingTier(
+        minimumSeats: 45,
+        maximumSeats: 49,
+        discountPercent: 45,
+        discountAmount: 9,
+        unitPrice: 10.99
+      ),
+      SiteLicensePricingTier(
+        minimumSeats: 50,
+        maximumSeats: nil,
+        discountPercent: 50,
+        discountAmount: 10,
+        unitPrice: 9.99
+      )
+    ]
+  }
+}
+
+@Observable
+final class SiteLicensePricingStore {
+  var tiers: [SiteLicensePricingTier] {
+    didSet { save() }
+  }
+
+  private let defaults = UserDefaults.standard
+  private let defaultsKey = "paddle.policy.siteLicensePricingTiers"
+
+  init() {
+    guard
+      let data = defaults.data(forKey: defaultsKey),
+      let tiers = try? JSONDecoder().decode([SiteLicensePricingTier].self, from: data)
+    else {
+      self.tiers = SiteLicensePricingTier.defaults
+      return
+    }
+
+    self.tiers = tiers
+  }
+
+  func resetToDefaults() {
+    tiers = SiteLicensePricingTier.defaults
+  }
+
+  private func save() {
+    guard let data = try? JSONEncoder().encode(tiers) else {
+      return
+    }
+
+    defaults.set(data, forKey: defaultsKey)
+  }
+}

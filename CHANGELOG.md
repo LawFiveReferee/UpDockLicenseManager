@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.13 — Site License Pricing Table
+- Bumped app version to 1.0.13 build 18.
+- Added an editable Site License Pricing table in Paddle Settings.
+- Added default tiers for 1-4 through 50+ seats with placeholder discounts and per-seat prices.
+- Added a Restore Defaults action for the site-license pricing schedule.
+
 ## v1.0.12 — Paddle Fulfillment Policies
 - Bumped app version to 1.0.12 build 17.
 - Added Paddle fulfillment policy settings for site-license product and price IDs.

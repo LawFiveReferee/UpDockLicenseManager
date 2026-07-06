@@ -3,6 +3,7 @@ import SwiftUI
 struct PaddleSettingsView: View {
   @State private var settings = PaddleSettings()
   @State private var fulfillmentPolicy = PaddleFulfillmentPolicyStore()
+  @State private var siteLicensePricing = SiteLicensePricingStore()
 
   @State private var apiKey = ""
   @State private var notificationSecret = ""
@@ -86,6 +87,84 @@ struct PaddleSettingsView: View {
           .foregroundStyle(.secondary)
       }
 
+      Section("Site License Pricing") {
+        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+          GridRow {
+            Text("Min")
+            Text("Max")
+            Text("Discount")
+            Text("Discount Amount")
+            Text("New Price")
+          }
+          .font(.caption)
+          .foregroundStyle(.secondary)
+
+          ForEach(siteLicensePricing.tiers.indices, id: \.self) { index in
+            GridRow {
+              TextField(
+                "Min",
+                value: $siteLicensePricing.tiers[index].minimumSeats,
+                format: .number
+              )
+              .frame(width: 56)
+
+              TextField(
+                "+",
+                text: maximumSeatsBinding(for: index)
+              )
+              .frame(width: 56)
+
+              HStack(spacing: 4) {
+                TextField(
+                  "Discount",
+                  value: $siteLicensePricing.tiers[index].discountPercent,
+                  format: .number.precision(.fractionLength(0...2))
+                )
+                .frame(width: 72)
+
+                Text("%")
+                  .foregroundStyle(.secondary)
+              }
+
+              HStack(spacing: 4) {
+                Text("$")
+                  .foregroundStyle(.secondary)
+
+                TextField(
+                  "Amount",
+                  value: $siteLicensePricing.tiers[index].discountAmount,
+                  format: .number.precision(.fractionLength(2))
+                )
+                .frame(width: 82)
+              }
+
+              HStack(spacing: 4) {
+                Text("$")
+                  .foregroundStyle(.secondary)
+
+                TextField(
+                  "Price",
+                  value: $siteLicensePricing.tiers[index].unitPrice,
+                  format: .number.precision(.fractionLength(2))
+                )
+                .frame(width: 82)
+              }
+            }
+            .textFieldStyle(.roundedBorder)
+          }
+        }
+        .monospacedDigit()
+
+        HStack {
+          Button("Restore Defaults") {
+            siteLicensePricing.resetToDefaults()
+          }
+
+          Text("Use a blank Max value for the open-ended final tier.")
+            .foregroundStyle(.secondary)
+        }
+      }
+
       Section("Notification Secret") {
         if showingNotificationSecret {
           TextField(
@@ -134,5 +213,30 @@ struct PaddleSettingsView: View {
       apiKey = KeychainSettingsStore.shared.paddleAPIKey
       notificationSecret = KeychainSettingsStore.shared.paddleNotificationSecret
     }
+  }
+
+  private func maximumSeatsBinding(for index: Int) -> Binding<String> {
+    Binding(
+      get: {
+        guard siteLicensePricing.tiers.indices.contains(index) else {
+          return ""
+        }
+
+        return siteLicensePricing.tiers[index].maximumSeats.map(String.init) ?? ""
+      },
+      set: { newValue in
+        guard siteLicensePricing.tiers.indices.contains(index) else {
+          return
+        }
+
+        let trimmedValue = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedValue.isEmpty {
+          siteLicensePricing.tiers[index].maximumSeats = nil
+        } else if let maximumSeats = Int(trimmedValue) {
+          siteLicensePricing.tiers[index].maximumSeats = maximumSeats
+        }
+      }
+    )
   }
 }
