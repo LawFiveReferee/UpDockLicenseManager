@@ -590,6 +590,8 @@ struct PendingPurchaseDetailView: View {
   let statusMessage: String?
   let onFulfillPurchase: (PendingPaddlePurchase) -> Void
 
+  @State private var showingLicensePreview = false
+
   private var transaction: PaddleTransactionData? {
     purchase.payload.data
   }
@@ -642,8 +644,9 @@ struct PendingPurchaseDetailView: View {
 
         HStack {
           Button("Preview License") {
+            showingLicensePreview = true
           }
-          .disabled(true)
+          .disabled(isFulfilling)
 
           Button("Fulfill Purchase") {
             onFulfillPurchase(purchase)
@@ -654,6 +657,9 @@ struct PendingPurchaseDetailView: View {
       }
       .padding(24)
       .frame(maxWidth: 720, alignment: .leading)
+    }
+    .sheet(isPresented: $showingLicensePreview) {
+      PendingLicensePreviewView(purchase: purchase)
     }
   }
 
@@ -678,6 +684,91 @@ struct PendingPurchaseDetailView: View {
       Text(label)
         .foregroundStyle(.secondary)
         .frame(width: 140, alignment: .leading)
+
+      Text(value.isEmpty ? "—" : value)
+        .textSelection(.enabled)
+    }
+  }
+}
+
+struct PendingLicensePreviewView: View {
+  @Environment(\.dismiss) private var dismiss
+
+  let purchase: PendingPaddlePurchase
+
+  private var transaction: PaddleTransactionData? {
+    purchase.payload.data
+  }
+
+  private var item: PaddleTransactionItem? {
+    transaction?.primaryItem
+  }
+
+  var body: some View {
+    NavigationStack {
+      ScrollView {
+        VStack(alignment: .leading, spacing: 18) {
+          previewCard("License") {
+            row("Type", "Commercial")
+            row("Product", item?.product?.name ?? "UpDock Pro")
+            row("Serial", "Generated during fulfillment")
+            row("Expiration", "None")
+          }
+
+          previewCard("Customer") {
+            row("Name", transaction?.customerName ?? "—")
+            row("Email", transaction?.customerEmail ?? "—")
+            row("Customer ID", transaction?.customerID ?? transaction?.customer?.id ?? "—")
+          }
+
+          previewCard("Paddle") {
+            row("Transaction ID", purchase.transactionID)
+            row("Status", transaction?.status ?? "—")
+            row("Product ID", item?.product?.id ?? item?.price?.productID ?? "—")
+            row("Price ID", item?.price?.id ?? "—")
+          }
+
+          previewCard("Fulfillment") {
+            row("Local Action", "Create commercial license")
+            row("Web Action", "Archive transaction")
+            row("Email", "Prepared after license creation")
+          }
+        }
+        .padding(24)
+      }
+      .navigationTitle("License Preview")
+      .toolbar {
+        ToolbarItem {
+          Button("Close") {
+            dismiss()
+          }
+        }
+      }
+    }
+    .frame(width: 640, height: 540)
+  }
+
+  private func previewCard<Content: View>(
+    _ title: String,
+    @ViewBuilder content: () -> Content
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text(title)
+        .font(.headline)
+
+      content()
+    }
+    .padding(18)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(.regularMaterial)
+    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+  }
+
+  private func row(_ label: String, _ value: String) -> some View {
+    HStack(alignment: .firstTextBaseline) {
+      Text(label)
+        .foregroundStyle(.secondary)
+        .frame(width: 130, alignment: .leading)
 
       Text(value.isEmpty ? "—" : value)
         .textSelection(.enabled)

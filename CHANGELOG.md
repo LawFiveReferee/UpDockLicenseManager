@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.8 — Pending License Preview
+- Bumped app version to 1.0.8 build 13.
+- Enabled the Pending Purchases Preview License action.
+- Added a license preview sheet showing customer, product, Paddle, and fulfillment details before creating a commercial license.
+
 ## v1.0.7 — Paddle Customer Fallbacks
 - Bumped app version to 1.0.7 build 12.
 - Added cardholder name fallback for Paddle purchases when the customer record has no name.
