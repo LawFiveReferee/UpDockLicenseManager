@@ -16,6 +16,7 @@ struct LicenseDetailView: View {
 
   let auditEvents: [AuditEvent]
   let relatedPaddleLicenseCount: Int
+  let paddleSeatBadgeText: String?
   let onSave: (LicenseRecord) -> Void
   let onCopySerial: () -> Void
   let onRevoke: () -> Void
@@ -26,6 +27,7 @@ struct LicenseDetailView: View {
     license: LicenseRecord,
     auditEvents: [AuditEvent],
     relatedPaddleLicenseCount: Int,
+    paddleSeatBadgeText: String?,
     onSave: @escaping (LicenseRecord) -> Void,
     onCopySerial: @escaping () -> Void,
     onRevoke: @escaping () -> Void,
@@ -36,6 +38,7 @@ struct LicenseDetailView: View {
     self._originalLicense = State(initialValue: license)
     self.auditEvents = auditEvents
     self.relatedPaddleLicenseCount = relatedPaddleLicenseCount
+    self.paddleSeatBadgeText = paddleSeatBadgeText
     self.onSave = onSave
     self.onCopySerial = onCopySerial
     self.onRevoke = onRevoke
@@ -118,6 +121,9 @@ struct LicenseDetailView: View {
                 .foregroundStyle(fulfillmentArchiveStyle)
 
               detailRow("Transaction ID", editableLicense.paddleTransactionID)
+              if let paddleSeatBadgeText {
+                detailRow("Seat", paddleSeatBadgeText)
+              }
               detailRow("Licenses for Transaction", "\(max(relatedPaddleLicenseCount, 1))")
 
               if let checkedAt = editableLicense.fulfillmentArchiveCheckedAt {

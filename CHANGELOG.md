@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.11 — Seat Position Badges
+- Bumped app version to 1.0.11 build 16.
+- Changed multi-seat license row badges from total seat count to "Seat x of y".
+- Added the same seat position label to Web Fulfillment details.
+- Added badge support for future site-license records when product or notes identify a site license.
+
 ## v1.0.10 — Multi-Seat Visibility
 - Bumped app version to 1.0.10 build 15.
 - Added multi-seat badges to license rows when multiple licenses share a Paddle transaction.

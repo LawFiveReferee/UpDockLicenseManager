@@ -87,6 +87,7 @@ struct ContentView: View {
     } content: {
       LicenseListView(
         licenses: filteredLicenses,
+        allLicenses: store.licenses,
         selectedLicense: $selectedLicense,
         searchText: searchText
       )
@@ -96,6 +97,10 @@ struct ContentView: View {
           license: selectedLicense,
           auditEvents: auditLog.events(for: selectedLicense),
           relatedPaddleLicenseCount: relatedPaddleLicenseCount(for: selectedLicense),
+          paddleSeatBadgeText: LicenseSeatBadgeContext.make(
+            for: selectedLicense,
+            in: store.licenses
+          ).badgeText,
           onSave: { license in
             updateLicense(license)
           },
