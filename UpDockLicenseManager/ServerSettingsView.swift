@@ -259,6 +259,23 @@ struct ServerSettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
+
+                if let context = event.context, !context.isEmpty {
+                  VStack(alignment: .leading, spacing: 3) {
+                    ForEach(context.sorted(by: { $0.key < $1.key }), id: \.key) { key, value in
+                      HStack(alignment: .top) {
+                        Text(key)
+                          .font(.caption.bold())
+                          .foregroundStyle(.secondary)
+                          .frame(width: 110, alignment: .leading)
+
+                        Text(value)
+                          .font(.system(.caption, design: .monospaced))
+                          .textSelection(.enabled)
+                      }
+                    }
+                  }
+                }
               }
             }
           }

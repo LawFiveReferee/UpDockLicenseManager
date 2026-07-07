@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.30 — Webhook Event Diagnostics
+- Bumped app version to 1.0.30 build 35.
+- Server Settings now displays webhook event context such as Paddle status code, path, and sanitized error details.
+
 ## v1.0.29 — Remember Private Config Access
 - Bumped app version to 1.0.29 build 34.
 - Local private config updates now remember security-scoped access to the selected paddle-config.php file.
