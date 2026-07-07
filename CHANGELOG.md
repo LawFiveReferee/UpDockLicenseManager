@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.21 — Email Sent Tracking
+- Bumped app version to 1.0.21 build 26.
+- Added a Sent email delivery state so prepared drafts and completed customer delivery are tracked separately.
+- Added a Mark Sent action and audit event for customer license emails.
+- Recovery Report and CSV export now include the customer email delivery state.
+
 ## v1.0.20 — Customer License Email Detail
 - Bumped app version to 1.0.20 build 25.
 - License email drafts now include serial number, seat allowance, and Paddle purchase reference when available.

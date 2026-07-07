@@ -11,6 +11,7 @@ enum AuditEventKind: String, Codable, CaseIterable, Identifiable {
   case fulfillmentChecked = "Fulfillment Checked"
   case emailDraftPrepared = "Email Draft Prepared"
   case emailDraftFailed = "Email Draft Failed"
+  case emailMarkedSent = "Email Marked Sent"
   case licenseExported = "License Exported"
 
   var id: String { rawValue }
@@ -27,6 +28,7 @@ enum AuditEventKind: String, Codable, CaseIterable, Identifiable {
     case .fulfillmentChecked: return "arrow.clockwise"
     case .emailDraftPrepared: return "envelope.badge"
     case .emailDraftFailed: return "exclamationmark.triangle"
+    case .emailMarkedSent: return "paperplane"
     case .licenseExported: return "square.and.arrow.up"
     }
   }

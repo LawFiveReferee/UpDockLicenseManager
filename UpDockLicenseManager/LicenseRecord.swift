@@ -38,6 +38,7 @@ enum FulfillmentArchiveStatus: String, Codable, CaseIterable, Identifiable {
 enum EmailDeliveryStatus: String, Codable, CaseIterable, Identifiable {
   case notPrepared = "Not Prepared"
   case draftPrepared = "Draft Prepared"
+  case sent = "Sent"
   case failed = "Failed"
 
   var id: String { rawValue }
@@ -163,7 +164,7 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
 
   var needsEmailDelivery: Bool {
     !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-      && emailDeliveryStatus != .draftPrepared
+      && emailDeliveryStatus != .sent
       && !isRevoked
   }
 

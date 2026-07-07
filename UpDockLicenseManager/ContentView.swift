@@ -113,6 +113,9 @@ struct ContentView: View {
           onPrepareEmailDelivery: { license in
             try prepareEmailDelivery(for: license)
           },
+          onMarkEmailSent: { license in
+            markEmailSent(for: license)
+          },
           onRefreshFulfillmentArchive: { license in
             try await refreshFulfillmentArchive(for: license)
           }
@@ -395,11 +398,11 @@ struct ContentView: View {
             license: license
           )
         )
-      } else if license.emailDeliveryStatus != .draftPrepared {
+      } else if license.emailDeliveryStatus != .sent {
         issues.append(
           RecoveryIssue(
             severity: license.emailDeliveryStatus == .failed ? .failure : .warning,
-            title: "Email Draft Not Ready",
+            title: "Customer Email Not Sent",
             detail: "Current email status is \(license.emailDeliveryStatus.rawValue).",
             license: license
           )
@@ -638,6 +641,22 @@ struct ContentView: View {
 
       throw error
     }
+  }
+
+  private func markEmailSent(for license: LicenseRecord) -> LicenseRecord {
+    var updatedLicense = license
+    updatedLicense.emailDeliveryStatus = .sent
+    updatedLicense.emailDeliveryAttemptedAt = Date()
+    updatedLicense.emailDeliveryError = ""
+
+    updateLicense(updatedLicense, auditChanges: false)
+    recordAudit(
+      .emailMarkedSent,
+      license: updatedLicense,
+      message: "Marked customer email as sent to \(updatedLicense.email)."
+    )
+
+    return updatedLicense
   }
 
   private func duplicateSelectedLicense() {

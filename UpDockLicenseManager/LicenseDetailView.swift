@@ -21,6 +21,7 @@ struct LicenseDetailView: View {
   let onCopySerial: () -> Void
   let onRevoke: () -> Void
   let onPrepareEmailDelivery: (LicenseRecord) throws -> LicenseRecord
+  let onMarkEmailSent: (LicenseRecord) -> LicenseRecord
   let onRefreshFulfillmentArchive: (LicenseRecord) async throws -> LicenseRecord
 
   init(
@@ -32,6 +33,7 @@ struct LicenseDetailView: View {
     onCopySerial: @escaping () -> Void,
     onRevoke: @escaping () -> Void,
     onPrepareEmailDelivery: @escaping (LicenseRecord) throws -> LicenseRecord,
+    onMarkEmailSent: @escaping (LicenseRecord) -> LicenseRecord,
     onRefreshFulfillmentArchive: @escaping (LicenseRecord) async throws -> LicenseRecord
   ) {
     self._editableLicense = State(initialValue: license)
@@ -43,6 +45,7 @@ struct LicenseDetailView: View {
     self.onCopySerial = onCopySerial
     self.onRevoke = onRevoke
     self.onPrepareEmailDelivery = onPrepareEmailDelivery
+    self.onMarkEmailSent = onMarkEmailSent
     self.onRefreshFulfillmentArchive = onRefreshFulfillmentArchive
   }
 
@@ -271,9 +274,9 @@ struct LicenseDetailView: View {
             detailRow("Recipient", editableLicense.email)
 
             if let attemptedAt = editableLicense.emailDeliveryAttemptedAt {
-              detailRow("Last Attempt", attemptedAt.formatted(date: .abbreviated, time: .shortened))
+              detailRow(emailDeliveryDateLabel, attemptedAt.formatted(date: .abbreviated, time: .shortened))
             } else {
-              detailRow("Last Attempt", "Never")
+              detailRow(emailDeliveryDateLabel, "Never")
             }
 
             if !editableLicense.emailDeliveryError.isEmpty {
@@ -281,16 +284,23 @@ struct LicenseDetailView: View {
                 .foregroundStyle(.red)
             }
 
-            Button {
-              prepareEmailDelivery()
-            } label: {
-              if isPreparingEmailDelivery {
-                ProgressView()
-              } else {
-                Label(emailDeliveryButtonTitle, systemImage: "envelope")
+            HStack {
+              Button {
+                prepareEmailDelivery()
+              } label: {
+                if isPreparingEmailDelivery {
+                  ProgressView()
+                } else {
+                  Label(emailDeliveryButtonTitle, systemImage: "envelope")
+                }
               }
+              .disabled(isPreparingEmailDelivery || editableLicense.email.isEmpty)
+
+              Button("Mark Sent", systemImage: "paperplane") {
+                markEmailSent()
+              }
+              .disabled(editableLicense.emailDeliveryStatus == .sent || editableLicense.email.isEmpty)
             }
-            .disabled(isPreparingEmailDelivery || editableLicense.email.isEmpty)
           }
         }
 
@@ -440,6 +450,8 @@ struct LicenseDetailView: View {
       return "No email draft prepared"
     case .draftPrepared:
       return "Mail draft prepared"
+    case .sent:
+      return "Customer email sent"
     case .failed:
       return "Email draft failed"
     }
@@ -451,6 +463,8 @@ struct LicenseDetailView: View {
       return "envelope"
     case .draftPrepared:
       return "envelope.badge"
+    case .sent:
+      return "paperplane"
     case .failed:
       return "exclamationmark.triangle"
     }
@@ -461,17 +475,23 @@ struct LicenseDetailView: View {
     case .notPrepared:
       return AnyShapeStyle(.secondary)
     case .draftPrepared:
+      return AnyShapeStyle(.orange)
+    case .sent:
       return AnyShapeStyle(.green)
     case .failed:
       return AnyShapeStyle(.red)
     }
   }
 
+  private var emailDeliveryDateLabel: String {
+    editableLicense.emailDeliveryStatus == .sent ? "Sent At" : "Last Attempt"
+  }
+
   private var emailDeliveryButtonTitle: String {
     switch editableLicense.emailDeliveryStatus {
     case .notPrepared:
       return "Prepare Email"
-    case .draftPrepared, .failed:
+    case .draftPrepared, .sent, .failed:
       return "Retry Email"
     }
   }
@@ -664,15 +684,21 @@ struct LicenseDetailView: View {
     }
 
     switch editableLicense.emailDeliveryStatus {
+    case .sent:
+      return WorkflowDiagnosticItem(
+        title: "Customer Email",
+        detail: "Marked sent to customer.",
+        state: .complete
+      )
     case .draftPrepared:
       return WorkflowDiagnosticItem(
-        title: "Email Draft",
-        detail: "Mail draft has been prepared.",
-        state: .complete
+        title: "Customer Email",
+        detail: "Mail draft is prepared but not marked sent.",
+        state: .warning
       )
     case .failed:
       return WorkflowDiagnosticItem(
-        title: "Email Draft",
+        title: "Customer Email",
         detail: editableLicense.emailDeliveryError.isEmpty
           ? "Last draft attempt failed."
           : editableLicense.emailDeliveryError,
@@ -680,7 +706,7 @@ struct LicenseDetailView: View {
       )
     case .notPrepared:
       return WorkflowDiagnosticItem(
-        title: "Email Draft",
+        title: "Customer Email",
         detail: "Mail draft has not been prepared.",
         state: .warning
       )
@@ -740,6 +766,14 @@ struct LicenseDetailView: View {
     }
 
     isPreparingEmailDelivery = false
+  }
+
+  private func markEmailSent() {
+    let updatedLicense = onMarkEmailSent(originalLicense)
+    editableLicense.emailDeliveryStatus = updatedLicense.emailDeliveryStatus
+    editableLicense.emailDeliveryAttemptedAt = updatedLicense.emailDeliveryAttemptedAt
+    editableLicense.emailDeliveryError = updatedLicense.emailDeliveryError
+    originalLicense = updatedLicense
   }
 
   private func saveChanges() {
