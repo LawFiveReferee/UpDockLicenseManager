@@ -66,7 +66,7 @@ struct LicenseDetailView: View {
   }
 
   private var hasSeatTracking: Bool {
-    editableLicense.seatAllowance != nil || isSiteLicenseLike
+    editableLicense.type == .commercial || editableLicense.seatAllowance != nil || isSiteLicenseLike
   }
 
   private var remainingSeatText: String {
@@ -513,7 +513,7 @@ struct LicenseDetailView: View {
   }
 
   private var activationRegistryTitle: String {
-    switch editableLicense.activationRegistryStatus {
+    switch effectiveActivationRegistryStatus {
     case .registered:
       return "Registered for activation"
     case .failed:
@@ -526,7 +526,7 @@ struct LicenseDetailView: View {
   }
 
   private var activationRegistrySymbol: String {
-    switch editableLicense.activationRegistryStatus {
+    switch effectiveActivationRegistryStatus {
     case .registered:
       return "checkmark.circle"
     case .failed:
@@ -539,7 +539,7 @@ struct LicenseDetailView: View {
   }
 
   private var activationRegistryStyle: AnyShapeStyle {
-    switch editableLicense.activationRegistryStatus {
+    switch effectiveActivationRegistryStatus {
     case .registered:
       return AnyShapeStyle(.green)
     case .failed:
@@ -549,6 +549,14 @@ struct LicenseDetailView: View {
     case .unknown:
       return AnyShapeStyle(.orange)
     }
+  }
+
+  private var effectiveActivationRegistryStatus: ActivationRegistryStatus {
+    if editableLicense.seatAllowance == nil && !isSiteLicenseLike {
+      return .notRequired
+    }
+
+    return editableLicense.activationRegistryStatus
   }
 
   private var workflowDiagnosticItems: [WorkflowDiagnosticItem] {

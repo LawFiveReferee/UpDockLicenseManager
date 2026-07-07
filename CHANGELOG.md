@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.19 — Activation Visibility
+- Bumped app version to 1.0.19 build 24.
+- Seat Usage and Activation Registry cards now appear for all commercial licenses.
+- Non-site commercial licenses show activation registration as not required.
+
 ## v1.0.18 — Activation Registry Fulfillment
 - Bumped app version to 1.0.18 build 23.
 - Site-license fulfillment now registers the generated license serial and seat allowance with the activation registry.
