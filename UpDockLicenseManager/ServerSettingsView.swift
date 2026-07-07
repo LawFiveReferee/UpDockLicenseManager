@@ -422,21 +422,44 @@ struct ServerSettingsView: View {
   private func fetchOperationsStatus() async {
     isFetchingOperationsStatus = true
     operationsStatusError = nil
-    KeychainSettingsStore.shared.managerToken = managerToken
 
     do {
       operationsStatus = try await ServerService.shared.fetchOperationsStatus(
         settings: settings,
         managerToken: managerToken
       )
+      KeychainSettingsStore.shared.managerToken = managerToken
+      operationsStatusCheckedAt = Date()
+    } catch {
+      await retryOperationsStatusWithSavedToken(after: error)
+    }
+
+    isFetchingOperationsStatus = false
+  }
+
+  private func retryOperationsStatusWithSavedToken(after firstError: Error) async {
+    let savedToken = KeychainSettingsStore.shared.managerToken
+
+    guard case NetworkServiceError.serverError(401) = firstError,
+          savedToken != managerToken else {
+      operationsStatus = nil
+      operationsStatusCheckedAt = Date()
+      operationsStatusError = firstError.localizedDescription
+      return
+    }
+
+    do {
+      operationsStatus = try await ServerService.shared.fetchOperationsStatus(
+        settings: settings,
+        managerToken: savedToken
+      )
+      managerToken = savedToken
       operationsStatusCheckedAt = Date()
     } catch {
       operationsStatus = nil
       operationsStatusCheckedAt = Date()
       operationsStatusError = error.localizedDescription
     }
-
-    isFetchingOperationsStatus = false
   }
 
   private func storageIsReady(_ healthResponse: HealthResponse) -> Bool {

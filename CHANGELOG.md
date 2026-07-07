@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.25 — Operations Token Fallback
+- Bumped app version to 1.0.25 build 30.
+- Refresh Operations now retries with the saved Keychain manager token if the visible Manager Token field returns HTTP 401.
+- The Manager Token field is updated to the saved token when the fallback succeeds.
+
 ## v1.0.24 — Operations Token Handling
 - Bumped app version to 1.0.24 build 29.
 - Server Operations now uses the current Manager Token field value when building and fetching the operations-status URL.
