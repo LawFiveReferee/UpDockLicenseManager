@@ -237,6 +237,29 @@ struct LicenseDetailView: View {
           }
         }
 
+        if hasSeatTracking {
+          card {
+            VStack(alignment: .leading, spacing: 14) {
+              Text("Activation Registry")
+                .font(.headline)
+
+              Label(activationRegistryTitle, systemImage: activationRegistrySymbol)
+                .foregroundStyle(activationRegistryStyle)
+
+              if let checkedAt = editableLicense.activationRegistryCheckedAt {
+                detailRow("Last Checked", checkedAt.formatted(date: .abbreviated, time: .shortened))
+              } else {
+                detailRow("Last Checked", "Never")
+              }
+
+              if !editableLicense.activationRegistryError.isEmpty {
+                Label(editableLicense.activationRegistryError, systemImage: "exclamationmark.triangle")
+                  .foregroundStyle(.red)
+              }
+            }
+          }
+        }
+
         card {
           VStack(alignment: .leading, spacing: 14) {
             Text("Email Delivery")
@@ -487,6 +510,45 @@ struct LicenseDetailView: View {
     }
 
     return AnyShapeStyle(.green)
+  }
+
+  private var activationRegistryTitle: String {
+    switch editableLicense.activationRegistryStatus {
+    case .registered:
+      return "Registered for activation"
+    case .failed:
+      return "Registration failed"
+    case .notRequired:
+      return "Not required"
+    case .unknown:
+      return "Not registered yet"
+    }
+  }
+
+  private var activationRegistrySymbol: String {
+    switch editableLicense.activationRegistryStatus {
+    case .registered:
+      return "checkmark.circle"
+    case .failed:
+      return "xmark.circle"
+    case .notRequired:
+      return "minus.circle"
+    case .unknown:
+      return "questionmark.circle"
+    }
+  }
+
+  private var activationRegistryStyle: AnyShapeStyle {
+    switch editableLicense.activationRegistryStatus {
+    case .registered:
+      return AnyShapeStyle(.green)
+    case .failed:
+      return AnyShapeStyle(.red)
+    case .notRequired:
+      return AnyShapeStyle(.secondary)
+    case .unknown:
+      return AnyShapeStyle(.orange)
+    }
   }
 
   private var workflowDiagnosticItems: [WorkflowDiagnosticItem] {

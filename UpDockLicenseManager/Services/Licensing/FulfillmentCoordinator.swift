@@ -21,6 +21,14 @@ struct PendingPurchaseFulfillmentResult {
     updatedExistingLicenses + createdLicenses
   }
 
+  var activationRegistrationFailedCount: Int {
+    savedLicenses.filter { $0.activationRegistryStatus == .failed }.count
+  }
+
+  var activationRegisteredCount: Int {
+    savedLicenses.filter { $0.activationRegistryStatus == .registered }.count
+  }
+
   var statusMessage: String {
     if serverResponse.alreadyFulfilled && createdLicenses.isEmpty {
       return "Transaction was already archived. Showing existing license records."
@@ -31,7 +39,17 @@ struct PendingPurchaseFulfillmentResult {
     }
 
     if fulfillmentPolicy.mode == .siteLicense {
-      return "Purchase fulfilled and archived. Created site license for \(fulfillmentPolicy.purchasedQuantity) seat\(fulfillmentPolicy.purchasedQuantity == 1 ? "" : "s")."
+      let baseMessage = "Purchase fulfilled and archived. Created site license for \(fulfillmentPolicy.purchasedQuantity) seat\(fulfillmentPolicy.purchasedQuantity == 1 ? "" : "s")."
+
+      if activationRegistrationFailedCount > 0 {
+        return baseMessage + " Activation registration needs attention."
+      }
+
+      if activationRegisteredCount > 0 {
+        return baseMessage + " Activation registry updated."
+      }
+
+      return baseMessage
     }
 
     return "Purchase fulfilled and archived. Created \(createdLicenses.count) license\(createdLicenses.count == 1 ? "" : "s")."
@@ -55,7 +73,7 @@ final class FulfillmentCoordinator {
 
     let fulfillmentPolicy = PaddleFulfillmentPolicyStore().policy(for: purchase)
     let existingLicenses = existingLicensesForTransactionID(purchase.transactionID)
-    let updatedExistingLicenses = existingLicenses.map { existingLicense in
+    let archiveUpdatedExistingLicenses = existingLicenses.map { existingLicense in
       var updatedLicense = existingLicense
       updatedLicense.fulfillmentArchiveStatus = .archived
       updatedLicense.fulfillmentArchiveCheckedAt = Date()
@@ -73,9 +91,19 @@ final class FulfillmentCoordinator {
         seatNumber: index + existingLicenses.count + 1
       )
     }
+    let registeredLicenses = await registerActivationRegistryIfNeeded(
+      licenses: archiveUpdatedExistingLicenses + createdLicenses,
+      settings: settings
+    )
+    let updatedExistingLicenses = Array(
+      registeredLicenses.prefix(archiveUpdatedExistingLicenses.count)
+    )
+    let activationUpdatedCreatedLicenses = Array(
+      registeredLicenses.dropFirst(archiveUpdatedExistingLicenses.count)
+    )
 
     return PendingPurchaseFulfillmentResult(
-      createdLicenses: createdLicenses,
+      createdLicenses: activationUpdatedCreatedLicenses,
       updatedExistingLicenses: updatedExistingLicenses,
       serverResponse: serverResponse,
       fulfillmentPolicy: fulfillmentPolicy
@@ -121,7 +149,6 @@ final class FulfillmentCoordinator {
     let transaction = purchase.payload.data
     let customer = transaction?.customer
     let item = transaction?.primaryItem
-    let quantity = purchase.licenseQuantity
 
     let name = transaction?.customerName ?? ""
     let email = transaction?.customerEmail ?? ""
@@ -151,8 +178,42 @@ final class FulfillmentCoordinator {
       paddleStatus: transaction?.status ?? "",
       fulfilledAt: Date(),
       fulfillmentArchiveStatus: .archived,
-      fulfillmentArchiveCheckedAt: Date()
+      fulfillmentArchiveCheckedAt: Date(),
+      activationRegistryStatus: fulfillmentPolicy.mode == .siteLicense ? .unknown : .notRequired
     )
+  }
+
+  private func registerActivationRegistryIfNeeded(
+    licenses: [LicenseRecord],
+    settings: NetworkSettings
+  ) async -> [LicenseRecord] {
+    var registeredLicenses: [LicenseRecord] = []
+
+    for license in licenses {
+      guard license.seatAllowance != nil else {
+        var updatedLicense = license
+        updatedLicense.activationRegistryStatus = .notRequired
+        registeredLicenses.append(updatedLicense)
+        continue
+      }
+
+      do {
+        registeredLicenses.append(
+          try await ActivationRegistryService.shared.registerLicense(
+            license,
+            settings: settings
+          )
+        )
+      } catch {
+        var updatedLicense = license
+        updatedLicense.activationRegistryStatus = .failed
+        updatedLicense.activationRegistryCheckedAt = Date()
+        updatedLicense.activationRegistryError = error.localizedDescription
+        registeredLicenses.append(updatedLicense)
+      }
+    }
+
+    return registeredLicenses
   }
 
   private func licenseNote(

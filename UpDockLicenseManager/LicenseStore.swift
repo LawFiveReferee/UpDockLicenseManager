@@ -95,6 +95,9 @@ final class LicenseStore {
       "Expires At",
       "Seat Allowance",
       "Seats Assigned",
+      "Activation Registry Status",
+      "Activation Registry Checked At",
+      "Activation Registry Error",
       "Notes"
     ].joined(separator: ","))
 
@@ -109,6 +112,9 @@ final class LicenseStore {
         csvEscape(license.expiresAt?.formatted(.iso8601) ?? ""),
         csvEscape(license.seatAllowance.map(String.init) ?? ""),
         csvEscape(String(license.seatsAssigned)),
+        csvEscape(license.activationRegistryStatus.rawValue),
+        csvEscape(license.activationRegistryCheckedAt?.formatted(.iso8601) ?? ""),
+        csvEscape(license.activationRegistryError),
         csvEscape(license.notes)
       ].joined(separator: ","))
     }

@@ -43,6 +43,15 @@ enum EmailDeliveryStatus: String, Codable, CaseIterable, Identifiable {
   var id: String { rawValue }
 }
 
+enum ActivationRegistryStatus: String, Codable, CaseIterable, Identifiable {
+  case unknown = "Unknown"
+  case notRequired = "Not Required"
+  case registered = "Registered"
+  case failed = "Failed"
+
+  var id: String { rawValue }
+}
+
 struct LicenseRecord: Identifiable, Codable, Hashable {
   var id: UUID
   var serial: String
@@ -70,6 +79,9 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
   var emailDeliveryStatus: EmailDeliveryStatus
   var emailDeliveryAttemptedAt: Date?
   var emailDeliveryError: String
+  var activationRegistryStatus: ActivationRegistryStatus
+  var activationRegistryCheckedAt: Date?
+  var activationRegistryError: String
 
   init(
     id: UUID = UUID(),
@@ -95,7 +107,10 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     fulfillmentArchiveCheckedAt: Date? = nil,
     emailDeliveryStatus: EmailDeliveryStatus = .notPrepared,
     emailDeliveryAttemptedAt: Date? = nil,
-    emailDeliveryError: String = ""
+    emailDeliveryError: String = "",
+    activationRegistryStatus: ActivationRegistryStatus = .unknown,
+    activationRegistryCheckedAt: Date? = nil,
+    activationRegistryError: String = ""
   ) {
     self.id = id
     self.serial = serial
@@ -121,6 +136,9 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     self.emailDeliveryStatus = emailDeliveryStatus
     self.emailDeliveryAttemptedAt = emailDeliveryAttemptedAt
     self.emailDeliveryError = emailDeliveryError
+    self.activationRegistryStatus = activationRegistryStatus
+    self.activationRegistryCheckedAt = activationRegistryCheckedAt
+    self.activationRegistryError = activationRegistryError
   }
 
   var status: LicenseStatus {
@@ -174,6 +192,9 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     case emailDeliveryStatus
     case emailDeliveryAttemptedAt
     case emailDeliveryError
+    case activationRegistryStatus
+    case activationRegistryCheckedAt
+    case activationRegistryError
   }
 
   init(from decoder: Decoder) throws {
@@ -218,6 +239,18 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     emailDeliveryError = try container.decodeIfPresent(
       String.self,
       forKey: .emailDeliveryError
+    ) ?? ""
+    activationRegistryStatus = try container.decodeIfPresent(
+      ActivationRegistryStatus.self,
+      forKey: .activationRegistryStatus
+    ) ?? .unknown
+    activationRegistryCheckedAt = try container.decodeIfPresent(
+      Date.self,
+      forKey: .activationRegistryCheckedAt
+    )
+    activationRegistryError = try container.decodeIfPresent(
+      String.self,
+      forKey: .activationRegistryError
     ) ?? ""
   }
 }

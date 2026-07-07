@@ -164,6 +164,59 @@ final class ServerService {
   }
 }
 
+final class ActivationRegistryService {
+  static let shared = ActivationRegistryService()
+
+  private init() {}
+
+  func registerLicense(
+    _ license: LicenseRecord,
+    settings: NetworkSettings
+  ) async throws -> LicenseRecord {
+    guard let seatAllowance = license.seatAllowance else {
+      var updatedLicense = license
+      updatedLicense.activationRegistryStatus = .notRequired
+      updatedLicense.activationRegistryCheckedAt = Date()
+      updatedLicense.activationRegistryError = ""
+      return updatedLicense
+    }
+
+    _ = try await NetworkService.shared.get(
+      from: registrationURL(
+        license: license,
+        seatAllowance: seatAllowance,
+        settings: settings
+      )
+    )
+
+    var updatedLicense = license
+    updatedLicense.activationRegistryStatus = .registered
+    updatedLicense.activationRegistryCheckedAt = Date()
+    updatedLicense.activationRegistryError = ""
+    return updatedLicense
+  }
+
+  private func registrationURL(
+    license: LicenseRecord,
+    seatAllowance: Int,
+    settings: NetworkSettings
+  ) -> String {
+    let token = KeychainSettingsStore.shared.managerToken
+    var components = URLComponents(string: settings.licenseRegisterURL)
+    components?.queryItems = [
+      URLQueryItem(name: "token", value: token),
+      URLQueryItem(name: "serial", value: license.serial),
+      URLQueryItem(name: "seat_allowance", value: "\(seatAllowance)"),
+      URLQueryItem(name: "product", value: license.product),
+      URLQueryItem(name: "customer_name", value: license.name),
+      URLQueryItem(name: "customer_email", value: license.email),
+      URLQueryItem(name: "paddle_transaction_id", value: license.paddleTransactionID)
+    ]
+
+    return components?.url?.absoluteString ?? ""
+  }
+}
+
 private struct ActivationTestRequest {
   let title: String
   let url: String

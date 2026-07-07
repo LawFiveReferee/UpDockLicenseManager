@@ -442,6 +442,30 @@ struct ContentView: View {
         )
       }
 
+      if license.seatAllowance != nil && license.activationRegistryStatus == .failed {
+        issues.append(
+          RecoveryIssue(
+            severity: .failure,
+            title: "Activation Registration Failed",
+            detail: license.activationRegistryError.isEmpty
+              ? "The site license was not registered with the activation registry."
+              : license.activationRegistryError,
+            license: license
+          )
+        )
+      }
+
+      if license.seatAllowance != nil && license.activationRegistryStatus == .unknown {
+        issues.append(
+          RecoveryIssue(
+            severity: .warning,
+            title: "Activation Registration Not Confirmed",
+            detail: "The site license has no confirmed activation registry registration.",
+            license: license
+          )
+        )
+      }
+
       if auditLog.events(for: license).isEmpty {
         issues.append(
           RecoveryIssue(

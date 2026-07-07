@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.18 — Activation Registry Fulfillment
+- Bumped app version to 1.0.18 build 23.
+- Site-license fulfillment now registers the generated license serial and seat allowance with the activation registry.
+- License details now show activation registry status for site licenses.
+- Recovery Report and CSV export now include activation registry registration state.
+
 ## v1.0.17 — Activation Test Tools
 - Bumped app version to 1.0.17 build 22.
 - Added generated activation registry URLs to Server Settings.
