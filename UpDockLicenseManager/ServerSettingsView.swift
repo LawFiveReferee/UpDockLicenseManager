@@ -9,6 +9,8 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
+private let localPrivateConfigBookmarkKey = "localPrivateConfigBookmark"
+
 struct ServerSettingsView: View {
   @State private var settings = NetworkSettings()
   @State private var managerToken = KeychainSettingsStore.shared.managerToken
@@ -112,7 +114,7 @@ struct ServerSettingsView: View {
           .buttonStyle(.borderedProminent)
 
           Button("Update Local Config…") {
-            chooseAndUpdateLocalPrivateConfigManagerToken()
+            updateLocalPrivateConfigManagerToken()
           }
         }
 
@@ -364,8 +366,8 @@ struct ServerSettingsView: View {
     .formStyle(.grouped)
     .padding()
     .alert("Manager Token Saved", isPresented: $showingManagerTokenSyncAlert) {
-      Button("Choose Config File…") {
-        chooseAndUpdateLocalPrivateConfigManagerToken()
+      Button("Update Local Config") {
+        updateLocalPrivateConfigManagerToken()
       }
 
       Button("Copy Token") {
@@ -374,7 +376,7 @@ struct ServerSettingsView: View {
 
       Button("OK") {}
     } message: {
-      Text("Choose the private paddle-config.php file to update UPDOCK_MANAGER_TOKEN, then sync that private file separately to the server.")
+      Text("Update UPDOCK_MANAGER_TOKEN in the private paddle-config.php file, then sync that private file separately to the server. The app will ask you to choose the file once if needed.")
     }
   }
 
@@ -467,6 +469,15 @@ struct ServerSettingsView: View {
     showingManagerTokenSyncAlert = true
   }
 
+  private func updateLocalPrivateConfigManagerToken() {
+    if let configURL = savedLocalPrivateConfigURL() {
+      _ = updateLocalPrivateConfigManagerToken(at: configURL)
+      return
+    }
+
+    chooseAndUpdateLocalPrivateConfigManagerToken()
+  }
+
   private func chooseAndUpdateLocalPrivateConfigManagerToken() {
     let configDirectoryURL = FileManager.default.homeDirectoryForCurrentUser
       .appendingPathComponent("Documents/GitHub/UpDockWebPage/updock-private")
@@ -488,10 +499,12 @@ struct ServerSettingsView: View {
       return
     }
 
-    updateLocalPrivateConfigManagerToken(at: configURL)
+    if updateLocalPrivateConfigManagerToken(at: configURL) {
+      saveLocalPrivateConfigBookmark(for: configURL)
+    }
   }
 
-  private func updateLocalPrivateConfigManagerToken(at configURL: URL) {
+  private func updateLocalPrivateConfigManagerToken(at configURL: URL) -> Bool {
     do {
       let didAccess = configURL.startAccessingSecurityScopedResource()
       defer {
@@ -507,7 +520,7 @@ struct ServerSettingsView: View {
 
       guard config.range(of: pattern, options: .regularExpression) != nil else {
         managerTokenConfigUpdateMessage = "Could not find UPDOCK_MANAGER_TOKEN in local private config."
-        return
+        return false
       }
 
       config = config.replacingOccurrences(
@@ -518,8 +531,61 @@ struct ServerSettingsView: View {
 
       try config.write(to: configURL, atomically: true, encoding: .utf8)
       managerTokenConfigUpdateMessage = "Updated \(configURL.lastPathComponent). Sync it separately to the server."
+      return true
     } catch {
       managerTokenConfigUpdateMessage = "Could not update local private config: \(error.localizedDescription)"
+      return false
+    }
+  }
+
+  private func savedLocalPrivateConfigURL() -> URL? {
+    guard let encodedBookmark = UserDefaults.standard.string(forKey: localPrivateConfigBookmarkKey),
+          let bookmarkData = Data(base64Encoded: encodedBookmark) else {
+      return nil
+    }
+
+    do {
+      var isStale = false
+      let configURL = try URL(
+        resolvingBookmarkData: bookmarkData,
+        options: .withSecurityScope,
+        relativeTo: nil,
+        bookmarkDataIsStale: &isStale
+      )
+
+      if isStale {
+        UserDefaults.standard.removeObject(forKey: localPrivateConfigBookmarkKey)
+        return nil
+      }
+
+      return configURL
+    } catch {
+      UserDefaults.standard.removeObject(forKey: localPrivateConfigBookmarkKey)
+      return nil
+    }
+  }
+
+  private func saveLocalPrivateConfigBookmark(for configURL: URL) {
+    do {
+      let didAccess = configURL.startAccessingSecurityScopedResource()
+      defer {
+        if didAccess {
+          configURL.stopAccessingSecurityScopedResource()
+        }
+      }
+
+      let bookmarkData = try configURL.bookmarkData(
+        options: .withSecurityScope,
+        includingResourceValuesForKeys: nil,
+        relativeTo: nil
+      )
+      UserDefaults.standard.set(
+        bookmarkData.base64EncodedString(),
+        forKey: localPrivateConfigBookmarkKey
+      )
+      managerTokenConfigUpdateMessage = "Updated \(configURL.lastPathComponent). Future updates can reuse this file. Sync it separately to the server."
+    } catch {
+      managerTokenConfigUpdateMessage = "Updated \(configURL.lastPathComponent), but could not remember file access: \(error.localizedDescription)"
     }
   }
 
