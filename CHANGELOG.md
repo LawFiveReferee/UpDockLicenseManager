@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.27 — Local Private Config Token Update
+- Bumped app version to 1.0.27 build 32.
+- Manager Token saved alert now includes an Update Local Config action.
+- The action updates UPDOCK_MANAGER_TOKEN in the local private paddle-config.php file and reminds the operator to sync it separately.
+
 ## v1.0.26 — Manager Token Sync Reminder
 - Bumped app version to 1.0.26 build 31.
 - Generating or saving a Manager Token now shows a reminder to update and separately sync the private web config.

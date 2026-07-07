@@ -24,6 +24,7 @@ struct ServerSettingsView: View {
   @State private var operationsStatusCheckedAt: Date?
   @State private var isFetchingOperationsStatus = false
   @State private var showingManagerTokenSyncAlert = false
+  @State private var managerTokenConfigUpdateMessage = ""
 
   var body: some View {
     Form {
@@ -112,6 +113,11 @@ struct ServerSettingsView: View {
 
         Text("Used by License Manager when communicating with pending.php and fulfilled.php.")
           .foregroundStyle(.secondary)
+
+        if !managerTokenConfigUpdateMessage.isEmpty {
+          Text(managerTokenConfigUpdateMessage)
+            .foregroundStyle(.secondary)
+        }
       }
 
       Section("Connection") {
@@ -353,6 +359,10 @@ struct ServerSettingsView: View {
     .formStyle(.grouped)
     .padding()
     .alert("Manager Token Saved", isPresented: $showingManagerTokenSyncAlert) {
+      Button("Update Local Config") {
+        updateLocalPrivateConfigManagerToken()
+      }
+
       Button("Copy Token") {
         copyToPasteboard(managerToken)
       }
@@ -450,6 +460,34 @@ struct ServerSettingsView: View {
   private func saveManagerToken() {
     KeychainSettingsStore.shared.managerToken = managerToken
     showingManagerTokenSyncAlert = true
+  }
+
+  private func updateLocalPrivateConfigManagerToken() {
+    do {
+      let configURL = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Documents/GitHub/UpDockWebPage/updock-private/paddle-config.php")
+
+      var config = try String(contentsOf: configURL, encoding: .utf8)
+      let escapedToken = managerToken.replacingOccurrences(of: "'", with: "\\'")
+      let pattern = #"const\s+UPDOCK_MANAGER_TOKEN\s*=\s*'[^']*';"#
+      let replacement = "const UPDOCK_MANAGER_TOKEN = '\(escapedToken)';"
+
+      guard config.range(of: pattern, options: .regularExpression) != nil else {
+        managerTokenConfigUpdateMessage = "Could not find UPDOCK_MANAGER_TOKEN in local private config."
+        return
+      }
+
+      config = config.replacingOccurrences(
+        of: pattern,
+        with: replacement,
+        options: .regularExpression
+      )
+
+      try config.write(to: configURL, atomically: true, encoding: .utf8)
+      managerTokenConfigUpdateMessage = "Updated local private config. Sync it separately to the server."
+    } catch {
+      managerTokenConfigUpdateMessage = "Could not update local private config: \(error.localizedDescription)"
+    }
   }
 
   private func retryOperationsStatusWithSavedToken(after firstError: Error) async {
