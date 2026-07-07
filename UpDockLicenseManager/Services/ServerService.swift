@@ -84,6 +84,14 @@ final class ServerService {
     return try JSONDecoder().decode(WebhookLogResponse.self, from: data)
   }
 
+  func fetchOperationsStatus(settings: NetworkSettings) async throws -> OperationsStatusResponse {
+    let data = try await NetworkService.shared.get(
+      from: settings.authenticatedOperationsStatusURL
+    )
+
+    return try JSONDecoder().decode(OperationsStatusResponse.self, from: data)
+  }
+
   func runActivationLimitTest(
     settings: NetworkSettings,
     serial: String,
@@ -256,4 +264,58 @@ struct WebhookLogEntry: Decodable, Identifiable, Hashable {
       context?["event_type"] ?? ""
     ].joined(separator: "|")
   }
+}
+
+struct OperationsStatusResponse: Decodable {
+  var status: String
+  var apiVersion: Int?
+  var generatedAt: String
+  var counts: OperationsStatusCounts
+  var latest: OperationsStatusLatest
+  var storage: OperationsStatusStorage
+}
+
+struct OperationsStatusCounts: Decodable {
+  var pendingTransactions: Int
+  var fulfilledTransactions: Int
+  var registeredLicenses: Int
+  var activeActivations: Int
+}
+
+struct OperationsStatusLatest: Decodable {
+  var pendingTransactions: [OperationsStatusFileSummary]
+  var fulfilledTransactions: [OperationsStatusFileSummary]
+  var registeredLicenses: [OperationsStatusFileSummary]
+  var webhookEvents: [OperationsStatusWebhookEvent]
+}
+
+struct OperationsStatusFileSummary: Decodable, Identifiable, Hashable {
+  var id: String
+  var updatedAt: String
+  var file: String
+}
+
+struct OperationsStatusWebhookEvent: Decodable, Identifiable, Hashable {
+  var time: String?
+  var status: String
+  var message: String
+  var context: [String: String]?
+
+  var id: String {
+    [
+      time ?? "",
+      status,
+      message,
+      context?["transaction_id"] ?? "",
+      context?["event_type"] ?? ""
+    ].joined(separator: "|")
+  }
+}
+
+struct OperationsStatusStorage: Decodable {
+  var transactionsWritable: Bool
+  var fulfilledWritable: Bool
+  var licensesWritable: Bool
+  var activationsWritable: Bool
+  var webhookLogWritable: Bool
 }

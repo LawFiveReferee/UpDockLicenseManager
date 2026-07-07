@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.23 — Server Operations Summary
+- Bumped app version to 1.0.23 build 28.
+- Server Settings now fetches and displays operations-status counts inside the app.
+- Added storage writability and recent webhook event summaries to Server Settings.
+
 ## v1.0.22 — Operations Status URL
 - Bumped app version to 1.0.22 build 27.
 - Server Settings now builds the authenticated operations-status URL from the saved base URL and manager token.

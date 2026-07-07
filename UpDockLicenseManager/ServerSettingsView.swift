@@ -19,6 +19,10 @@ struct ServerSettingsView: View {
   @State private var activationTestSerial = "TEST-SITE-001"
   @State private var activationTestSteps: [ActivationTestStep] = []
   @State private var isRunningActivationTest = false
+  @State private var operationsStatus: OperationsStatusResponse?
+  @State private var operationsStatusError: String?
+  @State private var operationsStatusCheckedAt: Date?
+  @State private var isFetchingOperationsStatus = false
 
   var body: some View {
     Form {
@@ -165,6 +169,89 @@ struct ServerSettingsView: View {
 
         if let healthError {
           Label(healthError, systemImage: "exclamationmark.triangle")
+            .foregroundStyle(.red)
+        }
+      }
+
+      Section("Server Operations") {
+        HStack {
+          Button {
+            Task {
+              await fetchOperationsStatus()
+            }
+          } label: {
+            if isFetchingOperationsStatus {
+              ProgressView()
+            } else {
+              Label("Refresh Operations", systemImage: "arrow.clockwise")
+            }
+          }
+          .disabled(isFetchingOperationsStatus)
+
+          if let operationsStatusCheckedAt {
+            Text(operationsStatusCheckedAt.formatted(date: .abbreviated, time: .shortened))
+              .foregroundStyle(.secondary)
+          }
+        }
+
+        if let operationsStatus {
+          Label("Operations status loaded", systemImage: "checkmark.circle")
+            .foregroundStyle(.green)
+
+          LabeledContent("Pending") {
+            Text("\(operationsStatus.counts.pendingTransactions)")
+          }
+
+          LabeledContent("Fulfilled") {
+            Text("\(operationsStatus.counts.fulfilledTransactions)")
+          }
+
+          LabeledContent("Registered Licenses") {
+            Text("\(operationsStatus.counts.registeredLicenses)")
+          }
+
+          LabeledContent("Active Activations") {
+            Text("\(operationsStatus.counts.activeActivations)")
+          }
+
+          LabeledContent("Generated") {
+            Text(operationsStatus.generatedAt)
+              .textSelection(.enabled)
+          }
+
+          storageRow("Transactions", operationsStatus.storage.transactionsWritable)
+          storageRow("Fulfilled", operationsStatus.storage.fulfilledWritable)
+          storageRow("Licenses", operationsStatus.storage.licensesWritable)
+          storageRow("Activations", operationsStatus.storage.activationsWritable)
+          storageRow("Webhook Log", operationsStatus.storage.webhookLogWritable)
+
+          if !operationsStatus.latest.webhookEvents.isEmpty {
+            Divider()
+
+            Text("Recent Webhook Events")
+              .font(.headline)
+
+            ForEach(operationsStatus.latest.webhookEvents.prefix(5)) { event in
+              VStack(alignment: .leading, spacing: 4) {
+                Label(event.message, systemImage: webhookSymbol(for: event.status))
+                  .foregroundStyle(webhookStyle(for: event.status))
+
+                HStack {
+                  Text(event.status)
+                  if let time = event.time {
+                    Text(time)
+                  }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+              }
+            }
+          }
+        }
+
+        if let operationsStatusError {
+          Label(operationsStatusError, systemImage: "exclamationmark.triangle")
             .foregroundStyle(.red)
         }
       }
@@ -328,6 +415,22 @@ struct ServerSettingsView: View {
     isRunningActivationTest = false
   }
 
+  private func fetchOperationsStatus() async {
+    isFetchingOperationsStatus = true
+    operationsStatusError = nil
+
+    do {
+      operationsStatus = try await ServerService.shared.fetchOperationsStatus(settings: settings)
+      operationsStatusCheckedAt = Date()
+    } catch {
+      operationsStatus = nil
+      operationsStatusCheckedAt = Date()
+      operationsStatusError = error.localizedDescription
+    }
+
+    isFetchingOperationsStatus = false
+  }
+
   private func storageIsReady(_ healthResponse: HealthResponse) -> Bool {
     healthResponse.transactionsWritable
       && healthResponse.fulfilledWritable
@@ -341,6 +444,38 @@ struct ServerSettingsView: View {
         .font(.caption.monospaced())
         .foregroundStyle(.secondary)
         .textSelection(.enabled)
+    }
+  }
+
+  private func storageRow(_ label: String, _ isWritable: Bool) -> some View {
+    LabeledContent(label) {
+      writableLabel(isWritable)
+    }
+  }
+
+  private func webhookSymbol(for status: String) -> String {
+    switch status.lowercased() {
+    case "stored":
+      return "tray.and.arrow.down"
+    case "warning":
+      return "exclamationmark.triangle"
+    case "error":
+      return "xmark.circle"
+    default:
+      return "info.circle"
+    }
+  }
+
+  private func webhookStyle(for status: String) -> AnyShapeStyle {
+    switch status.lowercased() {
+    case "stored":
+      return AnyShapeStyle(.green)
+    case "warning":
+      return AnyShapeStyle(.orange)
+    case "error":
+      return AnyShapeStyle(.red)
+    default:
+      return AnyShapeStyle(.secondary)
     }
   }
 
