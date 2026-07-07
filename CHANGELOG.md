@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.28 — Private Config File Picker
+- Bumped app version to 1.0.28 build 33.
+- Manager Token local config updates now use a file picker so the sandboxed app can write to the selected private paddle-config.php file.
+- Added an Update Local Config action directly in Server Settings.
+
 ## v1.0.27 — Local Private Config Token Update
 - Bumped app version to 1.0.27 build 32.
 - Manager Token saved alert now includes an Update Local Config action.

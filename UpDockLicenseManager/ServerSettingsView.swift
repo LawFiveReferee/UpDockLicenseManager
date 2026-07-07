@@ -7,6 +7,7 @@
 
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ServerSettingsView: View {
   @State private var settings = NetworkSettings()
@@ -109,6 +110,10 @@ struct ServerSettingsView: View {
             saveManagerToken()
           }
           .buttonStyle(.borderedProminent)
+
+          Button("Update Local Config…") {
+            chooseAndUpdateLocalPrivateConfigManagerToken()
+          }
         }
 
         Text("Used by License Manager when communicating with pending.php and fulfilled.php.")
@@ -359,8 +364,8 @@ struct ServerSettingsView: View {
     .formStyle(.grouped)
     .padding()
     .alert("Manager Token Saved", isPresented: $showingManagerTokenSyncAlert) {
-      Button("Update Local Config") {
-        updateLocalPrivateConfigManagerToken()
+      Button("Choose Config File…") {
+        chooseAndUpdateLocalPrivateConfigManagerToken()
       }
 
       Button("Copy Token") {
@@ -369,7 +374,7 @@ struct ServerSettingsView: View {
 
       Button("OK") {}
     } message: {
-      Text("Update UPDOCK_MANAGER_TOKEN in the private paddle-config.php file, then sync that private file separately to the server.")
+      Text("Choose the private paddle-config.php file to update UPDOCK_MANAGER_TOKEN, then sync that private file separately to the server.")
     }
   }
 
@@ -462,10 +467,38 @@ struct ServerSettingsView: View {
     showingManagerTokenSyncAlert = true
   }
 
-  private func updateLocalPrivateConfigManagerToken() {
+  private func chooseAndUpdateLocalPrivateConfigManagerToken() {
+    let configDirectoryURL = FileManager.default.homeDirectoryForCurrentUser
+      .appendingPathComponent("Documents/GitHub/UpDockWebPage/updock-private")
+
+    let panel = NSOpenPanel()
+    panel.title = "Choose Private Config"
+    panel.message = "Select paddle-config.php in updock-private."
+    panel.prompt = "Update Config"
+    panel.directoryURL = configDirectoryURL
+    panel.canChooseDirectories = false
+    panel.canChooseFiles = true
+    panel.allowsMultipleSelection = false
+    if let phpType = UTType(filenameExtension: "php") {
+      panel.allowedContentTypes = [phpType]
+    }
+
+    guard panel.runModal() == .OK, let configURL = panel.url else {
+      managerTokenConfigUpdateMessage = "Local private config was not updated."
+      return
+    }
+
+    updateLocalPrivateConfigManagerToken(at: configURL)
+  }
+
+  private func updateLocalPrivateConfigManagerToken(at configURL: URL) {
     do {
-      let configURL = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Documents/GitHub/UpDockWebPage/updock-private/paddle-config.php")
+      let didAccess = configURL.startAccessingSecurityScopedResource()
+      defer {
+        if didAccess {
+          configURL.stopAccessingSecurityScopedResource()
+        }
+      }
 
       var config = try String(contentsOf: configURL, encoding: .utf8)
       let escapedToken = managerToken.replacingOccurrences(of: "'", with: "\\'")
@@ -484,7 +517,7 @@ struct ServerSettingsView: View {
       )
 
       try config.write(to: configURL, atomically: true, encoding: .utf8)
-      managerTokenConfigUpdateMessage = "Updated local private config. Sync it separately to the server."
+      managerTokenConfigUpdateMessage = "Updated \(configURL.lastPathComponent). Sync it separately to the server."
     } catch {
       managerTokenConfigUpdateMessage = "Could not update local private config: \(error.localizedDescription)"
     }
