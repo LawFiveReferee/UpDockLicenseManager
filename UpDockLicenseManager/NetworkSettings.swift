@@ -93,6 +93,14 @@ final class NetworkSettings {
         )
     }
 
+    func authenticatedOperationsStatusURL(token: String) -> String {
+        authenticatedURL(
+            baseURL: operationsStatusURL,
+            token: token,
+            queryItems: []
+        )
+    }
+
     var simulateURL: String {
         serverBaseURL + "/simulate.php"
     }
@@ -173,6 +181,18 @@ final class NetworkSettings {
         queryItems: [URLQueryItem]
     ) -> String {
         let token = KeychainSettingsStore.shared.managerToken
+        return authenticatedURL(
+            baseURL: baseURL,
+            token: token,
+            queryItems: queryItems
+        )
+    }
+
+    private func authenticatedURL(
+        baseURL: String,
+        token: String,
+        queryItems: [URLQueryItem]
+    ) -> String {
         var components = URLComponents(string: baseURL)
         components?.queryItems = [URLQueryItem(name: "token", value: token)] + queryItems
 

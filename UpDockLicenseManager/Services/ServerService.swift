@@ -84,9 +84,12 @@ final class ServerService {
     return try JSONDecoder().decode(WebhookLogResponse.self, from: data)
   }
 
-  func fetchOperationsStatus(settings: NetworkSettings) async throws -> OperationsStatusResponse {
+  func fetchOperationsStatus(
+    settings: NetworkSettings,
+    managerToken: String
+  ) async throws -> OperationsStatusResponse {
     let data = try await NetworkService.shared.get(
-      from: settings.authenticatedOperationsStatusURL
+      from: settings.authenticatedOperationsStatusURL(token: managerToken)
     )
 
     return try JSONDecoder().decode(OperationsStatusResponse.self, from: data)

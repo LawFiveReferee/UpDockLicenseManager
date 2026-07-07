@@ -63,13 +63,13 @@ struct ServerSettingsView: View {
 
         LabeledContent("Operations Status") {
           HStack {
-            Text(settings.authenticatedOperationsStatusURL)
+            Text(operationsStatusURL)
               .font(.caption.monospaced())
               .foregroundStyle(.secondary)
               .textSelection(.enabled)
 
             Button("Copy", systemImage: "doc.on.doc") {
-              copyToPasteboard(settings.authenticatedOperationsStatusURL)
+              copyToPasteboard(operationsStatusURL)
             }
             .labelStyle(.iconOnly)
           }
@@ -387,6 +387,10 @@ struct ServerSettingsView: View {
       : AnyShapeStyle(.orange)
   }
 
+  private var operationsStatusURL: String {
+    settings.authenticatedOperationsStatusURL(token: managerToken)
+  }
+
   private func checkConnection() async {
     isCheckingConnection = true
     healthError = nil
@@ -418,9 +422,13 @@ struct ServerSettingsView: View {
   private func fetchOperationsStatus() async {
     isFetchingOperationsStatus = true
     operationsStatusError = nil
+    KeychainSettingsStore.shared.managerToken = managerToken
 
     do {
-      operationsStatus = try await ServerService.shared.fetchOperationsStatus(settings: settings)
+      operationsStatus = try await ServerService.shared.fetchOperationsStatus(
+        settings: settings,
+        managerToken: managerToken
+      )
       operationsStatusCheckedAt = Date()
     } catch {
       operationsStatus = nil

@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.24 — Operations Token Handling
+- Bumped app version to 1.0.24 build 29.
+- Server Operations now uses the current Manager Token field value when building and fetching the operations-status URL.
+- Refresh Operations saves the current Manager Token before making the request.
+
 ## v1.0.23 — Server Operations Summary
 - Bumped app version to 1.0.23 build 28.
 - Server Settings now fetches and displays operations-status counts inside the app.
