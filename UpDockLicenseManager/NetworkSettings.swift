@@ -82,6 +82,17 @@ final class NetworkSettings {
         serverBaseURL + "/activation-status.php"
     }
 
+    var operationsStatusURL: String {
+        serverBaseURL + "/operations-status.php"
+    }
+
+    var authenticatedOperationsStatusURL: String {
+        authenticatedURL(
+            baseURL: operationsStatusURL,
+            queryItems: []
+        )
+    }
+
     var simulateURL: String {
         serverBaseURL + "/simulate.php"
     }

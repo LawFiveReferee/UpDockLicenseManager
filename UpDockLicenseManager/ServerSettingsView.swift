@@ -56,6 +56,20 @@ struct ServerSettingsView: View {
             .foregroundStyle(.secondary)
             .textSelection(.enabled)
         }
+
+        LabeledContent("Operations Status") {
+          HStack {
+            Text(settings.authenticatedOperationsStatusURL)
+              .font(.caption.monospaced())
+              .foregroundStyle(.secondary)
+              .textSelection(.enabled)
+
+            Button("Copy", systemImage: "doc.on.doc") {
+              copyToPasteboard(settings.authenticatedOperationsStatusURL)
+            }
+            .labelStyle(.iconOnly)
+          }
+        }
       }
 
       Section("Manager Token") {
@@ -82,11 +96,7 @@ struct ServerSettingsView: View {
           }
 
           Button("Copy") {
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(
-              managerToken,
-              forType: .string
-            )
+            copyToPasteboard(managerToken)
           }
 
           Button("Save") {
@@ -332,6 +342,11 @@ struct ServerSettingsView: View {
         .foregroundStyle(.secondary)
         .textSelection(.enabled)
     }
+  }
+
+  private func copyToPasteboard(_ value: String) {
+    NSPasteboard.general.clearContents()
+    NSPasteboard.general.setString(value, forType: .string)
   }
 
   private func writableLabel(_ isWritable: Bool) -> some View {

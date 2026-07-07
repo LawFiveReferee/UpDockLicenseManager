@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.22 — Operations Status URL
+- Bumped app version to 1.0.22 build 27.
+- Server Settings now builds the authenticated operations-status URL from the saved base URL and manager token.
+- Added a copy action for the operations-status URL.
+
 ## v1.0.21 — Email Sent Tracking
 - Bumped app version to 1.0.21 build 26.
 - Added a Sent email delivery state so prepared drafts and completed customer delivery are tracked separately.
