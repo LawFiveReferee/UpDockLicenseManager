@@ -242,8 +242,16 @@ struct ServerSettingsView: View {
           if !operationsStatus.latest.webhookEvents.isEmpty {
             Divider()
 
-            Text("Recent Webhook Events")
-              .font(.headline)
+            HStack {
+              Text("Recent Webhook Events")
+                .font(.headline)
+
+              Spacer()
+
+              Button("Copy Results", systemImage: "doc.on.doc") {
+                copyWebhookEventResults()
+              }
+            }
 
             ForEach(operationsStatus.latest.webhookEvents.prefix(5)) { event in
               VStack(alignment: .leading, spacing: 4) {
@@ -677,6 +685,34 @@ struct ServerSettingsView: View {
     default:
       return AnyShapeStyle(.secondary)
     }
+  }
+
+  private func copyWebhookEventResults() {
+    guard let operationsStatus else {
+      return
+    }
+
+    let results = operationsStatus.latest.webhookEvents.prefix(5).enumerated().map { index, event in
+      var lines = [
+        "\(index + 1). \(event.message)",
+        "status: \(event.status)"
+      ]
+
+      if let time = event.time {
+        lines.append("time: \(time)")
+      }
+
+      if let context = event.context, !context.isEmpty {
+        lines.append(contentsOf: context.sorted(by: { $0.key < $1.key }).map { key, value in
+          "\(key): \(value)"
+        })
+      }
+
+      return lines.joined(separator: "\n")
+    }
+    .joined(separator: "\n\n")
+
+    copyToPasteboard(results)
   }
 
   private func copyToPasteboard(_ value: String) {

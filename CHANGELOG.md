@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.31 — Copy Webhook Diagnostics
+- Bumped app version to 1.0.31 build 36.
+- Added a Copy Results button for Recent Webhook Events in Server Settings.
+- Copied diagnostics include event message, status, time, and context fields.
+
 ## v1.0.30 — Webhook Event Diagnostics
 - Bumped app version to 1.0.30 build 35.
 - Server Settings now displays webhook event context such as Paddle status code, path, and sanitized error details.
