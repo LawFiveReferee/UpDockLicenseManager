@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.26 — Manager Token Sync Reminder
+- Bumped app version to 1.0.26 build 31.
+- Generating or saving a Manager Token now shows a reminder to update and separately sync the private web config.
+- Added a Copy Token action in the reminder so the private config can be updated without reselecting the field.
+
 ## v1.0.25 — Operations Token Fallback
 - Bumped app version to 1.0.25 build 30.
 - Refresh Operations now retries with the saved Keychain manager token if the visible Manager Token field returns HTTP 401.

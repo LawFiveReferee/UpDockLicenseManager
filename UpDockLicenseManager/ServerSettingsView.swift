@@ -23,6 +23,7 @@ struct ServerSettingsView: View {
   @State private var operationsStatusError: String?
   @State private var operationsStatusCheckedAt: Date?
   @State private var isFetchingOperationsStatus = false
+  @State private var showingManagerTokenSyncAlert = false
 
   var body: some View {
     Form {
@@ -96,7 +97,7 @@ struct ServerSettingsView: View {
 
           Button("Generate") {
             managerToken = TokenGenerator.makeManagerToken()
-            KeychainSettingsStore.shared.managerToken = managerToken
+            saveManagerToken()
           }
 
           Button("Copy") {
@@ -104,7 +105,7 @@ struct ServerSettingsView: View {
           }
 
           Button("Save") {
-            KeychainSettingsStore.shared.managerToken = managerToken
+            saveManagerToken()
           }
           .buttonStyle(.borderedProminent)
         }
@@ -351,6 +352,15 @@ struct ServerSettingsView: View {
     }
     .formStyle(.grouped)
     .padding()
+    .alert("Manager Token Saved", isPresented: $showingManagerTokenSyncAlert) {
+      Button("Copy Token") {
+        copyToPasteboard(managerToken)
+      }
+
+      Button("OK") {}
+    } message: {
+      Text("Update UPDOCK_MANAGER_TOKEN in the private paddle-config.php file, then sync that private file separately to the server.")
+    }
   }
 
   private var connectionStatusTitle: String {
@@ -435,6 +445,11 @@ struct ServerSettingsView: View {
     }
 
     isFetchingOperationsStatus = false
+  }
+
+  private func saveManagerToken() {
+    KeychainSettingsStore.shared.managerToken = managerToken
+    showingManagerTokenSyncAlert = true
   }
 
   private func retryOperationsStatusWithSavedToken(after firstError: Error) async {
