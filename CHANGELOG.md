@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.20 — Customer License Email Detail
+- Bumped app version to 1.0.20 build 25.
+- License email drafts now include serial number, seat allowance, and Paddle purchase reference when available.
+- Site-license email subjects now identify the message as a site license.
+
 ## v1.0.19 — Activation Visibility
 - Bumped app version to 1.0.19 build 24.
 - Seat Usage and Activation Registry cards now appear for all commercial licenses.
