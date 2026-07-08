@@ -237,6 +237,9 @@ struct ContentView: View {
 
           selectedFilter = .all
           selectedLicense = selectedFulfilledLicense
+        },
+        onPrepareEmailDrafts: { licenses in
+          prepareEmailDraftsAfterFulfillment(for: licenses)
         }
       )
     }
@@ -641,6 +644,34 @@ struct ContentView: View {
 
       throw error
     }
+  }
+
+  private func prepareEmailDraftsAfterFulfillment(
+    for licenses: [LicenseRecord]
+  ) -> EmailDraftPreparationResult {
+    var preparedCount = 0
+    var failedCount = 0
+    var skippedCount = 0
+
+    for license in licenses {
+      guard !license.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        skippedCount += 1
+        continue
+      }
+
+      do {
+        _ = try prepareEmailDelivery(for: license)
+        preparedCount += 1
+      } catch {
+        failedCount += 1
+      }
+    }
+
+    return EmailDraftPreparationResult(
+      preparedCount: preparedCount,
+      failedCount: failedCount,
+      skippedCount: skippedCount
+    )
   }
 
   private func markEmailSent(for license: LicenseRecord) -> LicenseRecord {

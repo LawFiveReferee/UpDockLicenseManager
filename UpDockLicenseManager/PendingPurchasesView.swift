@@ -8,15 +8,41 @@
 import Foundation
 import SwiftUI
 
+struct EmailDraftPreparationResult {
+  var preparedCount: Int
+  var failedCount: Int
+  var skippedCount: Int
+
+  var statusText: String {
+    var parts: [String] = []
+
+    if preparedCount > 0 {
+      parts.append("Prepared \(preparedCount) email draft\(preparedCount == 1 ? "" : "s")")
+    }
+
+    if skippedCount > 0 {
+      parts.append("Skipped \(skippedCount) without customer email")
+    }
+
+    if failedCount > 0 {
+      parts.append("\(failedCount) email draft\(failedCount == 1 ? "" : "s") failed")
+    }
+
+    return parts.joined(separator: ". ")
+  }
+}
+
 struct PendingPurchasesView: View {
   @Environment(\.dismiss) private var dismiss
 
   let existingLicensesForTransactionID: (String) -> [LicenseRecord]
   let onFulfillPurchase: ([LicenseRecord], [LicenseRecord]) -> Void
+  let onPrepareEmailDrafts: ([LicenseRecord]) -> EmailDraftPreparationResult
 
   @State private var networkSettings = NetworkSettings()
   @State private var purchases: [PendingPaddlePurchase] = []
   @State private var selectedPurchaseIDs: Set<PendingPaddlePurchase.ID> = []
+  @AppStorage("prepareEmailDraftsAfterFulfillment") private var prepareEmailDraftsAfterFulfillment = false
 
   @State private var isLoading = false
   @State private var fulfillingTransactionID: String?
@@ -200,6 +226,7 @@ struct PendingPurchasesView: View {
         BatchFulfillmentDetailView(
           selectedCount: selectedPurchases.count,
           progress: batchProgress,
+          prepareEmailDraftsAfterFulfillment: $prepareEmailDraftsAfterFulfillment,
           onFulfillSelected: {
             Task {
               await fulfillSelectedPurchases()
@@ -211,6 +238,7 @@ struct PendingPurchasesView: View {
           purchase: selectedPurchase,
           isFulfilling: fulfillingTransactionID == selectedPurchase.transactionID,
           statusMessage: statusMessage,
+          prepareEmailDraftsAfterFulfillment: $prepareEmailDraftsAfterFulfillment,
           onFulfillPurchase: { purchase in
             Task {
               await fulfillPurchase(purchase)
@@ -352,6 +380,7 @@ struct PendingPurchasesView: View {
       )
 
       onFulfillPurchase(result.createdLicenses, result.updatedExistingLicenses)
+      let emailDraftResult = prepareEmailDraftsIfNeeded(for: result.createdLicenses)
 
       removePurchases([purchase])
       selectedPurchaseIDs = nextSelectionIDs
@@ -360,7 +389,10 @@ struct PendingPurchasesView: View {
         preferredSelectionIDs: nextSelectionIDs,
         selectFirstIfNeeded: true
       )
-      statusMessage = result.statusMessage
+      statusMessage = fulfillmentStatusMessage(
+        result.statusMessage,
+        emailDraftResult: emailDraftResult
+      )
     } catch {
       errorMessage = error.localizedDescription
     }
@@ -385,6 +417,9 @@ struct PendingPurchasesView: View {
 
     var createdLicenseCount = 0
     var existingLicenseCount = 0
+    var emailDraftPreparedCount = 0
+    var emailDraftFailedCount = 0
+    var emailDraftSkippedCount = 0
     var completedPurchases: [PendingPaddlePurchase] = []
 
     for purchase in purchasesToFulfill {
@@ -401,6 +436,11 @@ struct PendingPurchasesView: View {
         createdLicenseCount += result.createdLicenses.count
         existingLicenseCount += result.updatedExistingLicenses.count
         onFulfillPurchase(result.createdLicenses, result.updatedExistingLicenses)
+        if let emailDraftResult = prepareEmailDraftsIfNeeded(for: result.createdLicenses) {
+          emailDraftPreparedCount += emailDraftResult.preparedCount
+          emailDraftFailedCount += emailDraftResult.failedCount
+          emailDraftSkippedCount += emailDraftResult.skippedCount
+        }
 
         completedPurchases.append(purchase)
         removePurchases([purchase])
@@ -427,7 +467,12 @@ struct PendingPurchasesView: View {
       statusMessage = batchStatusMessage(
         createdLicenseCount: createdLicenseCount,
         existingLicenseCount: existingLicenseCount,
-        purchaseCount: completedPurchases.count
+        purchaseCount: completedPurchases.count,
+        emailDraftResult: EmailDraftPreparationResult(
+          preparedCount: emailDraftPreparedCount,
+          failedCount: emailDraftFailedCount,
+          skippedCount: emailDraftSkippedCount
+        )
       )
     }
 
@@ -486,16 +531,43 @@ struct PendingPurchasesView: View {
     }
   }
 
+  private func prepareEmailDraftsIfNeeded(
+    for licenses: [LicenseRecord]
+  ) -> EmailDraftPreparationResult? {
+    guard prepareEmailDraftsAfterFulfillment else {
+      return nil
+    }
+
+    return onPrepareEmailDrafts(licenses)
+  }
+
+  private func fulfillmentStatusMessage(
+    _ baseMessage: String,
+    emailDraftResult: EmailDraftPreparationResult?
+  ) -> String {
+    guard let emailDraftResult,
+          !emailDraftResult.statusText.isEmpty else {
+      return baseMessage
+    }
+
+    return baseMessage + " " + emailDraftResult.statusText + "."
+  }
+
   private func batchStatusMessage(
     createdLicenseCount: Int,
     existingLicenseCount: Int,
-    purchaseCount: Int
+    purchaseCount: Int,
+    emailDraftResult: EmailDraftPreparationResult
   ) -> String {
+    let emailStatus = emailDraftResult.statusText.isEmpty
+      ? ""
+      : " " + emailDraftResult.statusText + "."
+
     if existingLicenseCount == 0 {
-      return "Fulfilled \(purchaseCount) purchase\(purchaseCount == 1 ? "" : "s") and created \(createdLicenseCount) license\(createdLicenseCount == 1 ? "" : "s")."
+      return "Fulfilled \(purchaseCount) purchase\(purchaseCount == 1 ? "" : "s") and created \(createdLicenseCount) license\(createdLicenseCount == 1 ? "" : "s")." + emailStatus
     }
 
-    return "Fulfilled \(purchaseCount) purchase\(purchaseCount == 1 ? "" : "s"): \(createdLicenseCount) new license\(createdLicenseCount == 1 ? "" : "s"), \(existingLicenseCount) existing."
+    return "Fulfilled \(purchaseCount) purchase\(purchaseCount == 1 ? "" : "s"): \(createdLicenseCount) new license\(createdLicenseCount == 1 ? "" : "s"), \(existingLicenseCount) existing." + emailStatus
   }
 }
 
@@ -516,6 +588,7 @@ struct BatchFulfillmentProgress {
 struct BatchFulfillmentDetailView: View {
   let selectedCount: Int
   let progress: BatchFulfillmentProgress?
+  @Binding var prepareEmailDraftsAfterFulfillment: Bool
   let onFulfillSelected: () -> Void
 
   var body: some View {
@@ -527,6 +600,15 @@ struct BatchFulfillmentDetailView: View {
         detailCard("Selected Purchases") {
           row("Count", "\(selectedCount)")
           row("Mode", "Sequential fulfillment")
+        }
+
+        detailCard("Delivery") {
+          Toggle(
+            "Prepare email drafts after fulfillment",
+            isOn: $prepareEmailDraftsAfterFulfillment
+          )
+          Text("Mail drafts are prepared for newly created licenses with customer email addresses.")
+            .foregroundStyle(.secondary)
         }
 
         if let progress {
@@ -584,6 +666,7 @@ struct PendingPurchaseDetailView: View {
   let purchase: PendingPaddlePurchase
   let isFulfilling: Bool
   let statusMessage: String?
+  @Binding var prepareEmailDraftsAfterFulfillment: Bool
   let onFulfillPurchase: (PendingPaddlePurchase) -> Void
 
   @State private var showingLicensePreview = false
@@ -658,6 +741,16 @@ struct PendingPurchaseDetailView: View {
           }
           row("Expiration", "None")
           row("Result", fulfillmentResultText)
+          row("Email", prepareEmailDraftsAfterFulfillment ? "Prepare draft after fulfillment" : "Manual from license detail")
+        }
+
+        detailCard("Delivery") {
+          Toggle(
+            "Prepare email draft after fulfillment",
+            isOn: $prepareEmailDraftsAfterFulfillment
+          )
+          Text("The app will create a signed license file and open an Apple Mail draft for the customer.")
+            .foregroundStyle(.secondary)
         }
 
         if let siteLicensePricingTier {
@@ -811,7 +904,7 @@ struct PendingLicensePreviewView: View {
           previewCard("Fulfillment") {
             row("Local Action", localActionText)
             row("Web Action", "Archive transaction")
-            row("Email", "Prepared after license creation")
+            row("Email", "Optional draft after license creation")
           }
         }
         .padding(24)

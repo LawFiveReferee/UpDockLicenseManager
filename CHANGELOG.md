@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.32 — Fulfillment Email Draft Option
+- Bumped app version to 1.0.32 build 37.
+- Pending Purchases now has a persistent option to prepare customer email drafts after fulfillment.
+- Single and batch fulfillment status messages now report prepared, skipped, and failed email drafts.
+
 ## v1.0.31 — Copy Webhook Diagnostics
 - Bumped app version to 1.0.31 build 36.
 - Added a Copy Results button for Recent Webhook Events in Server Settings.
