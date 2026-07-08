@@ -29,6 +29,10 @@ final class PaddleSettings {
     didSet { save() }
   }
 
+  var clientSideToken: String {
+    didSet { save() }
+  }
+
   private let defaults = UserDefaults.standard
 
   init() {
@@ -38,12 +42,14 @@ final class PaddleSettings {
 
     defaultProductID = defaults.string(forKey: "paddle.product") ?? ""
     defaultPriceID = defaults.string(forKey: "paddle.price") ?? ""
+    clientSideToken = defaults.string(forKey: "paddle.clientSideToken") ?? ""
   }
 
   private func save() {
     defaults.set(environment.rawValue, forKey: "paddle.environment")
     defaults.set(defaultProductID, forKey: "paddle.product")
     defaults.set(defaultPriceID, forKey: "paddle.price")
+    defaults.set(clientSideToken, forKey: "paddle.clientSideToken")
   }
 }
 
@@ -213,6 +219,14 @@ struct SiteLicensePricingTier: Identifiable, Codable, Hashable {
     }
 
     return "\(minimumSeats)+"
+  }
+
+  var attributeRangeLabel: String {
+    if let maximumSeats {
+      return "\(minimumSeats)-\(maximumSeats)"
+    }
+
+    return "\(minimumSeats)-plus"
   }
 
   static var defaults: [SiteLicensePricingTier] {

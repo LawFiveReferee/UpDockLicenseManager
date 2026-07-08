@@ -83,11 +83,24 @@ struct PaddleSettingsView: View {
       }
 
       Section("Default Product") {
+        TextField("Client-Side Token", text: $settings.clientSideToken)
+          .textFieldStyle(.roundedBorder)
+
         TextField("Product ID", text: $settings.defaultProductID)
           .textFieldStyle(.roundedBorder)
 
         TextField("Price ID", text: $settings.defaultPriceID)
           .textFieldStyle(.roundedBorder)
+
+        HStack {
+          Button("Copy Checkout HTML") {
+            copyCheckoutHTMLBlock()
+          }
+          .disabled(settings.clientSideToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+          Text("Copies the pro.html purchase button block using the current environment, client token, and site-license pricing table.")
+            .foregroundStyle(.secondary)
+        }
       }
 
       Section("Fulfillment Policy") {
@@ -291,6 +304,84 @@ struct PaddleSettingsView: View {
     case .production:
       return "https://api.paddle.com"
     }
+  }
+
+  private func copyCheckoutHTMLBlock() {
+    NSPasteboard.general.clearContents()
+    NSPasteboard.general.setString(checkoutHTMLBlock, forType: .string)
+    savedMessage = "Checkout HTML copied. Paste it over the existing pro.html purchase block, then sync public web files."
+  }
+
+  private var checkoutHTMLBlock: String {
+    let token = htmlAttribute(settings.clientSideToken)
+    let defaultPriceID = htmlAttribute(defaultCheckoutPriceID)
+    let baseUnitPrice = String(format: "%.2f", defaultBaseUnitPrice)
+    let environmentLine = settings.environment == .sandbox
+      ? "\n            data-paddle-environment=\"sandbox\""
+      : ""
+    let tierLines = siteLicensePricing.tiers
+      .sorted { first, second in
+        first.minimumSeats < second.minimumSeats
+      }
+      .map { tier in
+        "            data-paddle-price-id-\(tier.attributeRangeLabel)=\"\(htmlAttribute(tier.priceID))\""
+      }
+      .joined(separator: "\n")
+
+    return """
+        <div class="hero-actions">
+          <button
+            class="button button-primary"
+            id="buy-updock-pro"
+            type="button"
+
+            data-paddle-client-token="\(token)"
+            data-paddle-price-id="\(defaultPriceID)"
+            data-paddle-base-unit-price="\(baseUnitPrice)"
+            data-paddle-currency="USD"
+\(tierLines)\(environmentLine)
+            data-paddle-success-url="https://updockapp.com/thanks.html"
+
+          >
+            Purchase UpDock Pro
+          </button>
+          <p class="checkout-status" id="buy-updock-pro-status" role="status" aria-live="polite"></p>
+          <a class="button button-secondary" href="compare.html">Compare Versions</a>
+        </div>
+"""
+  }
+
+  private var defaultCheckoutPriceID: String {
+    let savedDefaultPriceID = settings.defaultPriceID.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    if !savedDefaultPriceID.isEmpty {
+      return savedDefaultPriceID
+    }
+
+    return siteLicensePricing.tiers
+      .sorted { first, second in
+        first.minimumSeats < second.minimumSeats
+      }
+      .first?
+      .priceID ?? ""
+  }
+
+  private var defaultBaseUnitPrice: Double {
+    siteLicensePricing.tiers
+      .sorted { first, second in
+        first.minimumSeats < second.minimumSeats
+      }
+      .first?
+      .unitPrice ?? 19.99
+  }
+
+  private func htmlAttribute(_ value: String) -> String {
+    value
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .replacingOccurrences(of: "&", with: "&amp;")
+      .replacingOccurrences(of: "\"", with: "&quot;")
+      .replacingOccurrences(of: "<", with: "&lt;")
+      .replacingOccurrences(of: ">", with: "&gt;")
   }
 
   private func updateLocalPrivateConfig(constants: [String: String]) {

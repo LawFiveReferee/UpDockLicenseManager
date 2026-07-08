@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.39 — Checkout HTML Builder
+- Bumped app version to 1.0.39 build 44.
+- Paddle Settings now stores the Paddle client-side token.
+- Added a Copy Checkout HTML action that builds the pro.html purchase block from the current Paddle environment and site-license pricing table.
+
 ## v1.0.38 — Webhook Log Export
 - Bumped app version to 1.0.38 build 43.
 - Webhook Log now has Copy Log and Export Text actions for sharing Paddle diagnostics.
