@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.35 — Paddle Environment Readiness
+- Bumped app version to 1.0.35 build 40.
+- Production Readiness now compares the app Paddle environment with the server Paddle API mode reported by health.php.
+- The readiness check warns when the app is set to Sandbox but the server is Production, or the reverse.
+
 ## v1.0.34 — Paddle Private Config Updates
 - Bumped app version to 1.0.34 build 39.
 - Paddle Settings can now update PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, and PADDLE_API_BASE_URL in the local private paddle-config.php file.

@@ -29,6 +29,7 @@ private enum ProductionReadinessStatus {
 
 struct ServerSettingsView: View {
   @State private var settings = NetworkSettings()
+  @State private var paddleSettings = PaddleSettings()
   @State private var managerToken = KeychainSettingsStore.shared.managerToken
   @State private var showingToken = false
   @State private var healthResponse: HealthResponse?
@@ -507,6 +508,7 @@ struct ServerSettingsView: View {
           : "Save the Paddle notification secret in Paddle Settings."
       ),
       privateConfigReadinessItem,
+      paddleEnvironmentReadinessItem,
       serverHealthReadinessItem,
       storageReadinessItem,
       operationsReadinessItem,
@@ -577,6 +579,35 @@ struct ServerSettingsView: View {
       title: "Private Web Config",
       status: isLoaded ? .ready : .warning,
       detail: isLoaded ? "Private config is loaded on the server." : "Private config is not loaded on the server."
+    )
+  }
+
+  private var paddleEnvironmentReadinessItem: ProductionReadinessItem {
+    guard let healthResponse else {
+      return ProductionReadinessItem(
+        title: "Paddle Environment",
+        status: .notChecked,
+        detail: "Run Test Connection."
+      )
+    }
+
+    let serverMode = healthResponse.paddleApiMode?.lowercased() ?? "unknown"
+    let appMode = paddleSettings.environment == .sandbox ? "sandbox" : "production"
+
+    guard serverMode != "unknown" else {
+      return ProductionReadinessItem(
+        title: "Paddle Environment",
+        status: .warning,
+        detail: "Server Paddle API mode is unknown. Sync the latest public web files and private config."
+      )
+    }
+
+    return ProductionReadinessItem(
+      title: "Paddle Environment",
+      status: serverMode == appMode ? .ready : .warning,
+      detail: serverMode == appMode
+        ? "App and server are both using \(paddleSettings.environment.rawValue)."
+        : "App is \(paddleSettings.environment.rawValue), but server is \(serverMode)."
     )
   }
 

@@ -25,5 +25,7 @@ struct HealthResponse: Codable {
 
     let privateConfigLoaded: Bool?
 
+    let paddleApiMode: String?
+
     let webhookLogWritable: Bool?
 }
