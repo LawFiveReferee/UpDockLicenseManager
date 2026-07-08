@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.37 — Pending Purchase Customer Display
+- Bumped app version to 1.0.37 build 42.
+- Pending Purchases now uses the normalized customer email and name fallback logic in the purchase list.
+
 ## v1.0.36 — Pending Purchase Environment Labels
 - Bumped app version to 1.0.36 build 41.
 - Pending Purchases now shows the Paddle environment for each transaction before fulfillment.

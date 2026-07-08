@@ -193,10 +193,10 @@ struct PendingPurchasesView: View {
       List(selection: $selectedPurchaseIDs) {
         ForEach(purchases) { purchase in
           VStack(alignment: .leading, spacing: 5) {
-            Text(purchase.payload.data?.customer?.email ?? "Unknown Customer")
+            Text(customerTitle(for: purchase))
               .font(.headline)
 
-            Text(purchase.payload.data?.customer?.name ?? "—")
+            Text(customerSubtitle(for: purchase))
               .foregroundStyle(.secondary)
 
             Text(purchase.transactionID)
@@ -586,6 +586,16 @@ struct PendingPurchasesView: View {
     default:
       return AnyShapeStyle(.secondary)
     }
+  }
+
+  private func customerTitle(for purchase: PendingPaddlePurchase) -> String {
+    let email = purchase.payload.data?.customerEmail ?? ""
+    return email.isEmpty ? "Unknown Customer" : email
+  }
+
+  private func customerSubtitle(for purchase: PendingPaddlePurchase) -> String {
+    let name = purchase.payload.data?.customerName ?? ""
+    return name.isEmpty ? "—" : name
   }
 }
 
