@@ -11,6 +11,22 @@ import UniformTypeIdentifiers
 
 private let localPrivateConfigBookmarkKey = "localPrivateConfigBookmark"
 
+private struct ProductionReadinessItem: Identifiable {
+  var title: String
+  var status: ProductionReadinessStatus
+  var detail: String
+
+  var id: String {
+    title
+  }
+}
+
+private enum ProductionReadinessStatus {
+  case ready
+  case warning
+  case notChecked
+}
+
 struct ServerSettingsView: View {
   @State private var settings = NetworkSettings()
   @State private var managerToken = KeychainSettingsStore.shared.managerToken
@@ -125,6 +141,25 @@ struct ServerSettingsView: View {
           Text(managerTokenConfigUpdateMessage)
             .foregroundStyle(.secondary)
         }
+      }
+
+      Section("Production Readiness") {
+        HStack {
+          Label(productionReadinessTitle, systemImage: productionReadinessSymbol)
+            .foregroundStyle(productionReadinessStyle)
+
+          Spacer()
+
+          Text("\(productionReadyCount) of \(productionReadinessItems.count) ready")
+            .foregroundStyle(.secondary)
+        }
+
+        ForEach(productionReadinessItems) { item in
+          readinessRow(item)
+        }
+
+        Text("Use Test Connection and Refresh Operations to update server-side checks.")
+          .foregroundStyle(.secondary)
       }
 
       Section("Connection") {
@@ -443,6 +478,210 @@ struct ServerSettingsView: View {
     settings.authenticatedOperationsStatusURL(token: managerToken)
   }
 
+  private var productionReadinessItems: [ProductionReadinessItem] {
+    [
+      ProductionReadinessItem(
+        title: "Signing Key",
+        status: signingKeyIsPresent ? .ready : .warning,
+        detail: signingKeyIsPresent ? "Signing identity is present." : "Create or import a signing identity."
+      ),
+      ProductionReadinessItem(
+        title: "Manager Token",
+        status: managerToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .warning : .ready,
+        detail: managerToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+          ? "Generate and save a manager token."
+          : "Manager token is present."
+      ),
+      ProductionReadinessItem(
+        title: "Paddle API Key",
+        status: keychainValueIsPresent(KeychainSettingsStore.shared.paddleAPIKey) ? .ready : .warning,
+        detail: keychainValueIsPresent(KeychainSettingsStore.shared.paddleAPIKey)
+          ? "Paddle API key is saved locally."
+          : "Save a Paddle API key in Paddle Settings."
+      ),
+      ProductionReadinessItem(
+        title: "Paddle Webhook Secret",
+        status: keychainValueIsPresent(KeychainSettingsStore.shared.paddleNotificationSecret) ? .ready : .warning,
+        detail: keychainValueIsPresent(KeychainSettingsStore.shared.paddleNotificationSecret)
+          ? "Webhook secret is saved locally."
+          : "Save the Paddle notification secret in Paddle Settings."
+      ),
+      privateConfigReadinessItem,
+      serverHealthReadinessItem,
+      storageReadinessItem,
+      operationsReadinessItem,
+      pendingQueueReadinessItem,
+      webhookReadinessItem,
+      emailDraftReadinessItem
+    ]
+  }
+
+  private var productionReadyCount: Int {
+    productionReadinessItems.filter { $0.status == .ready }.count
+  }
+
+  private var productionReadinessTitle: String {
+    let warningCount = productionReadinessItems.filter { $0.status == .warning }.count
+    let notCheckedCount = productionReadinessItems.filter { $0.status == .notChecked }.count
+
+    if warningCount == 0 && notCheckedCount == 0 {
+      return "Ready for production review"
+    }
+
+    if warningCount > 0 {
+      return "\(warningCount) item\(warningCount == 1 ? "" : "s") need attention"
+    }
+
+    return "\(notCheckedCount) item\(notCheckedCount == 1 ? "" : "s") not checked"
+  }
+
+  private var productionReadinessSymbol: String {
+    productionReadinessItems.contains { $0.status == .warning }
+      ? "exclamationmark.triangle"
+      : productionReadinessItems.contains { $0.status == .notChecked }
+        ? "questionmark.circle"
+        : "checkmark.circle"
+  }
+
+  private var productionReadinessStyle: AnyShapeStyle {
+    if productionReadinessItems.contains(where: { $0.status == .warning }) {
+      return AnyShapeStyle(.orange)
+    }
+
+    if productionReadinessItems.contains(where: { $0.status == .notChecked }) {
+      return AnyShapeStyle(.secondary)
+    }
+
+    return AnyShapeStyle(.green)
+  }
+
+  private var signingKeyIsPresent: Bool {
+    (try? SigningIdentityStore.loadPrivateKey()) != nil
+  }
+
+  private func keychainValueIsPresent(_ value: String) -> Bool {
+    !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
+  private var privateConfigReadinessItem: ProductionReadinessItem {
+    guard let healthResponse else {
+      return ProductionReadinessItem(
+        title: "Private Web Config",
+        status: .notChecked,
+        detail: "Run Test Connection."
+      )
+    }
+
+    let isLoaded = healthResponse.privateConfigLoaded ?? false
+    return ProductionReadinessItem(
+      title: "Private Web Config",
+      status: isLoaded ? .ready : .warning,
+      detail: isLoaded ? "Private config is loaded on the server." : "Private config is not loaded on the server."
+    )
+  }
+
+  private var serverHealthReadinessItem: ProductionReadinessItem {
+    guard let healthResponse else {
+      return ProductionReadinessItem(
+        title: "Server Health",
+        status: .notChecked,
+        detail: "Run Test Connection."
+      )
+    }
+
+    let isHealthy = healthResponse.status.localizedCaseInsensitiveContains("ok")
+    return ProductionReadinessItem(
+      title: "Server Health",
+      status: isHealthy ? .ready : .warning,
+      detail: isHealthy ? "Server health endpoint is OK." : "Server returned \(healthResponse.status)."
+    )
+  }
+
+  private var storageReadinessItem: ProductionReadinessItem {
+    guard let healthResponse else {
+      return ProductionReadinessItem(
+        title: "Server Storage",
+        status: .notChecked,
+        detail: "Run Test Connection."
+      )
+    }
+
+    return ProductionReadinessItem(
+      title: "Server Storage",
+      status: storageIsReady(healthResponse) ? .ready : .warning,
+      detail: storageIsReady(healthResponse)
+        ? "Transaction, fulfilled, license, activation, and webhook storage are writable."
+        : "One or more server storage directories are not writable."
+    )
+  }
+
+  private var operationsReadinessItem: ProductionReadinessItem {
+    guard operationsStatus != nil else {
+      return ProductionReadinessItem(
+        title: "Operations Status",
+        status: .notChecked,
+        detail: "Run Refresh Operations."
+      )
+    }
+
+    return ProductionReadinessItem(
+      title: "Operations Status",
+      status: .ready,
+      detail: "Protected operations endpoint is reachable."
+    )
+  }
+
+  private var pendingQueueReadinessItem: ProductionReadinessItem {
+    guard let operationsStatus else {
+      return ProductionReadinessItem(
+        title: "Pending Queue",
+        status: .notChecked,
+        detail: "Run Refresh Operations."
+      )
+    }
+
+    let pendingCount = operationsStatus.counts.pendingTransactions
+    return ProductionReadinessItem(
+      title: "Pending Queue",
+      status: pendingCount == 0 ? .ready : .warning,
+      detail: pendingCount == 0
+        ? "No pending transactions are waiting."
+        : "\(pendingCount) pending transaction\(pendingCount == 1 ? "" : "s") need review."
+    )
+  }
+
+  private var webhookReadinessItem: ProductionReadinessItem {
+    guard let latestWebhookEvent = operationsStatus?.latest.webhookEvents.first else {
+      return ProductionReadinessItem(
+        title: "Webhook Intake",
+        status: operationsStatus == nil ? .notChecked : .warning,
+        detail: operationsStatus == nil ? "Run Refresh Operations." : "No recent webhook events found."
+      )
+    }
+
+    let isStored = latestWebhookEvent.status.localizedCaseInsensitiveCompare("stored") == .orderedSame
+    return ProductionReadinessItem(
+      title: "Webhook Intake",
+      status: isStored ? .ready : .warning,
+      detail: isStored
+        ? "Latest webhook event was stored."
+        : "Latest webhook event is \(latestWebhookEvent.status): \(latestWebhookEvent.message)."
+    )
+  }
+
+  private var emailDraftReadinessItem: ProductionReadinessItem {
+    let mailURL = URL(string: "mailto:support@updockapp.com")!
+    let mailAppURL = NSWorkspace.shared.urlForApplication(toOpen: mailURL)
+
+    return ProductionReadinessItem(
+      title: "Email Drafts",
+      status: mailAppURL == nil ? .warning : .ready,
+      detail: mailAppURL == nil
+        ? "No mail app is available for customer draft delivery."
+        : "Mail draft handoff is available."
+    )
+  }
+
   private func checkConnection() async {
     isCheckingConnection = true
     healthError = nil
@@ -644,6 +883,7 @@ struct ServerSettingsView: View {
       && healthResponse.fulfilledWritable
       && (healthResponse.licensesWritable ?? true)
       && (healthResponse.activationsWritable ?? true)
+      && (healthResponse.webhookLogWritable ?? true)
   }
 
   private func activationURLRow(_ label: String, _ url: String) -> some View {
@@ -658,6 +898,48 @@ struct ServerSettingsView: View {
   private func storageRow(_ label: String, _ isWritable: Bool) -> some View {
     LabeledContent(label) {
       writableLabel(isWritable)
+    }
+  }
+
+  private func readinessRow(_ item: ProductionReadinessItem) -> some View {
+    HStack(alignment: .top, spacing: 10) {
+      Image(systemName: readinessSymbol(for: item.status))
+        .foregroundStyle(readinessStyle(for: item.status))
+        .frame(width: 18)
+
+      VStack(alignment: .leading, spacing: 2) {
+        Text(item.title)
+          .font(.body.weight(.medium))
+
+        Text(item.detail)
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .textSelection(.enabled)
+      }
+
+      Spacer()
+    }
+  }
+
+  private func readinessSymbol(for status: ProductionReadinessStatus) -> String {
+    switch status {
+    case .ready:
+      return "checkmark.circle"
+    case .warning:
+      return "exclamationmark.triangle"
+    case .notChecked:
+      return "questionmark.circle"
+    }
+  }
+
+  private func readinessStyle(for status: ProductionReadinessStatus) -> AnyShapeStyle {
+    switch status {
+    case .ready:
+      return AnyShapeStyle(.green)
+    case .warning:
+      return AnyShapeStyle(.orange)
+    case .notChecked:
+      return AnyShapeStyle(.secondary)
     }
   }
 

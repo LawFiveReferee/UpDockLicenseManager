@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.33 — Production Readiness Panel
+- Bumped app version to 1.0.33 build 38.
+- Added a Production Readiness section to Server Settings.
+- Readiness checks now cover signing, local secrets, private web config, server health, storage, operations, pending queue, webhook intake, and email draft handoff.
+
 ## v1.0.32 — Fulfillment Email Draft Option
 - Bumped app version to 1.0.32 build 37.
 - Pending Purchases now has a persistent option to prepare customer email drafts after fulfillment.

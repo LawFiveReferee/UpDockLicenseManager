@@ -22,4 +22,8 @@ struct HealthResponse: Codable {
     let licensesWritable: Bool?
 
     let activationsWritable: Bool?
+
+    let privateConfigLoaded: Bool?
+
+    let webhookLogWritable: Bool?
 }
