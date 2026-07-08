@@ -270,8 +270,14 @@ struct PaddleSettingsView: View {
     .formStyle(.grouped)
     .padding()
     .onAppear {
-      apiKey = KeychainSettingsStore.shared.paddleAPIKey
+      apiKey = cleanedStoredAPIKey()
       notificationSecret = KeychainSettingsStore.shared.paddleNotificationSecret
+    }
+    .onChange(of: apiKey) { _, newValue in
+      KeychainSettingsStore.shared.paddleAPIKey = newValue
+    }
+    .onChange(of: notificationSecret) { _, newValue in
+      KeychainSettingsStore.shared.paddleNotificationSecret = newValue
     }
   }
 
@@ -307,6 +313,18 @@ struct PaddleSettingsView: View {
     case .production:
       return "https://api.paddle.com"
     }
+  }
+
+  private func cleanedStoredAPIKey() -> String {
+    let storedAPIKey = KeychainSettingsStore.shared.paddleAPIKey
+
+    guard storedAPIKey == "test_api_key_123" else {
+      return storedAPIKey
+    }
+
+    KeychainSettingsStore.shared.remove(.paddleAPIKey)
+    savedMessage = "Removed old test API key from Keychain."
+    return ""
   }
 
   private func copyCheckoutHTMLBlock() {

@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.41 — Paddle Secret Persistence
+- Bumped app version to 1.0.41 build 46.
+- Paddle Settings now saves API key and webhook secret edits immediately.
+- The old test_api_key_123 placeholder is cleared from Keychain if encountered.
+
 ## v1.0.40 — Paddle Secret Save Consistency
 - Bumped app version to 1.0.40 build 45.
 - Paddle Settings now saves API key and webhook secret to Keychain before updating the local private config file.
