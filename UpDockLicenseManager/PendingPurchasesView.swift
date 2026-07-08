@@ -202,6 +202,10 @@ struct PendingPurchasesView: View {
             Text(purchase.transactionID)
               .font(.system(.caption, design: .monospaced))
               .foregroundStyle(.secondary)
+
+            Text(purchase.paddleEnvironmentLabel)
+              .font(.caption.bold())
+              .foregroundStyle(environmentStyle(for: purchase))
           }
           .padding(.vertical, 4)
           .tag(purchase.id)
@@ -224,6 +228,7 @@ struct PendingPurchasesView: View {
     Group {
       if selectedPurchases.count > 1 {
         BatchFulfillmentDetailView(
+          purchases: selectedPurchases,
           selectedCount: selectedPurchases.count,
           progress: batchProgress,
           prepareEmailDraftsAfterFulfillment: $prepareEmailDraftsAfterFulfillment,
@@ -569,6 +574,19 @@ struct PendingPurchasesView: View {
 
     return "Fulfilled \(purchaseCount) purchase\(purchaseCount == 1 ? "" : "s"): \(createdLicenseCount) new license\(createdLicenseCount == 1 ? "" : "s"), \(existingLicenseCount) existing." + emailStatus
   }
+
+  private func environmentStyle(for purchase: PendingPaddlePurchase) -> AnyShapeStyle {
+    switch purchase.paddleEnvironment?.lowercased() {
+    case "production":
+      return AnyShapeStyle(.green)
+    case "sandbox":
+      return AnyShapeStyle(.blue)
+    case "unknown":
+      return AnyShapeStyle(.orange)
+    default:
+      return AnyShapeStyle(.secondary)
+    }
+  }
 }
 
 struct BatchFulfillmentProgress {
@@ -586,6 +604,7 @@ struct BatchFulfillmentProgress {
 }
 
 struct BatchFulfillmentDetailView: View {
+  let purchases: [PendingPaddlePurchase]
   let selectedCount: Int
   let progress: BatchFulfillmentProgress?
   @Binding var prepareEmailDraftsAfterFulfillment: Bool
@@ -600,6 +619,7 @@ struct BatchFulfillmentDetailView: View {
         detailCard("Selected Purchases") {
           row("Count", "\(selectedCount)")
           row("Mode", "Sequential fulfillment")
+          row("Environment", environmentSummary)
         }
 
         detailCard("Delivery") {
@@ -659,6 +679,16 @@ struct BatchFulfillmentDetailView: View {
       Text(value.isEmpty ? "—" : value)
         .textSelection(.enabled)
     }
+  }
+
+  private var environmentSummary: String {
+    let labels = Dictionary(grouping: purchases, by: \.paddleEnvironmentLabel)
+      .mapValues(\.count)
+
+    return labels
+      .sorted { $0.key < $1.key }
+      .map { "\($0.key): \($0.value)" }
+      .joined(separator: ", ")
   }
 }
 
@@ -720,6 +750,7 @@ struct PendingPurchaseDetailView: View {
 
         detailCard("Purchase") {
           row("Transaction ID", purchase.transactionID)
+          row("Environment", purchase.paddleEnvironmentLabel)
           row("Status", transaction?.status ?? "—")
           row("Received", purchase.receivedAt)
           row("Event Type", purchase.eventType)
@@ -886,6 +917,7 @@ struct PendingLicensePreviewView: View {
 
           previewCard("Paddle") {
             row("Transaction ID", purchase.transactionID)
+            row("Environment", purchase.paddleEnvironmentLabel)
             row("Status", transaction?.status ?? "—")
             row("Product ID", item?.product?.id ?? item?.price?.productID ?? "—")
             row("Price ID", item?.price?.id ?? "—")

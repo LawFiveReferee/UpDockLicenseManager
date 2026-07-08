@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.36 — Pending Purchase Environment Labels
+- Bumped app version to 1.0.36 build 41.
+- Pending Purchases now shows the Paddle environment for each transaction before fulfillment.
+- Batch fulfillment summarizes selected transaction environments so mixed Sandbox and Production batches are visible.
+
 ## v1.0.35 — Paddle Environment Readiness
 - Bumped app version to 1.0.35 build 40.
 - Production Readiness now compares the app Paddle environment with the server Paddle API mode reported by health.php.

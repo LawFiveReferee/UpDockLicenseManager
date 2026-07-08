@@ -18,9 +18,23 @@ struct PendingPaddlePurchase: Codable, Identifiable, Hashable {
   let receivedAt: String
   let eventType: String
   let transactionID: String
+  let paddleEnvironment: String?
   let payload: PaddleWebhookPayload
 
   var id: String { transactionID }
+
+  var paddleEnvironmentLabel: String {
+    switch paddleEnvironment?.lowercased() {
+    case "sandbox":
+      return "Sandbox"
+    case "production":
+      return "Production"
+    case "unknown":
+      return "Unknown"
+    default:
+      return "Not recorded"
+    }
+  }
 
   var licenseQuantity: Int {
     max(payload.data?.primaryItem?.quantity ?? 1, 1)
@@ -30,6 +44,7 @@ struct PendingPaddlePurchase: Codable, Identifiable, Hashable {
     case receivedAt = "received_at"
     case eventType = "event_type"
     case transactionID = "transaction_id"
+    case paddleEnvironment = "paddle_environment"
     case payload
   }
 }
