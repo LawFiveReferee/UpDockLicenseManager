@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.40 — Paddle Secret Save Consistency
+- Bumped app version to 1.0.40 build 45.
+- Paddle Settings now saves API key and webhook secret to Keychain before updating the local private config file.
+
 ## v1.0.39 — Checkout HTML Builder
 - Bumped app version to 1.0.39 build 44.
 - Paddle Settings now stores the Paddle client-side token.

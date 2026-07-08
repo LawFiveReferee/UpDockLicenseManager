@@ -66,6 +66,7 @@ struct PaddleSettingsView: View {
           .buttonStyle(.borderedProminent)
 
           Button("Update Local Config…") {
+            KeychainSettingsStore.shared.paddleAPIKey = apiKey
             updateLocalPrivateConfig(
               constants: ["PADDLE_API_KEY": apiKey]
             )
@@ -253,6 +254,8 @@ struct PaddleSettingsView: View {
           .buttonStyle(.borderedProminent)
 
           Button("Update Local Config…") {
+            KeychainSettingsStore.shared
+              .paddleNotificationSecret = notificationSecret
             updateLocalPrivateConfig(
               constants: ["PADDLE_WEBHOOK_SECRET": notificationSecret]
             )
