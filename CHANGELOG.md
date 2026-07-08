@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.34 — Paddle Private Config Updates
+- Bumped app version to 1.0.34 build 39.
+- Paddle Settings can now update PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, and PADDLE_API_BASE_URL in the local private paddle-config.php file.
+- Local config updates reuse remembered file access and remind the operator to sync the private file separately.
+
 ## v1.0.33 — Production Readiness Panel
 - Bumped app version to 1.0.33 build 38.
 - Added a Production Readiness section to Server Settings.

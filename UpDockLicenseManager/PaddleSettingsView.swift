@@ -1,4 +1,8 @@
+import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
+
+private let paddlePrivateConfigBookmarkKey = "localPrivateConfigBookmark"
 
 struct PaddleSettingsView: View {
   @State private var settings = PaddleSettings()
@@ -20,6 +24,19 @@ struct PaddleSettingsView: View {
           }
         }
         .pickerStyle(.segmented)
+
+        LabeledContent("API Base URL") {
+          Text(paddleAPIBaseURL)
+            .font(.caption.monospaced())
+            .foregroundStyle(.secondary)
+            .textSelection(.enabled)
+        }
+
+        Button("Update Local Config…") {
+          updateLocalPrivateConfig(
+            constants: ["PADDLE_API_BASE_URL": paddleAPIBaseURL]
+          )
+        }
       }
 
       Section("Secrets") {
@@ -47,6 +64,13 @@ struct PaddleSettingsView: View {
             savedMessage = "API key saved to Keychain."
           }
           .buttonStyle(.borderedProminent)
+
+          Button("Update Local Config…") {
+            updateLocalPrivateConfig(
+              constants: ["PADDLE_API_KEY": apiKey]
+            )
+          }
+          .disabled(apiKey.isEmpty)
         }
 
         if !savedMessage.isEmpty {
@@ -214,6 +238,13 @@ struct PaddleSettingsView: View {
             savedMessage = "Notification secret saved to Keychain."
           }
           .buttonStyle(.borderedProminent)
+
+          Button("Update Local Config…") {
+            updateLocalPrivateConfig(
+              constants: ["PADDLE_WEBHOOK_SECRET": notificationSecret]
+            )
+          }
+          .disabled(notificationSecret.isEmpty)
         }
 
         Text("Used to verify Paddle webhook signatures.")
@@ -251,5 +282,140 @@ struct PaddleSettingsView: View {
         }
       }
     )
+  }
+
+  private var paddleAPIBaseURL: String {
+    switch settings.environment {
+    case .sandbox:
+      return "https://sandbox-api.paddle.com"
+    case .production:
+      return "https://api.paddle.com"
+    }
+  }
+
+  private func updateLocalPrivateConfig(constants: [String: String]) {
+    if let configURL = savedLocalPrivateConfigURL() {
+      updateLocalPrivateConfig(constants: constants, at: configURL, shouldRememberAccess: false)
+      return
+    }
+
+    chooseAndUpdateLocalPrivateConfig(constants: constants)
+  }
+
+  private func chooseAndUpdateLocalPrivateConfig(constants: [String: String]) {
+    let configDirectoryURL = FileManager.default.homeDirectoryForCurrentUser
+      .appendingPathComponent("Documents/GitHub/UpDockWebPage/updock-private")
+
+    let panel = NSOpenPanel()
+    panel.title = "Choose Private Config"
+    panel.message = "Select paddle-config.php in updock-private."
+    panel.prompt = "Update Config"
+    panel.directoryURL = configDirectoryURL
+    panel.canChooseDirectories = false
+    panel.canChooseFiles = true
+    panel.allowsMultipleSelection = false
+    if let phpType = UTType(filenameExtension: "php") {
+      panel.allowedContentTypes = [phpType]
+    }
+
+    guard panel.runModal() == .OK, let configURL = panel.url else {
+      savedMessage = "Local private config was not updated."
+      return
+    }
+
+    updateLocalPrivateConfig(constants: constants, at: configURL, shouldRememberAccess: true)
+  }
+
+  private func updateLocalPrivateConfig(
+    constants: [String: String],
+    at configURL: URL,
+    shouldRememberAccess: Bool
+  ) {
+    do {
+      let didAccess = configURL.startAccessingSecurityScopedResource()
+      defer {
+        if didAccess {
+          configURL.stopAccessingSecurityScopedResource()
+        }
+      }
+
+      var config = try String(contentsOf: configURL, encoding: .utf8)
+      var missingConstants: [String] = []
+
+      for (name, value) in constants {
+        let pattern = #"const\s+\#(name)\s*=\s*'[^']*';"#
+        let escapedValue = value.replacingOccurrences(of: "'", with: "\\'")
+        let replacement = "const \(name) = '\(escapedValue)';"
+
+        guard config.range(of: pattern, options: .regularExpression) != nil else {
+          missingConstants.append(name)
+          continue
+        }
+
+        config = config.replacingOccurrences(
+          of: pattern,
+          with: replacement,
+          options: .regularExpression
+        )
+      }
+
+      guard missingConstants.isEmpty else {
+        savedMessage = "Could not find \(missingConstants.joined(separator: ", ")) in local private config."
+        return
+      }
+
+      try config.write(to: configURL, atomically: true, encoding: .utf8)
+
+      if shouldRememberAccess {
+        saveLocalPrivateConfigBookmark(for: configURL)
+      }
+
+      savedMessage = "Updated \(constants.keys.sorted().joined(separator: ", ")) in \(configURL.lastPathComponent). Sync it separately to the server."
+    } catch {
+      savedMessage = "Could not update local private config: \(error.localizedDescription)"
+    }
+  }
+
+  private func savedLocalPrivateConfigURL() -> URL? {
+    guard let encodedBookmark = UserDefaults.standard.string(forKey: paddlePrivateConfigBookmarkKey),
+          let bookmarkData = Data(base64Encoded: encodedBookmark) else {
+      return nil
+    }
+
+    do {
+      var isStale = false
+      let configURL = try URL(
+        resolvingBookmarkData: bookmarkData,
+        options: .withSecurityScope,
+        relativeTo: nil,
+        bookmarkDataIsStale: &isStale
+      )
+
+      if isStale {
+        UserDefaults.standard.removeObject(forKey: paddlePrivateConfigBookmarkKey)
+        return nil
+      }
+
+      return configURL
+    } catch {
+      UserDefaults.standard.removeObject(forKey: paddlePrivateConfigBookmarkKey)
+      return nil
+    }
+  }
+
+  private func saveLocalPrivateConfigBookmark(for configURL: URL) {
+    do {
+      let bookmarkData = try configURL.bookmarkData(
+        options: .withSecurityScope,
+        includingResourceValuesForKeys: nil,
+        relativeTo: nil
+      )
+      UserDefaults.standard.set(
+        bookmarkData.base64EncodedString(),
+        forKey: paddlePrivateConfigBookmarkKey
+      )
+    } catch {
+      savedMessage = "Updated \(configURL.lastPathComponent), but could not remember file access: \(error.localizedDescription)"
+    }
   }
 }
