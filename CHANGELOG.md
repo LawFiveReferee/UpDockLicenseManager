@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.38 — Webhook Log Export
+- Bumped app version to 1.0.38 build 43.
+- Webhook Log now has Copy Log and Export Text actions for sharing Paddle diagnostics.
+
 ## v1.0.37 — Pending Purchase Customer Display
 - Bumped app version to 1.0.37 build 42.
 - Pending Purchases now uses the normalized customer email and name fallback logic in the purchase list.

@@ -5,6 +5,7 @@
 //  Created by Ed Stockly on 7/3/26.
 //
 
+import AppKit
 import Foundation
 import SwiftUI
 
@@ -1067,6 +1068,18 @@ struct WebhookLogView: View {
       }
       .navigationTitle("Webhook Log")
       .toolbar {
+        ToolbarItemGroup {
+          Button("Copy Log") {
+            copyLog()
+          }
+          .disabled(entries.isEmpty)
+
+          Button("Export Text…") {
+            exportLog()
+          }
+          .disabled(entries.isEmpty)
+        }
+
         ToolbarItem {
           Button("Close") {
             dismiss()
@@ -1096,6 +1109,50 @@ struct WebhookLogView: View {
       return .secondary
     default:
       return .red
+    }
+  }
+
+  private var logText: String {
+    entries.reversed().enumerated().map { index, entry in
+      var lines = [
+        "\(index + 1). \(entry.message)",
+        "status: \(entry.status)",
+        "time: \(entry.time)"
+      ]
+
+      if let context = entry.context, !context.isEmpty {
+        lines.append(
+          contentsOf: context
+            .sorted { $0.key < $1.key }
+            .map { "\($0.key): \($0.value)" }
+        )
+      }
+
+      return lines.joined(separator: "\n")
+    }
+    .joined(separator: "\n\n")
+  }
+
+  private func copyLog() {
+    NSPasteboard.general.clearContents()
+    NSPasteboard.general.setString(logText, forType: .string)
+  }
+
+  private func exportLog() {
+    let panel = NSSavePanel()
+    panel.title = "Export Webhook Log"
+    panel.nameFieldStringValue = "updock-webhook-log.txt"
+    panel.canCreateDirectories = true
+
+    guard panel.runModal() == .OK,
+          let url = panel.url else {
+      return
+    }
+
+    do {
+      try logText.write(to: url, atomically: true, encoding: .utf8)
+    } catch {
+      NSSound.beep()
     }
   }
 }
