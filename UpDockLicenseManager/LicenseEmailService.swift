@@ -101,7 +101,7 @@ enum LicenseEmailService {
             attachmentURL
         ])
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             applyPreferredSenderIfAvailable(
                 subject: subject,
                 settings: settings
@@ -170,13 +170,31 @@ enum LicenseEmailService {
         let script = """
         tell application "Mail"
           set targetSubject to "\(appleScriptEscaped(subject))"
-          set targetSender to "\(appleScriptEscaped(preferredSender))"
-          repeat with draftMessage in outgoing messages
+          set preferredAddress to "\(appleScriptEscaped(preferredSender))"
+          set targetSender to preferredAddress
+
+          repeat with mailAccount in accounts
             try
-              if visible of draftMessage is true and subject of draftMessage is targetSubject then
-                set sender of draftMessage to targetSender
-              end if
+              repeat with accountAddress in email addresses of mailAccount
+                if accountAddress as string is preferredAddress then
+                  set targetSender to (full name of mailAccount as string) & " <" & preferredAddress & ">"
+                end if
+              end repeat
             end try
+          end repeat
+
+          repeat 20 times
+            set didUpdateSender to false
+            repeat with draftMessage in outgoing messages
+              try
+                if visible of draftMessage is true and subject of draftMessage is targetSubject then
+                  set sender of draftMessage to targetSender
+                  set didUpdateSender to true
+                end if
+              end try
+            end repeat
+            if didUpdateSender is true then exit repeat
+            delay 0.25
           end repeat
         end tell
         """

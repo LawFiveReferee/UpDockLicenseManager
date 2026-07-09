@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.58 — Mail Sender Matching
+- Bumped app version to 1.0.58 build 63.
+- Mail sender automation now waits for the compose draft and matches the preferred sender against configured Mail account addresses.
+- Sender selection now uses Mail's account display format when a matching address is found.
+
 ## v1.0.57 — Mail Automation Permission
 - Bumped app version to 1.0.57 build 62.
 - Added the Mail-specific Apple Events sandbox exception for preferred sender selection.
