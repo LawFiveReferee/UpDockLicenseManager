@@ -23,9 +23,6 @@ enum LicenseEmailService {
     ) -> String {
         let name = license.name.trimmingCharacters(in: .whitespacesAndNewlines)
         let greeting = name.isEmpty ? "Hello," : "Hello \(name),"
-        let signatureName = settings.signatureName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let signatureEmail = settings.signatureEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-        let signatureURL = settings.signatureURL.trimmingCharacters(in: .whitespacesAndNewlines)
         let purchaseReference = license.paddleTransactionID.trimmingCharacters(in: .whitespacesAndNewlines)
         let purchaseLine = purchaseReference.isEmpty
             ? ""
@@ -67,9 +64,8 @@ enum LicenseEmailService {
 
         Thank you,
 
-        \(signatureName.isEmpty ? "UpDock Customer Service" : signatureName)
-        \(signatureEmail.isEmpty ? "customerservice@updockapp.com" : signatureEmail)
-        \(signatureURL.isEmpty ? "https://updockapp.com/pro.html" : signatureURL)
+        Email Customer Service at UpDock
+        UpDock Pro Webpage
         """
     }
 
@@ -77,7 +73,8 @@ enum LicenseEmailService {
         to recipient: String,
         subject: String,
         body: String,
-        attachmentURL: URL
+        attachmentURL: URL,
+        settings: EmailSettings = EmailSettings()
     ) throws {
         guard let service = NSSharingService(named: .composeEmail) else {
             throw LicenseEmailError.mailServiceUnavailable
@@ -91,10 +88,57 @@ enum LicenseEmailService {
 
         service.subject = subject
 
-        service.perform(withItems: [
+        let formattedBody = makeLinkedEmailBody(
             body,
+            settings: settings
+        )
+
+        service.perform(withItems: [
+            formattedBody,
             attachmentURL
         ])
+    }
+
+    private static func makeLinkedEmailBody(
+        _ body: String,
+        settings: EmailSettings
+    ) -> NSAttributedString {
+        let attributedBody = NSMutableAttributedString(string: body)
+        let fullRange = NSRange(location: 0, length: attributedBody.length)
+        let signatureEmail = settings.signatureEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let signatureURL = settings.signatureURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let customerServiceEmail = signatureEmail.isEmpty ? "customerservice@updockapp.com" : signatureEmail
+        let proPageURL = signatureURL.isEmpty ? "https://updockapp.com/pro.html" : signatureURL
+
+        attributedBody.addAttribute(.font, value: NSFont.systemFont(ofSize: NSFont.systemFontSize), range: fullRange)
+
+        addLink(
+            to: "Email Customer Service at UpDock",
+            urlString: "mailto:\(customerServiceEmail)",
+            in: attributedBody
+        )
+        addLink(
+            to: "UpDock Pro Webpage",
+            urlString: proPageURL,
+            in: attributedBody
+        )
+
+        return attributedBody
+    }
+
+    private static func addLink(
+        to text: String,
+        urlString: String,
+        in attributedBody: NSMutableAttributedString
+    ) {
+        let range = (attributedBody.string as NSString).range(of: text)
+
+        guard range.location != NSNotFound,
+              let url = URL(string: urlString) else {
+            return
+        }
+
+        attributedBody.addAttribute(.link, value: url, range: range)
     }
 }
 

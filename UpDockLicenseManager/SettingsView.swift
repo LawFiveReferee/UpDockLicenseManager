@@ -90,8 +90,7 @@ struct EmailSettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Section("Signature") {
-                TextField("Signature Name", text: $settings.signatureName)
+            Section("Signature Links") {
                 TextField("Customer Service Email", text: $settings.signatureEmail)
                 TextField("UpDock Pro URL", text: $settings.signatureURL)
             }

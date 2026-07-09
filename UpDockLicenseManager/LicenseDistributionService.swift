@@ -49,7 +49,8 @@ enum LicenseDistributionService {
       to: record.email,
       subject: subject,
       body: body,
-      attachmentURL: exportedURL
+      attachmentURL: exportedURL,
+      settings: emailSettings
     )
 
     var updatedRecord = record

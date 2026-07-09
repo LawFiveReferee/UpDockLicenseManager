@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.54 — Linked Mail Signature
+- Bumped app version to 1.0.54 build 59.
+- License email drafts now use rich text so the customer service and UpDock Pro signature lines are clickable links in Mail.
+- Email settings now focus on the customer service email and UpDock Pro URL used by those signature links.
+
 ## v1.0.53 — Email Draft Settings
 - Bumped app version to 1.0.53 build 58.
 - Replaced the placeholder Email settings tab with editable Mail draft and signature settings.
