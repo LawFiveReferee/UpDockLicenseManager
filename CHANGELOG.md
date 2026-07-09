@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.42 — Paddle API Placeholder Guard
+- Bumped app version to 1.0.42 build 47.
+- The Keychain settings store now rejects the retired test_api_key_123 Paddle API placeholder globally.
+- Reading an old placeholder from Keychain removes it immediately so Paddle Settings opens with an empty API key instead of the test value.
+
 ## v1.0.41 — Paddle Secret Persistence
 - Bumped app version to 1.0.41 build 46.
 - Paddle Settings now saves API key and webhook secret edits immediately.
