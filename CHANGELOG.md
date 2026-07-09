@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.47 — Main Column Width Defaults
+- Bumped app version to 1.0.47 build 52.
+- Set main window minimum column widths to Sidebar 200, List 325, and Detail 500.
+- Set main window default column widths to Sidebar 225, List 375, and Detail 726, with maximum width left unconstrained.
+- Removed the temporary bottom-right column width readout.
+
 ## v1.0.46 — Main Column Width Readout
 - Bumped app version to 1.0.46 build 51.
 - Added a selectable bottom-right readout showing the current Sidebar, List, and Detail column widths.

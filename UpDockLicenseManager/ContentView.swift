@@ -29,39 +29,6 @@ enum LicenseSidebarFilter: String, CaseIterable, Identifiable {
   }
 }
 
-private enum MainWindowColumn: Hashable {
-  case sidebar
-  case list
-  case detail
-}
-
-private struct MainWindowColumnWidthReader: View {
-  var column: MainWindowColumn
-
-  var body: some View {
-    GeometryReader { proxy in
-      Color.clear
-        .preference(
-          key: MainWindowColumnWidthsPreferenceKey.self,
-          value: [column: proxy.size.width]
-        )
-    }
-  }
-}
-
-private struct MainWindowColumnWidthsPreferenceKey: PreferenceKey {
-  static var defaultValue: [MainWindowColumn: CGFloat] = [:]
-
-  static func reduce(
-    value: inout [MainWindowColumn: CGFloat],
-    nextValue: () -> [MainWindowColumn: CGFloat]
-  ) {
-    value.merge(nextValue()) { _, newValue in
-      newValue
-    }
-  }
-}
-
 enum LicenseSortOption: String, CaseIterable, Identifiable {
   case newestFirst = "Newest First"
   case oldestFirst = "Oldest First"
@@ -112,7 +79,6 @@ struct ContentView: View {
   @State private var showingPendingPurchases = false
   @State private var showingAuditLog = false
   @State private var showingRecoveryReport = false
-  @State private var mainColumnWidths: [MainWindowColumn: CGFloat] = [:]
 
   var body: some View {
     NavigationSplitView {
@@ -120,7 +86,7 @@ struct ContentView: View {
         store: store,
         selectedFilter: $selectedFilter
       )
-      .background(MainWindowColumnWidthReader(column: .sidebar))
+      .navigationSplitViewColumnWidth(min: 200, ideal: 225, max: .infinity)
     } content: {
       LicenseListView(
         licenses: filteredLicenses,
@@ -128,7 +94,7 @@ struct ContentView: View {
         selectedLicense: $selectedLicense,
         searchText: searchText
       )
-      .background(MainWindowColumnWidthReader(column: .list))
+      .navigationSplitViewColumnWidth(min: 325, ideal: 375, max: .infinity)
     } detail: {
       if let selectedLicense {
         LicenseDetailView(
@@ -159,19 +125,13 @@ struct ContentView: View {
           }
         )
         .id(selectedLicense.id)
-        .background(MainWindowColumnWidthReader(column: .detail))
+        .navigationSplitViewColumnWidth(min: 500, ideal: 726, max: .infinity)
       } else {
         LicenseDashboardView(store: store)
-          .background(MainWindowColumnWidthReader(column: .detail))
+          .navigationSplitViewColumnWidth(min: 500, ideal: 726, max: .infinity)
       }
     }
     .frame(minWidth: 1000, minHeight: 650)
-    .onPreferenceChange(MainWindowColumnWidthsPreferenceKey.self) { widths in
-      mainColumnWidths = widths
-    }
-    .overlay(alignment: .bottomTrailing) {
-      mainColumnWidthReadout
-    }
     .toolbar {
 
 
@@ -332,34 +292,6 @@ struct ContentView: View {
       Text(inspectionError ?? "Unknown error")
     }
   }
-
-  private var mainColumnWidthReadout: some View {
-    Text(mainColumnWidthSummary)
-      .font(.caption.monospacedDigit())
-      .textSelection(.enabled)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 5)
-      .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
-      .overlay {
-        RoundedRectangle(cornerRadius: 6)
-          .stroke(.separator, lineWidth: 1)
-      }
-      .padding(10)
-      .accessibilityLabel("Main window column widths")
-  }
-
-  private var mainColumnWidthSummary: String {
-    let sidebarWidth = roundedWidth(for: .sidebar)
-    let listWidth = roundedWidth(for: .list)
-    let detailWidth = roundedWidth(for: .detail)
-
-    return "Sidebar \(sidebarWidth), List \(listWidth), Detail \(detailWidth)"
-  }
-
-  private func roundedWidth(for column: MainWindowColumn) -> Int {
-    Int((mainColumnWidths[column] ?? 0).rounded())
-  }
-
 
   private func undoLastDelete() {
     guard let lastDeletedLicense else { return }
