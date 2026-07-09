@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.60 — Mail Signature Suppression
+- Bumped app version to 1.0.60 build 65.
+- Apple Mail draft creation now suppresses Mail's default account signature so only the UpDock license email signature appears.
+
 ## v1.0.59 — Mail Draft Creation
 - Bumped app version to 1.0.59 build 64.
 - Preferred-sender email drafts now create the Apple Mail message directly so the saved From account is applied at draft creation.

@@ -178,7 +178,7 @@ enum LicenseEmailService {
         tell application "Mail"
           activate
           set messageBody to \(appleScriptStringExpression(body))
-          set newEmail to make new outgoing message at beginning with properties {visible:true, sender:\(appleScriptStringExpression(sender)), subject:\(appleScriptStringExpression(subject)), content:messageBody}
+          set newEmail to make new outgoing message at beginning with properties {visible:true, sender:\(appleScriptStringExpression(sender)), subject:\(appleScriptStringExpression(subject)), message signature:missing value, content:messageBody}
           tell newEmail
             \(appleScriptRecipientLine(trimmedRecipient))
             make new attachment with properties {file name:(POSIX file \(appleScriptStringExpression(attachmentURL.path)) as alias)} at after the last paragraph
