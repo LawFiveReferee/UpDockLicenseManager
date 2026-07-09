@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.46 — Main Column Width Readout
+- Bumped app version to 1.0.46 build 51.
+- Added a selectable bottom-right readout showing the current Sidebar, List, and Detail column widths.
+- The readout updates as the main window split-view columns are resized.
+
 ## v1.0.45 — Toolbar Label Preference
 - Bumped app version to 1.0.45 build 50.
 - Added a General setting to show text labels in the main toolbar.
