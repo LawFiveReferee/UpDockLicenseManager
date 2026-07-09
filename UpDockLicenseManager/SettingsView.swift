@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import Observation
 
 struct SettingsView: View {
     @State private var settings = GeneralSettings()
+    @State private var emailSettings = EmailSettings()
     
     var body: some View {
         TabView {
@@ -32,13 +34,70 @@ struct SettingsView: View {
                     Label("Server", systemImage: "server.rack")
                 }
             
-            Text("Email settings coming next.")
-                .padding()
+            EmailSettingsView(settings: emailSettings)
                 .tabItem {
                     Label("Email", systemImage: "envelope")
                 }
         }
         .frame(width: 620, height: 420)
+    }
+}
+
+@Observable
+final class EmailSettings {
+    var preferredFromAddress: String {
+        didSet { save() }
+    }
+
+    var signatureName: String {
+        didSet { save() }
+    }
+
+    var signatureEmail: String {
+        didSet { save() }
+    }
+
+    var signatureURL: String {
+        didSet { save() }
+    }
+
+    private let defaults = UserDefaults.standard
+
+    init() {
+        self.preferredFromAddress = defaults.string(forKey: "emailPreferredFromAddress") ?? "customerservice@updockapp.com"
+        self.signatureName = defaults.string(forKey: "emailSignatureName") ?? "UpDock Customer Service"
+        self.signatureEmail = defaults.string(forKey: "emailSignatureEmail") ?? "customerservice@updockapp.com"
+        self.signatureURL = defaults.string(forKey: "emailSignatureURL") ?? "https://updockapp.com/pro.html"
+    }
+
+    private func save() {
+        defaults.set(preferredFromAddress, forKey: "emailPreferredFromAddress")
+        defaults.set(signatureName, forKey: "emailSignatureName")
+        defaults.set(signatureEmail, forKey: "emailSignatureEmail")
+        defaults.set(signatureURL, forKey: "emailSignatureURL")
+    }
+}
+
+struct EmailSettingsView: View {
+    @Bindable var settings: EmailSettings
+
+    var body: some View {
+        Form {
+            Section("Mail Drafts") {
+                TextField("Preferred From Account", text: $settings.preferredFromAddress)
+                Text("Mail drafts open in Apple Mail. Select this account in Mail before sending.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Signature") {
+                TextField("Signature Name", text: $settings.signatureName)
+                TextField("Customer Service Email", text: $settings.signatureEmail)
+                TextField("UpDock Pro URL", text: $settings.signatureURL)
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
     }
 }
 

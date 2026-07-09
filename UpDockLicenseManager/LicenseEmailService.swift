@@ -17,9 +17,15 @@ enum LicenseEmailService {
         return "Your UpDock Pro License"
     }
 
-    static func makeEmailBody(for license: LicenseRecord) -> String {
+    static func makeEmailBody(
+        for license: LicenseRecord,
+        settings: EmailSettings = EmailSettings()
+    ) -> String {
         let name = license.name.trimmingCharacters(in: .whitespacesAndNewlines)
         let greeting = name.isEmpty ? "Hello," : "Hello \(name),"
+        let signatureName = settings.signatureName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let signatureEmail = settings.signatureEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let signatureURL = settings.signatureURL.trimmingCharacters(in: .whitespacesAndNewlines)
         let purchaseReference = license.paddleTransactionID.trimmingCharacters(in: .whitespacesAndNewlines)
         let purchaseLine = purchaseReference.isEmpty
             ? ""
@@ -61,9 +67,9 @@ enum LicenseEmailService {
 
         Thank you,
 
-        UpDock Customer Service
-        customerservice@updockapp.com
-        https://updockapp.com/pro.html
+        \(signatureName.isEmpty ? "UpDock Customer Service" : signatureName)
+        \(signatureEmail.isEmpty ? "customerservice@updockapp.com" : signatureEmail)
+        \(signatureURL.isEmpty ? "https://updockapp.com/pro.html" : signatureURL)
         """
     }
 

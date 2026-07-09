@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.53 — Email Draft Settings
+- Bumped app version to 1.0.53 build 58.
+- Replaced the placeholder Email settings tab with editable Mail draft and signature settings.
+- License email drafts now use the saved signature name, customer service email, and UpDock Pro URL.
+
 ## v1.0.52 — License Email References
 - Bumped app version to 1.0.52 build 57.
 - Customer license email drafts now include the license issued date and Paddle customer ID when available.

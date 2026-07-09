@@ -32,14 +32,18 @@ enum LicenseDistributionService {
 
   static func exportAndEmailLicenseFile(
     record: LicenseRecord,
-    store: LicenseStore
+    store: LicenseStore,
+    emailSettings: EmailSettings = EmailSettings()
   ) throws -> LicenseRecord {
     let exportedURL = try store.exportLicenseFileToTemporaryFolder(
       for: record
     )
 
     let subject = LicenseEmailService.makeEmailSubject(for: record)
-    let body = LicenseEmailService.makeEmailBody(for: record)
+    let body = LicenseEmailService.makeEmailBody(
+      for: record,
+      settings: emailSettings
+    )
 
     try LicenseEmailService.openMailDraft(
       to: record.email,
