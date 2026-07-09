@@ -85,7 +85,7 @@ struct EmailSettingsView: View {
         Form {
             Section("Mail Drafts") {
                 TextField("Preferred From Account", text: $settings.preferredFromAddress)
-                Text("Mail drafts open in Apple Mail. Select this account in Mail before sending.")
+                Text("Mail drafts open in Apple Mail. The app will try to select this sender account; confirm it before sending.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

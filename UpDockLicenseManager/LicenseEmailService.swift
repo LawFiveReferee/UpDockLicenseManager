@@ -100,6 +100,13 @@ enum LicenseEmailService {
             formattedBody,
             attachmentURL
         ])
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            applyPreferredSenderIfAvailable(
+                subject: subject,
+                settings: settings
+            )
+        }
     }
 
     private static func makeLinkedEmailBody(
@@ -148,6 +155,41 @@ enum LicenseEmailService {
         }
 
         attributedBody.addAttribute(.link, value: url, range: range)
+    }
+
+    private static func applyPreferredSenderIfAvailable(
+        subject: String,
+        settings: EmailSettings
+    ) {
+        let preferredSender = settings.preferredFromAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !preferredSender.isEmpty else {
+            return
+        }
+
+        let script = """
+        tell application "Mail"
+          set targetSubject to "\(appleScriptEscaped(subject))"
+          set targetSender to "\(appleScriptEscaped(preferredSender))"
+          repeat with draftMessage in outgoing messages
+            try
+              if visible of draftMessage is true and subject of draftMessage is targetSubject then
+                set sender of draftMessage to targetSender
+              end if
+            end try
+          end repeat
+        end tell
+        """
+
+        var error: NSDictionary?
+        NSAppleScript(source: script)?.executeAndReturnError(&error)
+    }
+
+    private static func appleScriptEscaped(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
     }
 }
 

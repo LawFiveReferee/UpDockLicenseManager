@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.56 — Mail Sender Selection
+- Bumped app version to 1.0.56 build 61.
+- Email draft creation now asks Apple Mail to use the saved Preferred From Account when possible.
+- Added the macOS Apple Events entitlement needed for Mail draft sender automation.
+
 ## v1.0.55 — License Email Install Links
 - Bumped app version to 1.0.55 build 60.
 - Added an UpDock Pro App Download link above the license registration instructions in customer email drafts.
