@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.44 — Verified Paddle Secret Saves
+- Bumped app version to 1.0.44 build 49.
+- Paddle Settings now verifies Keychain writes before reporting API key or notification secret saves as successful.
+- Added explicit sandbox and Keychain entitlements for the app target.
+
 ## v1.0.43 — Paddle Secret Blank Save Guard
 - Bumped app version to 1.0.43 build 48.
 - Paddle Settings no longer lets blank API key or notification secret field states overwrite saved Keychain values.

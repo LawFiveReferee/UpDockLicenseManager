@@ -22,17 +22,17 @@ final class KeychainSettingsStore {
 
   var paddleAPIKey: String {
     get { value(for: .paddleAPIKey) }
-    set { set(newValue, for: .paddleAPIKey) }
+    set { _ = save(newValue, for: .paddleAPIKey) }
   }
 
   var paddleNotificationSecret: String {
     get { value(for: .paddleNotificationSecret) }
-    set { set(newValue, for: .paddleNotificationSecret) }
+    set { _ = save(newValue, for: .paddleNotificationSecret) }
   }
 
   var managerToken: String {
     get { value(for: .managerToken) }
-    set { set(newValue, for: .managerToken) }
+    set { _ = save(newValue, for: .managerToken) }
   }
 
   func value(for key: Key) -> String {
@@ -63,10 +63,11 @@ final class KeychainSettingsStore {
     return string
   }
 
-  func set(_ value: String, for key: Key) {
+  @discardableResult
+  func save(_ value: String, for key: Key) -> KeychainSaveResult {
     if key == .paddleAPIKey && isRetiredPaddleAPIPlaceholder(value) {
       remove(key)
-      return
+      return .removedRetiredPlaceholder
     }
 
     let data = Data(value.utf8)
@@ -77,16 +78,35 @@ final class KeychainSettingsStore {
       kSecAttrAccount: key.rawValue
     ]
 
-    SecItemDelete(query as CFDictionary)
+    let update: [CFString: Any] = [
+      kSecValueData: data
+    ]
+
+    let updateStatus = SecItemUpdate(query as CFDictionary, update as CFDictionary)
+
+    if updateStatus == errSecSuccess {
+      return .saved
+    }
+
+    guard updateStatus == errSecItemNotFound else {
+      return .failed(updateStatus)
+    }
 
     let add: [CFString: Any] = [
       kSecClass: kSecClassGenericPassword,
       kSecAttrService: service,
       kSecAttrAccount: key.rawValue,
+      kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
       kSecValueData: data
     ]
 
-    SecItemAdd(add as CFDictionary, nil)
+    let addStatus = SecItemAdd(add as CFDictionary, nil)
+
+    if addStatus == errSecSuccess {
+      return .saved
+    }
+
+    return .failed(addStatus)
   }
 
   func remove(_ key: Key) {
@@ -101,5 +121,26 @@ final class KeychainSettingsStore {
 
   private func isRetiredPaddleAPIPlaceholder(_ value: String) -> Bool {
     value.trimmingCharacters(in: .whitespacesAndNewlines) == "test_api_key_123"
+  }
+}
+
+enum KeychainSaveResult: Equatable {
+  case saved
+  case removedRetiredPlaceholder
+  case failed(OSStatus)
+
+  var didSave: Bool {
+    self == .saved
+  }
+
+  var message: String {
+    switch self {
+    case .saved:
+      return "Saved to Keychain."
+    case .removedRetiredPlaceholder:
+      return "Removed retired placeholder from Keychain."
+    case .failed(let status):
+      return "Keychain save failed with OSStatus \(status)."
+    }
   }
 }

@@ -330,7 +330,18 @@ struct PaddleSettingsView: View {
       return
     }
 
-    KeychainSettingsStore.shared.paddleAPIKey = trimmedAPIKey
+    let result = KeychainSettingsStore.shared.save(trimmedAPIKey, for: .paddleAPIKey)
+
+    guard result.didSave else {
+      savedMessage = result.message
+      return
+    }
+
+    guard KeychainSettingsStore.shared.paddleAPIKey == trimmedAPIKey else {
+      savedMessage = "API key save could not be verified after writing to Keychain."
+      return
+    }
+
     apiKey = trimmedAPIKey
     savedMessage = "API key saved to Keychain."
   }
@@ -343,7 +354,18 @@ struct PaddleSettingsView: View {
       return
     }
 
-    KeychainSettingsStore.shared.paddleNotificationSecret = trimmedSecret
+    let result = KeychainSettingsStore.shared.save(trimmedSecret, for: .paddleNotificationSecret)
+
+    guard result.didSave else {
+      savedMessage = result.message
+      return
+    }
+
+    guard KeychainSettingsStore.shared.paddleNotificationSecret == trimmedSecret else {
+      savedMessage = "Notification secret save could not be verified after writing to Keychain."
+      return
+    }
+
     notificationSecret = trimmedSecret
     savedMessage = "Notification secret saved to Keychain."
   }
@@ -355,7 +377,7 @@ struct PaddleSettingsView: View {
       return
     }
 
-    KeychainSettingsStore.shared.paddleAPIKey = trimmedAPIKey
+    _ = KeychainSettingsStore.shared.save(trimmedAPIKey, for: .paddleAPIKey)
   }
 
   private func saveNonEmptyNotificationSecret(_ value: String) {
@@ -365,7 +387,7 @@ struct PaddleSettingsView: View {
       return
     }
 
-    KeychainSettingsStore.shared.paddleNotificationSecret = trimmedSecret
+    _ = KeychainSettingsStore.shared.save(trimmedSecret, for: .paddleNotificationSecret)
   }
 
   private func copyCheckoutHTMLBlock() {
