@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.49 — Toolbar Priority Order
+- Bumped app version to 1.0.49 build 54.
+- Moved Settings and Signing Test into the first main toolbar group.
+- Settings now appears before Signing Test so Sort and Export are more likely to collapse first on narrow windows.
+
 ## v1.0.48 — Adaptive Detail Layout
 - Bumped app version to 1.0.48 build 53.
 - Restored the selectable bottom-right main column width readout.

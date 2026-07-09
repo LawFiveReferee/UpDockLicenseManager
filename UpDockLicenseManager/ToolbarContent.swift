@@ -30,6 +30,20 @@ struct LicenseToolbarContent: ToolbarContent {
 
   var body: some ToolbarContent {
     ToolbarItemGroup {
+      SettingsLink {
+        toolbarLabel("Settings", systemImage: "gearshape")
+      }
+      .help("Settings")
+
+      Button {
+        LicenseService.runSigningSelfTest()
+      } label: {
+        toolbarLabel("Signing Test", systemImage: "checkmark.seal")
+      }
+      .help("Signing Test")
+    }
+
+    ToolbarItemGroup {
       Button {
         onNew()
       } label: {
@@ -142,16 +156,6 @@ struct LicenseToolbarContent: ToolbarContent {
         toolbarLabel("Export", systemImage: "square.and.arrow.up")
       }
       .help("Export")
-      Button {
-        LicenseService.runSigningSelfTest()
-      } label: {
-        toolbarLabel("Signing Test", systemImage: "checkmark.seal")
-      }
-      .help("Signing Test")
-      SettingsLink {
-        toolbarLabel("Settings", systemImage: "gearshape")
-      }
-      .help("Settings")
     }
   }
 
