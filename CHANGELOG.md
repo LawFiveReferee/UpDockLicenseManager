@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.50 — Development License Cleanup
+- Bumped app version to 1.0.50 build 55.
+- Added a Development toolbar menu with a confirmed Remove All Local Licenses action.
+- The cleanup removes only local app license records and leaves Paddle, web fulfillment archives, and activation records untouched.
+
 ## v1.0.49 — Toolbar Priority Order
 - Bumped app version to 1.0.49 build 54.
 - Moved Settings and Signing Test into the first main toolbar group.

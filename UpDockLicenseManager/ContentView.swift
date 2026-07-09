@@ -104,6 +104,7 @@ struct ContentView: View {
   @State private var licensePendingDeletion: LicenseRecord?
   @State private var showingDeleteConfirmation = false
   @State private var lastDeletedLicense: LicenseRecord?
+  @State private var showingRemoveAllDevelopmentLicensesConfirmation = false
 
   @State private var inspectedLicense: ImportedLicenseInspection?
   @State private var showingInspectionError = false
@@ -214,6 +215,9 @@ struct ContentView: View {
           },
           onShowRecoveryReport: {
             showingRecoveryReport = true
+          },
+          onRemoveAllDevelopmentLicenses: {
+            showingRemoveAllDevelopmentLicensesConfirmation = true
           }
         )
 
@@ -343,6 +347,15 @@ struct ContentView: View {
       Button("OK") {}
     } message: {
       Text(inspectionError ?? "Unknown error")
+    }
+    .alert("Remove All Local Licenses?", isPresented: $showingRemoveAllDevelopmentLicensesConfirmation) {
+      Button("Cancel", role: .cancel) {}
+
+      Button("Remove All", role: .destructive) {
+        removeAllDevelopmentLicenses()
+      }
+    } message: {
+      Text("This development-only action removes every license from this Mac app's local license list. It does not change Paddle, the web fulfillment archive, or activation records.")
     }
   }
 
@@ -819,6 +832,19 @@ struct ContentView: View {
     }
 
     licensePendingDeletion = nil
+  }
+
+  private func removeAllDevelopmentLicenses() {
+    let removedCount = store.removeAllForDevelopment()
+    selectedLicense = nil
+    lastDeletedLicense = nil
+    licensePendingDeletion = nil
+    selectedFilter = .all
+
+    recordAudit(
+      .licenseDeleted,
+      message: "Development cleanup removed \(removedCount) local license records."
+    )
   }
 
   private func exportJSON() {

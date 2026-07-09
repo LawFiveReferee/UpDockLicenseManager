@@ -32,6 +32,12 @@ final class LicenseStore {
     licenses.removeAll { ids.contains($0.id) }
   }
 
+  func removeAllForDevelopment() -> Int {
+    let removedCount = licenses.count
+    licenses.removeAll()
+    return removedCount
+  }
+
   func exportJSON(to url: URL) throws {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]

@@ -27,6 +27,7 @@ struct LicenseToolbarContent: ToolbarContent {
   let onShowPendingPurchases: () -> Void
   let onShowAuditLog: () -> Void
   let onShowRecoveryReport: () -> Void
+  let onRemoveAllDevelopmentLicenses: () -> Void
 
   var body: some ToolbarContent {
     ToolbarItemGroup {
@@ -156,6 +157,15 @@ struct LicenseToolbarContent: ToolbarContent {
         toolbarLabel("Export", systemImage: "square.and.arrow.up")
       }
       .help("Export")
+
+      Menu {
+        Button("Remove All Local Licenses…", role: .destructive) {
+          onRemoveAllDevelopmentLicenses()
+        }
+      } label: {
+        toolbarLabel("Development", systemImage: "hammer")
+      }
+      .help("Development")
     }
   }
 
