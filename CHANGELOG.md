@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.57 — Mail Automation Permission
+- Bumped app version to 1.0.57 build 62.
+- Added the Mail-specific Apple Events sandbox exception for preferred sender selection.
+- Updated the Apple Events permission description to mention the customer service sender account.
+
 ## v1.0.56 — Mail Sender Selection
 - Bumped app version to 1.0.56 build 61.
 - Email draft creation now asks Apple Mail to use the saved Preferred From Account when possible.
