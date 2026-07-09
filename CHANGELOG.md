@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.51 — Detail Version Label
+- Bumped app version to 1.0.51 build 56.
+- Added a small selectable version/build label below the main dashboard title.
+- Added the same version/build label below the License header in the detail column.
+
 ## v1.0.50 — Development License Cleanup
 - Bumped app version to 1.0.50 build 55.
 - Added a Development toolbar menu with a confirmed Remove All Local Licenses action.

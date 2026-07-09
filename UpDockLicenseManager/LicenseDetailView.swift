@@ -128,9 +128,13 @@ struct LicenseDetailView: View {
       VStack(alignment: .leading, spacing: 22) {
         card {
           VStack(alignment: .leading, spacing: 12) {
-            HStack {
-              Text("License")
-                .font(.title2.bold())
+            HStack(alignment: .top) {
+              VStack(alignment: .leading, spacing: 4) {
+                Text("License")
+                  .font(.title2.bold())
+
+                AppVersionText()
+              }
 
               Spacer()
 

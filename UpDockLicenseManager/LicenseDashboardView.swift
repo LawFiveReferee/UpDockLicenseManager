@@ -16,8 +16,12 @@ struct LicenseDashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                Text("UpDock Pro License Manager")
-                    .font(.largeTitle.bold())
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("UpDock Pro License Manager")
+                        .font(.largeTitle.bold())
+
+                    AppVersionText()
+                }
                 
                 LazyVGrid(columns: dashboardColumns, alignment: .leading, spacing: 16) {
                     dashboardCard("All", store.totalCount)
@@ -72,5 +76,22 @@ struct LicenseDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+struct AppVersionText: View {
+    private var versionText: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
+
+        return "Version \(version) (\(build))"
+    }
+
+    var body: some View {
+        Text(versionText)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .textSelection(.enabled)
+            .accessibilityLabel("App \(versionText)")
     }
 }
