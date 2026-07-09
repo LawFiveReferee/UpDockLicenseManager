@@ -29,6 +29,39 @@ enum LicenseSidebarFilter: String, CaseIterable, Identifiable {
   }
 }
 
+private enum MainWindowColumn: Hashable {
+  case sidebar
+  case list
+  case detail
+}
+
+private struct MainWindowColumnWidthReader: View {
+  var column: MainWindowColumn
+
+  var body: some View {
+    GeometryReader { proxy in
+      Color.clear
+        .preference(
+          key: MainWindowColumnWidthsPreferenceKey.self,
+          value: [column: proxy.size.width]
+        )
+    }
+  }
+}
+
+private struct MainWindowColumnWidthsPreferenceKey: PreferenceKey {
+  static var defaultValue: [MainWindowColumn: CGFloat] = [:]
+
+  static func reduce(
+    value: inout [MainWindowColumn: CGFloat],
+    nextValue: () -> [MainWindowColumn: CGFloat]
+  ) {
+    value.merge(nextValue()) { _, newValue in
+      newValue
+    }
+  }
+}
+
 enum LicenseSortOption: String, CaseIterable, Identifiable {
   case newestFirst = "Newest First"
   case oldestFirst = "Oldest First"
@@ -55,6 +88,7 @@ enum RecoveryReportActionError: LocalizedError {
 struct ContentView: View {
   @AppStorage("showToolbarTextLabels") private var showToolbarTextLabels = false
 
+  @State private var columnVisibility: NavigationSplitViewVisibility = .all
   @State private var store = LicenseStore()
   @State private var auditLog = AuditLogStore()
 
@@ -79,95 +113,114 @@ struct ContentView: View {
   @State private var showingPendingPurchases = false
   @State private var showingAuditLog = false
   @State private var showingRecoveryReport = false
+  @State private var mainColumnWidths: [MainWindowColumn: CGFloat] = [:]
 
   var body: some View {
-    NavigationSplitView {
-      LicenseSidebar(
-        store: store,
-        selectedFilter: $selectedFilter
-      )
-      .navigationSplitViewColumnWidth(min: 200, ideal: 225, max: .infinity)
-    } content: {
-      LicenseListView(
-        licenses: filteredLicenses,
-        allLicenses: store.licenses,
-        selectedLicense: $selectedLicense,
-        searchText: searchText
-      )
-      .navigationSplitViewColumnWidth(min: 325, ideal: 375, max: .infinity)
-    } detail: {
-      if let selectedLicense {
-        LicenseDetailView(
-          license: selectedLicense,
-          auditEvents: auditLog.events(for: selectedLicense),
-          relatedPaddleLicenseCount: relatedPaddleLicenseCount(for: selectedLicense),
-          paddleSeatBadgeText: LicenseSeatBadgeContext.make(
-            for: selectedLicense,
-            in: store.licenses
-          ).badgeText,
-          onSave: { license in
-            updateLicense(license)
+    GeometryReader { proxy in
+      NavigationSplitView(columnVisibility: $columnVisibility) {
+        LicenseSidebar(
+          store: store,
+          selectedFilter: $selectedFilter
+        )
+        .background(MainWindowColumnWidthReader(column: .sidebar))
+        .navigationSplitViewColumnWidth(min: 200, ideal: 225, max: .infinity)
+      } content: {
+        LicenseListView(
+          licenses: filteredLicenses,
+          allLicenses: store.licenses,
+          selectedLicense: $selectedLicense,
+          searchText: searchText
+        )
+        .background(MainWindowColumnWidthReader(column: .list))
+        .navigationSplitViewColumnWidth(min: 325, ideal: 375, max: .infinity)
+      } detail: {
+        if let selectedLicense {
+          LicenseDetailView(
+            license: selectedLicense,
+            auditEvents: auditLog.events(for: selectedLicense),
+            relatedPaddleLicenseCount: relatedPaddleLicenseCount(for: selectedLicense),
+            paddleSeatBadgeText: LicenseSeatBadgeContext.make(
+              for: selectedLicense,
+              in: store.licenses
+            ).badgeText,
+            onSave: { license in
+              updateLicense(license)
+            },
+            onCopySerial: {
+              LicenseService.copySerial(selectedLicense.serial)
+            },
+            onRevoke: {
+              updateLicense(LicenseService.revokeLicense(selectedLicense))
+            },
+            onPrepareEmailDelivery: { license in
+              try prepareEmailDelivery(for: license)
+            },
+            onMarkEmailSent: { license in
+              markEmailSent(for: license)
+            },
+            onRefreshFulfillmentArchive: { license in
+              try await refreshFulfillmentArchive(for: license)
+            }
+          )
+          .id(selectedLicense.id)
+          .background(MainWindowColumnWidthReader(column: .detail))
+          .navigationSplitViewColumnWidth(min: 500, ideal: 726, max: .infinity)
+        } else {
+          LicenseDashboardView(store: store)
+            .background(MainWindowColumnWidthReader(column: .detail))
+            .navigationSplitViewColumnWidth(min: 500, ideal: 726, max: .infinity)
+        }
+      }
+      .onAppear {
+        updateColumnVisibility(for: proxy.size.width)
+      }
+      .onChange(of: proxy.size.width) { _, newWidth in
+        updateColumnVisibility(for: newWidth)
+      }
+      .onPreferenceChange(MainWindowColumnWidthsPreferenceKey.self) { widths in
+        mainColumnWidths = widths
+      }
+      .overlay(alignment: .bottomTrailing) {
+        mainColumnWidthReadout
+      }
+      .toolbar {
+
+
+        LicenseToolbarContent(
+          selectedLicense: selectedLicense,
+          showsTextLabels: showToolbarTextLabels,
+          sortOption: $sortOption,
+          onNew: {
+            showingNewLicenseSheet = true
           },
-          onCopySerial: {
-            LicenseService.copySerial(selectedLicense.serial)
+          onFulfillPaddlePurchase: {
+            showingPaddleFulfillmentSheet = true
           },
-          onRevoke: {
-            updateLicense(LicenseService.revokeLicense(selectedLicense))
+          onDuplicate: duplicateSelectedLicense,
+          onDelete: confirmDeleteSelectedLicense,
+          onExportJSON: exportJSON,
+          onExportCSV: exportCSV,
+          onUndoDelete: undoLastDelete,
+          canUndoDelete: lastDeletedLicense != nil,
+          onExportLicenseFile: exportLicenseFile,
+          onInspectLicenseFile: inspectLicenseFile,
+          onExportAndRevealLicenseFile: exportAndRevealLicenseFile,
+          onExportAndEmailLicenseFile: exportAndEmailLicenseFile,
+          onShowPendingPurchases: {
+            showingPendingPurchases = true
           },
-          onPrepareEmailDelivery: { license in
-            try prepareEmailDelivery(for: license)
+          onShowAuditLog: {
+            showingAuditLog = true
           },
-          onMarkEmailSent: { license in
-            markEmailSent(for: license)
-          },
-          onRefreshFulfillmentArchive: { license in
-            try await refreshFulfillmentArchive(for: license)
+          onShowRecoveryReport: {
+            showingRecoveryReport = true
           }
         )
-        .id(selectedLicense.id)
-        .navigationSplitViewColumnWidth(min: 500, ideal: 726, max: .infinity)
-      } else {
-        LicenseDashboardView(store: store)
-          .navigationSplitViewColumnWidth(min: 500, ideal: 726, max: .infinity)
+
+
       }
     }
-    .frame(minWidth: 1000, minHeight: 650)
-    .toolbar {
-
-
-      LicenseToolbarContent(
-        selectedLicense: selectedLicense,
-        showsTextLabels: showToolbarTextLabels,
-        sortOption: $sortOption,
-        onNew: {
-          showingNewLicenseSheet = true
-        },
-        onFulfillPaddlePurchase: {
-          showingPaddleFulfillmentSheet = true
-        },
-        onDuplicate: duplicateSelectedLicense,
-        onDelete: confirmDeleteSelectedLicense,
-        onExportJSON: exportJSON,
-        onExportCSV: exportCSV,
-        onUndoDelete: undoLastDelete,
-        canUndoDelete: lastDeletedLicense != nil,
-        onExportLicenseFile: exportLicenseFile,
-        onInspectLicenseFile: inspectLicenseFile,
-        onExportAndRevealLicenseFile: exportAndRevealLicenseFile,
-        onExportAndEmailLicenseFile: exportAndEmailLicenseFile,
-        onShowPendingPurchases: {
-          showingPendingPurchases = true
-        },
-        onShowAuditLog: {
-          showingAuditLog = true
-        },
-        onShowRecoveryReport: {
-          showingRecoveryReport = true
-        }
-      )
-
-
-    }
+    .frame(minWidth: 825, minHeight: 650)
     .searchable(text: $searchText, placement: .toolbar, prompt: "Search licenses")
     .sheet(isPresented: $showingNewLicenseSheet) {
       NewLicenseSheet { license in
@@ -290,6 +343,41 @@ struct ContentView: View {
       Button("OK") {}
     } message: {
       Text(inspectionError ?? "Unknown error")
+    }
+  }
+
+  private var mainColumnWidthReadout: some View {
+    Text(mainColumnWidthSummary)
+      .font(.caption.monospacedDigit())
+      .textSelection(.enabled)
+      .padding(.horizontal, 8)
+      .padding(.vertical, 5)
+      .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+      .overlay {
+        RoundedRectangle(cornerRadius: 6)
+          .stroke(.separator, lineWidth: 1)
+      }
+      .padding(10)
+      .accessibilityLabel("Main window column widths")
+  }
+
+  private var mainColumnWidthSummary: String {
+    let sidebarWidth = roundedWidth(for: .sidebar)
+    let listWidth = roundedWidth(for: .list)
+    let detailWidth = roundedWidth(for: .detail)
+
+    return "Sidebar \(sidebarWidth), List \(listWidth), Detail \(detailWidth)"
+  }
+
+  private func roundedWidth(for column: MainWindowColumn) -> Int {
+    Int((mainColumnWidths[column] ?? 0).rounded())
+  }
+
+  private func updateColumnVisibility(for windowWidth: CGFloat) {
+    if windowWidth < 1_040, columnVisibility == .all {
+      columnVisibility = .doubleColumn
+    } else if windowWidth > 1_125, columnVisibility != .all {
+      columnVisibility = .all
     }
   }
 

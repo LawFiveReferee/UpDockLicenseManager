@@ -1,5 +1,12 @@
 # UpDock License Manager
 
+## v1.0.48 — Adaptive Detail Layout
+- Bumped app version to 1.0.48 build 53.
+- Restored the selectable bottom-right main column width readout.
+- Dashboard cards in the detail area now wrap as the detail column narrows.
+- The newest license card now expands to the available detail width.
+- The sidebar automatically hides when the window is too narrow for all three minimum columns.
+
 ## v1.0.47 — Main Column Width Defaults
 - Bumped app version to 1.0.47 build 52.
 - Set main window minimum column widths to Sidebar 200, List 325, and Detail 500.

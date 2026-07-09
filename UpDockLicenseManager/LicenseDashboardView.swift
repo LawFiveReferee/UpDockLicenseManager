@@ -9,6 +9,9 @@ import SwiftUI
 
 struct LicenseDashboardView: View {
     let store: LicenseStore
+    private let dashboardColumns = [
+        GridItem(.adaptive(minimum: 120), spacing: 16, alignment: .leading)
+    ]
     
     var body: some View {
         ScrollView {
@@ -16,19 +19,17 @@ struct LicenseDashboardView: View {
                 Text("UpDock Pro License Manager")
                     .font(.largeTitle.bold())
                 
-                HStack(spacing: 16) {
+                LazyVGrid(columns: dashboardColumns, alignment: .leading, spacing: 16) {
                     dashboardCard("All", store.totalCount)
                     dashboardCard("Active", store.activeCount)
                     dashboardCard("Expiring Soon", store.expiringSoonCount)
                     dashboardCard("Expired", store.expiredCount)
                     dashboardCard("Revoked", store.revokedCount)
-                }
-                
-                HStack(spacing: 16) {
                     dashboardCard("Active Beta", store.activeBetaCount)
                     dashboardCard("Active Trial", store.activeTrialCount)
                     dashboardCard("Active Commercial", store.activeCommercialCount)
                 }
+
                  if let newest = store.licenses.first {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Newest License")
@@ -47,7 +48,7 @@ struct LicenseDashboardView: View {
                         }
                     }
                     .padding(18)
-                    .frame(maxWidth: 700, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.regularMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
@@ -68,7 +69,7 @@ struct LicenseDashboardView: View {
                 .monospacedDigit()
         }
         .padding(18)
-        .frame(minWidth: 120, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
