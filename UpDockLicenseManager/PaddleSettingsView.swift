@@ -60,13 +60,12 @@ struct PaddleSettingsView: View {
           .disabled(apiKey.isEmpty)
 
           Button("Save API Key") {
-            KeychainSettingsStore.shared.paddleAPIKey = apiKey
-            savedMessage = "API key saved to Keychain."
+            savePaddleAPIKey()
           }
           .buttonStyle(.borderedProminent)
 
           Button("Update Local Config…") {
-            KeychainSettingsStore.shared.paddleAPIKey = apiKey
+            savePaddleAPIKey()
             updateLocalPrivateConfig(
               constants: ["PADDLE_API_KEY": apiKey]
             )
@@ -246,16 +245,12 @@ struct PaddleSettingsView: View {
           .disabled(notificationSecret.isEmpty)
 
           Button("Save Secret") {
-            KeychainSettingsStore.shared
-              .paddleNotificationSecret = notificationSecret
-
-            savedMessage = "Notification secret saved to Keychain."
+            saveNotificationSecret()
           }
           .buttonStyle(.borderedProminent)
 
           Button("Update Local Config…") {
-            KeychainSettingsStore.shared
-              .paddleNotificationSecret = notificationSecret
+            saveNotificationSecret()
             updateLocalPrivateConfig(
               constants: ["PADDLE_WEBHOOK_SECRET": notificationSecret]
             )
@@ -274,10 +269,10 @@ struct PaddleSettingsView: View {
       notificationSecret = KeychainSettingsStore.shared.paddleNotificationSecret
     }
     .onChange(of: apiKey) { _, newValue in
-      KeychainSettingsStore.shared.paddleAPIKey = newValue
+      saveNonEmptyPaddleAPIKey(newValue)
     }
     .onChange(of: notificationSecret) { _, newValue in
-      KeychainSettingsStore.shared.paddleNotificationSecret = newValue
+      saveNonEmptyNotificationSecret(newValue)
     }
   }
 
@@ -325,6 +320,52 @@ struct PaddleSettingsView: View {
     KeychainSettingsStore.shared.remove(.paddleAPIKey)
     savedMessage = "Removed old test API key from Keychain."
     return ""
+  }
+
+  private func savePaddleAPIKey() {
+    let trimmedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !trimmedAPIKey.isEmpty else {
+      savedMessage = "API key was not saved because the field is blank."
+      return
+    }
+
+    KeychainSettingsStore.shared.paddleAPIKey = trimmedAPIKey
+    apiKey = trimmedAPIKey
+    savedMessage = "API key saved to Keychain."
+  }
+
+  private func saveNotificationSecret() {
+    let trimmedSecret = notificationSecret.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !trimmedSecret.isEmpty else {
+      savedMessage = "Notification secret was not saved because the field is blank."
+      return
+    }
+
+    KeychainSettingsStore.shared.paddleNotificationSecret = trimmedSecret
+    notificationSecret = trimmedSecret
+    savedMessage = "Notification secret saved to Keychain."
+  }
+
+  private func saveNonEmptyPaddleAPIKey(_ value: String) {
+    let trimmedAPIKey = value.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !trimmedAPIKey.isEmpty else {
+      return
+    }
+
+    KeychainSettingsStore.shared.paddleAPIKey = trimmedAPIKey
+  }
+
+  private func saveNonEmptyNotificationSecret(_ value: String) {
+    let trimmedSecret = value.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !trimmedSecret.isEmpty else {
+      return
+    }
+
+    KeychainSettingsStore.shared.paddleNotificationSecret = trimmedSecret
   }
 
   private func copyCheckoutHTMLBlock() {

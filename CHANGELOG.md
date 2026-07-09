@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.43 — Paddle Secret Blank Save Guard
+- Bumped app version to 1.0.43 build 48.
+- Paddle Settings no longer lets blank API key or notification secret field states overwrite saved Keychain values.
+- Save actions now trim values before storing them and report when a blank secret was not saved.
+
 ## v1.0.42 — Paddle API Placeholder Guard
 - Bumped app version to 1.0.42 build 47.
 - The Keychain settings store now rejects the retired test_api_key_123 Paddle API placeholder globally.
