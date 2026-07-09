@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.52 — License Email References
+- Bumped app version to 1.0.52 build 57.
+- Customer license email drafts now include the license issued date and Paddle customer ID when available.
+- Updated the email signature to use UpDock Customer Service, the customer service email address, and the UpDock Pro page link.
+
 ## v1.0.51 — Detail Version Label
 - Bumped app version to 1.0.51 build 56.
 - Added a small selectable version/build label below the main dashboard title.

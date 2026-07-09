@@ -24,6 +24,10 @@ enum LicenseEmailService {
         let purchaseLine = purchaseReference.isEmpty
             ? ""
             : "\nPurchase reference: \(purchaseReference)"
+        let customerID = license.paddleCustomerID.trimmingCharacters(in: .whitespacesAndNewlines)
+        let customerLine = customerID.isEmpty
+            ? ""
+            : "\nPaddle customer ID: \(customerID)"
         let seatLine: String
 
         let expirationLine: String
@@ -48,7 +52,8 @@ enum LicenseEmailService {
         To install it, open UpDock Pro and import the attached .updocklicense file.
 
         Serial: \(license.serial)
-        \(seatLine)\(purchaseLine)
+        Issued: \(license.issuedAt.formatted(date: .long, time: .omitted))
+        \(seatLine)\(purchaseLine)\(customerLine)
 
         \(expirationLine)
 
@@ -56,7 +61,9 @@ enum LicenseEmailService {
 
         Thank you,
 
-        Stockly Consulting
+        UpDock Customer Service
+        customerservice@updockapp.com
+        https://updockapp.com/pro.html
         """
     }
 
