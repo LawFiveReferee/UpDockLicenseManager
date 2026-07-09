@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.45 — Toolbar Label Preference
+- Bumped app version to 1.0.45 build 50.
+- Added a General setting to show text labels in the main toolbar.
+- Main toolbar buttons now show hover help labels when rendered icon-only.
+
 ## v1.0.44 — Verified Paddle Secret Saves
 - Bumped app version to 1.0.44 build 49.
 - Paddle Settings now verifies Keychain writes before reporting API key or notification secret saves as successful.

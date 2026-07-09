@@ -66,6 +66,10 @@ struct GeneralSettingsView: View {
                     in: 1...365
                 )
             }
+
+            Section("Interface") {
+                Toggle("Show text labels in the main toolbar", isOn: $settings.showToolbarTextLabels)
+            }
         }
         .formStyle(.grouped)
         .padding()

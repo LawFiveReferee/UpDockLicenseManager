@@ -53,6 +53,8 @@ enum RecoveryReportActionError: LocalizedError {
 }
 
 struct ContentView: View {
+  @AppStorage("showToolbarTextLabels") private var showToolbarTextLabels = false
+
   @State private var store = LicenseStore()
   @State private var auditLog = AuditLogStore()
 
@@ -131,6 +133,7 @@ struct ContentView: View {
 
       LicenseToolbarContent(
         selectedLicense: selectedLicense,
+        showsTextLabels: showToolbarTextLabels,
         sortOption: $sortOption,
         onNew: {
           showingNewLicenseSheet = true

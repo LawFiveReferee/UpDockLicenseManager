@@ -9,6 +9,7 @@ import SwiftUI
 
 struct LicenseToolbarContent: ToolbarContent {
   let selectedLicense: LicenseRecord?
+  let showsTextLabels: Bool
   @Binding var sortOption: LicenseSortOption
 
   let onNew: () -> Void
@@ -32,56 +33,64 @@ struct LicenseToolbarContent: ToolbarContent {
       Button {
         onNew()
       } label: {
-        Label("New License", systemImage: "plus")
+        toolbarLabel("New License", systemImage: "plus")
       }
+      .help("New License")
       .keyboardShortcut("n", modifiers: .command)
 
       Button {
         onFulfillPaddlePurchase()
       } label: {
-        Label("Fulfill Paddle", systemImage: "creditcard")
+        toolbarLabel("Fulfill Paddle", systemImage: "creditcard")
       }
+      .help("Fulfill Paddle")
 
       Button {
         onShowPendingPurchases()
       } label: {
-        Label("Pending Purchases", systemImage: "tray.full")
+        toolbarLabel("Pending Purchases", systemImage: "tray.full")
       }
+      .help("Pending Purchases")
 
       Button {
         onShowAuditLog()
       } label: {
-        Label("Audit Log", systemImage: "clock.badge")
+        toolbarLabel("Audit Log", systemImage: "clock.badge")
       }
+      .help("Audit Log")
 
       Button {
         onShowRecoveryReport()
       } label: {
-        Label("Recovery Report", systemImage: "wrench.and.screwdriver")
+        toolbarLabel("Recovery Report", systemImage: "wrench.and.screwdriver")
       }
+      .help("Recovery Report")
 
       Button {
         onDuplicate()
       } label: {
-        Label("Duplicate", systemImage: "plus.square.on.square")
+        toolbarLabel("Duplicate", systemImage: "plus.square.on.square")
       }
       .disabled(selectedLicense == nil)
+      .help("Duplicate")
       .keyboardShortcut("d", modifiers: .command)
 
       Button {
         onDelete()
       } label: {
-        Label("Delete", systemImage: "trash")
+        toolbarLabel("Delete", systemImage: "trash")
       }
 
       .disabled(selectedLicense == nil)
+      .help("Delete")
       .keyboardShortcut(.delete, modifiers: [])
       Button {
         onUndoDelete()
       } label: {
-        Label("Undo Delete", systemImage: "arrow.uturn.backward")
+        toolbarLabel("Undo Delete", systemImage: "arrow.uturn.backward")
       }
       .disabled(!canUndoDelete)
+      .help("Undo Delete")
       .keyboardShortcut("z", modifiers: .command)
 
       Menu {
@@ -97,8 +106,9 @@ struct LicenseToolbarContent: ToolbarContent {
           }
         }
       } label: {
-        Label("Sort", systemImage: "arrow.up.arrow.down")
+        toolbarLabel("Sort", systemImage: "arrow.up.arrow.down")
       }
+      .help("Sort")
 
       Menu {
         Button("Export JSON") {
@@ -129,16 +139,30 @@ struct LicenseToolbarContent: ToolbarContent {
         .disabled(selectedLicense == nil)
 
       } label: {
-        Label("Export", systemImage: "square.and.arrow.up")
+        toolbarLabel("Export", systemImage: "square.and.arrow.up")
       }
+      .help("Export")
       Button {
         LicenseService.runSigningSelfTest()
       } label: {
-        Label("Signing Test", systemImage: "checkmark.seal")
+        toolbarLabel("Signing Test", systemImage: "checkmark.seal")
       }
+      .help("Signing Test")
       SettingsLink {
-        Label("Settings", systemImage: "gearshape")
+        toolbarLabel("Settings", systemImage: "gearshape")
       }
+      .help("Settings")
+    }
+  }
+
+  @ViewBuilder
+  private func toolbarLabel(_ title: String, systemImage: String) -> some View {
+    if showsTextLabels {
+      Label(title, systemImage: systemImage)
+        .labelStyle(.titleAndIcon)
+    } else {
+      Label(title, systemImage: systemImage)
+        .labelStyle(.iconOnly)
     }
   }
 }

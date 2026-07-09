@@ -30,6 +30,10 @@ final class GeneralSettings {
     var defaultBetaLengthDays: Int {
         didSet { save() }
     }
+
+    var showToolbarTextLabels: Bool {
+        didSet { save() }
+    }
     
     private let defaults = UserDefaults.standard
     
@@ -39,6 +43,7 @@ final class GeneralSettings {
         self.supportEmail = defaults.string(forKey: "supportEmail") ?? "customerservice@updockapp.com"
         self.defaultTrialLengthDays = defaults.object(forKey: "defaultTrialLengthDays") as? Int ?? 30
         self.defaultBetaLengthDays = defaults.object(forKey: "defaultBetaLengthDays") as? Int ?? 90
+        self.showToolbarTextLabels = defaults.object(forKey: "showToolbarTextLabels") as? Bool ?? false
     }
     
     private func save() {
@@ -47,5 +52,6 @@ final class GeneralSettings {
         defaults.set(supportEmail, forKey: "supportEmail")
         defaults.set(defaultTrialLengthDays, forKey: "defaultTrialLengthDays")
         defaults.set(defaultBetaLengthDays, forKey: "defaultBetaLengthDays")
+        defaults.set(showToolbarTextLabels, forKey: "showToolbarTextLabels")
     }
 }
