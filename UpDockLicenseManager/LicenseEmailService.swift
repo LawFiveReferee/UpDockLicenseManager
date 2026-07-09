@@ -9,6 +9,40 @@ import Foundation
 import AppKit
 
 enum LicenseEmailService {
+    static func openTestMailDraft(settings: EmailSettings = EmailSettings()) throws {
+        let customerServiceEmail = settings.signatureEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let recipient = customerServiceEmail.isEmpty ? "customerservice@updockapp.com" : customerServiceEmail
+        let testLicense = LicenseRecord(
+            serial: "UPD-PRO-TEST-DO-NOT-USE",
+            type: .commercial,
+            name: "Email Draft Test",
+            email: recipient,
+            issuedAt: Date(),
+            notes: "Email draft test only.",
+            seatAllowance: 1,
+            paddleCustomerID: "ctm_test_email_draft",
+            paddleTransactionID: "txn_test_email_draft",
+            paddleEmail: recipient,
+            paddleStatus: "test"
+        )
+        let attachmentURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("UpDock-Test-License-Do-Not-Use.updocklicense")
+        let attachmentBody = """
+        This is a test attachment created by UpDock License Manager.
+        It is not a valid UpDock Pro license.
+        """
+
+        try attachmentBody.write(to: attachmentURL, atomically: true, encoding: .utf8)
+
+        try openMailDraft(
+            to: recipient,
+            subject: "[TEST] \(makeEmailSubject(for: testLicense))",
+            body: makeEmailBody(for: testLicense, settings: settings),
+            attachmentURL: attachmentURL,
+            settings: settings
+        )
+    }
+
     static func makeEmailSubject(for license: LicenseRecord) -> String {
         if let seatAllowance = license.seatAllowance, seatAllowance > 1 {
             return "Your UpDock Pro Site License"

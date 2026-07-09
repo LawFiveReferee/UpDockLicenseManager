@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.61 — Email Test Draft
+- Bumped app version to 1.0.61 build 66.
+- Added a Prepare Test Draft action in Email settings to verify the Apple Mail sender, signature links, and attachment handling without fulfilling a purchase.
+- Test drafts use an internal recipient and a fake do-not-use attachment instead of creating a real license.
+
 ## v1.0.60 — Mail Signature Suppression
 - Bumped app version to 1.0.60 build 65.
 - Apple Mail draft creation now suppresses Mail's default account signature so only the UpDock license email signature appears.

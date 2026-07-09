@@ -80,6 +80,8 @@ final class EmailSettings {
 
 struct EmailSettingsView: View {
     @Bindable var settings: EmailSettings
+    @State private var testDraftStatus = ""
+    @State private var isPreparingTestDraft = false
 
     var body: some View {
         Form {
@@ -88,6 +90,25 @@ struct EmailSettingsView: View {
                 Text("Mail drafts open in Apple Mail. The app will try to select this sender account; confirm it before sending.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                Button {
+                    prepareTestDraft()
+                } label: {
+                    if isPreparingTestDraft {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Label("Prepare Test Draft", systemImage: "envelope.badge")
+                    }
+                }
+                .disabled(isPreparingTestDraft)
+
+                if !testDraftStatus.isEmpty {
+                    Text(testDraftStatus)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
             }
 
             Section("Signature Links") {
@@ -97,6 +118,20 @@ struct EmailSettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+    }
+
+    private func prepareTestDraft() {
+        isPreparingTestDraft = true
+        testDraftStatus = ""
+
+        do {
+            try LicenseEmailService.openTestMailDraft(settings: settings)
+            testDraftStatus = "Prepared test draft. Confirm the From account, signature links, and test attachment in Mail."
+        } catch {
+            testDraftStatus = error.localizedDescription
+        }
+
+        isPreparingTestDraft = false
     }
 }
 
