@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.59 — Mail Draft Creation
+- Bumped app version to 1.0.59 build 64.
+- Preferred-sender email drafts now create the Apple Mail message directly so the saved From account is applied at draft creation.
+- Plain-text Mail drafts now include visible download, customer service, and UpDock Pro URLs when using the AppleScript sender path.
+
 ## v1.0.58 — Mail Sender Matching
 - Bumped app version to 1.0.58 build 63.
 - Mail sender automation now waits for the compose draft and matches the preferred sender against configured Mail account addresses.

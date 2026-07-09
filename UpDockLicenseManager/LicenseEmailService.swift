@@ -79,6 +79,22 @@ enum LicenseEmailService {
         attachmentURL: URL,
         settings: EmailSettings = EmailSettings()
     ) throws {
+        let preferredSender = settings.preferredFromAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if !preferredSender.isEmpty {
+            try openAppleMailDraft(
+                to: recipient,
+                subject: subject,
+                body: makePlainTextEmailBody(
+                    body,
+                    settings: settings
+                ),
+                attachmentURL: attachmentURL,
+                sender: preferredSender
+            )
+            return
+        }
+
         guard let service = NSSharingService(named: .composeEmail) else {
             throw LicenseEmailError.mailServiceUnavailable
         }
@@ -100,13 +116,6 @@ enum LicenseEmailService {
             formattedBody,
             attachmentURL
         ])
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            applyPreferredSenderIfAvailable(
-                subject: subject,
-                settings: settings
-            )
-        }
     }
 
     private static func makeLinkedEmailBody(
@@ -157,67 +166,90 @@ enum LicenseEmailService {
         attributedBody.addAttribute(.link, value: url, range: range)
     }
 
-    private static func applyPreferredSenderIfAvailable(
+    private static func openAppleMailDraft(
+        to recipient: String,
         subject: String,
-        settings: EmailSettings
-    ) {
-        let preferredSender = settings.preferredFromAddress.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard !preferredSender.isEmpty else {
-            return
-        }
-
+        body: String,
+        attachmentURL: URL,
+        sender: String
+    ) throws {
+        let trimmedRecipient = recipient.trimmingCharacters(in: .whitespacesAndNewlines)
         let script = """
         tell application "Mail"
-          set targetSubject to "\(appleScriptEscaped(subject))"
-          set preferredAddress to "\(appleScriptEscaped(preferredSender))"
-          set targetSender to preferredAddress
-
-          repeat with mailAccount in accounts
-            try
-              repeat with accountAddress in email addresses of mailAccount
-                if accountAddress as string is preferredAddress then
-                  set targetSender to (full name of mailAccount as string) & " <" & preferredAddress & ">"
-                end if
-              end repeat
-            end try
-          end repeat
-
-          repeat 20 times
-            set didUpdateSender to false
-            repeat with draftMessage in outgoing messages
-              try
-                if visible of draftMessage is true and subject of draftMessage is targetSubject then
-                  set sender of draftMessage to targetSender
-                  set didUpdateSender to true
-                end if
-              end try
-            end repeat
-            if didUpdateSender is true then exit repeat
-            delay 0.25
-          end repeat
+          activate
+          set messageBody to \(appleScriptStringExpression(body))
+          set newEmail to make new outgoing message at beginning with properties {visible:true, sender:\(appleScriptStringExpression(sender)), subject:\(appleScriptStringExpression(subject)), content:messageBody}
+          tell newEmail
+            \(appleScriptRecipientLine(trimmedRecipient))
+            make new attachment with properties {file name:(POSIX file \(appleScriptStringExpression(attachmentURL.path)) as alias)} at after the last paragraph
+          end tell
         end tell
         """
 
         var error: NSDictionary?
         NSAppleScript(source: script)?.executeAndReturnError(&error)
+
+        if let error {
+            throw LicenseEmailError.mailAutomationFailed(error.description)
+        }
+    }
+
+    private static func makePlainTextEmailBody(
+        _ body: String,
+        settings: EmailSettings
+    ) -> String {
+        let signatureEmail = settings.signatureEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let signatureURL = settings.signatureURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let customerServiceEmail = signatureEmail.isEmpty ? "customerservice@updockapp.com" : signatureEmail
+        let proPageURL = signatureURL.isEmpty ? "https://updockapp.com/pro.html" : signatureURL
+
+        return body
+            .replacingOccurrences(
+                of: "UpDock Pro App Download",
+                with: "UpDock Pro App Download\nhttps://updockapp.com/downloads.html"
+            )
+            .replacingOccurrences(
+                of: "Email Customer Service at UpDock",
+                with: "Email Customer Service at UpDock\nmailto:\(customerServiceEmail)"
+            )
+            .replacingOccurrences(
+                of: "UpDock Pro Webpage",
+                with: "UpDock Pro Webpage\n\(proPageURL)"
+            )
+    }
+
+    private static func appleScriptRecipientLine(_ recipient: String) -> String {
+        guard !recipient.isEmpty else {
+            return ""
+        }
+
+        return "make new to recipient at end of to recipients with properties {address:\(appleScriptStringExpression(recipient))}"
+    }
+
+    private static func appleScriptStringExpression(_ value: String) -> String {
+        let lines = value.components(separatedBy: .newlines)
+        return lines
+            .map { "\"\(appleScriptEscaped($0))\"" }
+            .joined(separator: " & return & ")
     }
 
     private static func appleScriptEscaped(_ value: String) -> String {
         value
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
-            .replacingOccurrences(of: "\n", with: "\\n")
     }
 }
 
 enum LicenseEmailError: Error, LocalizedError {
     case mailServiceUnavailable
+    case mailAutomationFailed(String)
 
     var errorDescription: String? {
         switch self {
         case .mailServiceUnavailable:
             return "The macOS email compose service is not available."
+        case .mailAutomationFailed(let message):
+            return "Apple Mail draft automation failed: \(message)"
         }
     }
 }
