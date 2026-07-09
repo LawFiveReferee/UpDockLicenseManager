@@ -52,7 +52,9 @@ enum LicenseEmailService {
 
         Attached is your UpDock Pro license file.
 
-        To install it, open UpDock Pro and import the attached .updocklicense file.
+        UpDock Pro App Download
+
+        To register your copy open the UpDock Pro app, select Show UpDock Pro Settings… from the UpDock menu, and import the attached license file.
 
         Serial: \(license.serial)
         Issued: \(license.issuedAt.formatted(date: .long, time: .omitted))
@@ -65,6 +67,7 @@ enum LicenseEmailService {
         Thank you,
 
         Email Customer Service at UpDock
+
         UpDock Pro Webpage
         """
     }
@@ -109,12 +112,18 @@ enum LicenseEmailService {
         let signatureURL = settings.signatureURL.trimmingCharacters(in: .whitespacesAndNewlines)
         let customerServiceEmail = signatureEmail.isEmpty ? "customerservice@updockapp.com" : signatureEmail
         let proPageURL = signatureURL.isEmpty ? "https://updockapp.com/pro.html" : signatureURL
+        let downloadURL = "https://updockapp.com/downloads.html"
 
         attributedBody.addAttribute(.font, value: NSFont.systemFont(ofSize: NSFont.systemFontSize), range: fullRange)
 
         addLink(
             to: "Email Customer Service at UpDock",
             urlString: "mailto:\(customerServiceEmail)",
+            in: attributedBody
+        )
+        addLink(
+            to: "UpDock Pro App Download",
+            urlString: downloadURL,
             in: attributedBody
         )
         addLink(

@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.55 — License Email Install Links
+- Bumped app version to 1.0.55 build 60.
+- Added an UpDock Pro App Download link above the license registration instructions in customer email drafts.
+- Updated the registration instructions and added extra spacing between signature links.
+
 ## v1.0.54 — Linked Mail Signature
 - Bumped app version to 1.0.54 build 59.
 - License email drafts now use rich text so the customer service and UpDock Pro signature lines are clickable links in Mail.
