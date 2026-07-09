@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Observation
+import AppKit
 
 struct SettingsView: View {
     @State private var settings = GeneralSettings()
@@ -38,8 +39,13 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Email", systemImage: "envelope")
                 }
+
+            LaunchChecklistView()
+                .tabItem {
+                    Label("Launch", systemImage: "checklist")
+                }
         }
-        .frame(width: 620, height: 420)
+        .frame(width: 680, height: 500)
     }
 }
 
@@ -167,4 +173,147 @@ struct GeneralSettingsView: View {
         .formStyle(.grouped)
         .padding()
     }
+}
+
+struct LaunchChecklistView: View {
+    @State private var paddleSettings = PaddleSettings()
+    @State private var networkSettings = NetworkSettings()
+    @State private var emailSettings = EmailSettings()
+    @AppStorage("launchChecklist.domainApproved") private var domainApproved = false
+    @AppStorage("launchChecklist.businessVerified") private var businessVerified = false
+    @AppStorage("launchChecklist.liveSiteDeployed") private var liveSiteDeployed = false
+    @AppStorage("launchChecklist.webhookOneEvent") private var webhookOneEvent = false
+    @AppStorage("launchChecklist.liveDiscountTest") private var liveDiscountTest = false
+    @AppStorage("launchChecklist.pendingPurchaseVerified") private var pendingPurchaseVerified = false
+    @AppStorage("launchChecklist.fulfillmentVerified") private var fulfillmentVerified = false
+    @AppStorage("launchChecklist.emailDraftVerified") private var emailDraftVerified = false
+    @State private var copyStatus = ""
+
+    private var automaticChecks: [LaunchChecklistItem] {
+        [
+            LaunchChecklistItem(
+                title: "Paddle environment is Production",
+                detail: paddleSettings.environment.rawValue,
+                isComplete: paddleSettings.environment == .production
+            ),
+            LaunchChecklistItem(
+                title: "Client-side token is live",
+                detail: redactedPrefix(paddleSettings.clientSideToken, expectedPrefix: "live_"),
+                isComplete: paddleSettings.clientSideToken.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("live_")
+            ),
+            LaunchChecklistItem(
+                title: "Default live Price ID is set",
+                detail: paddleSettings.defaultPriceID.isEmpty ? "Not set" : paddleSettings.defaultPriceID,
+                isComplete: !paddleSettings.defaultPriceID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ),
+            LaunchChecklistItem(
+                title: "Server base URL is live",
+                detail: networkSettings.serverBaseURL,
+                isComplete: networkSettings.serverBaseURL.trimmingCharacters(in: .whitespacesAndNewlines) == "https://updockapp.com/paddle"
+            ),
+            LaunchChecklistItem(
+                title: "Manager token is saved",
+                detail: KeychainSettingsStore.shared.managerToken.isEmpty ? "Not saved" : "Saved in Keychain",
+                isComplete: !KeychainSettingsStore.shared.managerToken.isEmpty
+            ),
+            LaunchChecklistItem(
+                title: "Customer service sender is set",
+                detail: emailSettings.preferredFromAddress,
+                isComplete: emailSettings.preferredFromAddress.trimmingCharacters(in: .whitespacesAndNewlines) == "customerservice@updockapp.com"
+            )
+        ]
+    }
+
+    var body: some View {
+        Form {
+            Section("Automatic Checks") {
+                ForEach(automaticChecks) { item in
+                    launchStatusRow(item)
+                }
+            }
+
+            Section("Manual Launch Confirmations") {
+                Toggle("Paddle checkout domain is approved", isOn: $domainApproved)
+                Toggle("Paddle business and identity verification is complete", isOn: $businessVerified)
+                Toggle("Live website is deployed at updockapp.com", isOn: $liveSiteDeployed)
+                Toggle("Webhook destination subscribes only to transaction.completed", isOn: $webhookOneEvent)
+                Toggle("Live 100% discount checkout test passed", isOn: $liveDiscountTest)
+                Toggle("Pending Purchases received the live test purchase", isOn: $pendingPurchaseVerified)
+                Toggle("Fulfillment created the expected license and archived the transaction", isOn: $fulfillmentVerified)
+                Toggle("License email draft was verified in Apple Mail", isOn: $emailDraftVerified)
+            }
+
+            Section("Summary") {
+                Button("Copy Launch Checklist Summary", systemImage: "doc.on.doc") {
+                    copySummary()
+                }
+
+                if !copyStatus.isEmpty {
+                    Text(copyStatus)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+
+    private func launchStatusRow(_ item: LaunchChecklistItem) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Image(systemName: item.isComplete ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundStyle(item.isComplete ? Color.green : Color.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.title)
+                Text(item.detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
+        }
+    }
+
+    private func copySummary() {
+        let lines = automaticChecks.map { item in
+            "\(item.isComplete ? "PASS" : "CHECK"): \(item.title) — \(item.detail)"
+        } + [
+            manualSummary("Paddle checkout domain approved", domainApproved),
+            manualSummary("Business and identity verification complete", businessVerified),
+            manualSummary("Live website deployed", liveSiteDeployed),
+            manualSummary("Webhook limited to transaction.completed", webhookOneEvent),
+            manualSummary("Live 100% discount checkout test passed", liveDiscountTest),
+            manualSummary("Pending purchase verified", pendingPurchaseVerified),
+            manualSummary("Fulfillment verified", fulfillmentVerified),
+            manualSummary("License email draft verified", emailDraftVerified)
+        ]
+
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(lines.joined(separator: "\n"), forType: .string)
+        copyStatus = "Copied launch checklist summary."
+    }
+
+    private func manualSummary(_ title: String, _ isComplete: Bool) -> String {
+        "\(isComplete ? "PASS" : "CHECK"): \(title)"
+    }
+
+    private func redactedPrefix(_ value: String, expectedPrefix: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmed.isEmpty else {
+            return "Not set"
+        }
+
+        guard trimmed.hasPrefix(expectedPrefix) else {
+            return "Does not start with \(expectedPrefix)"
+        }
+
+        return "\(expectedPrefix)…"
+    }
+}
+
+struct LaunchChecklistItem: Identifiable {
+    var id: String { title }
+    var title: String
+    var detail: String
+    var isComplete: Bool
 }

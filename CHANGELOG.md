@@ -1,5 +1,11 @@
 # UpDock License Manager
 
+## v1.0.62 — Launch Checklist
+- Bumped app version to 1.0.62 build 67.
+- Added a Launch settings tab with automatic checks for live Paddle, server, manager token, and email sender configuration.
+- Added persistent manual launch confirmations for Paddle approval, deployment, webhook scope, live checkout, pending purchase, fulfillment, and email draft verification.
+- Added a Copy Launch Checklist Summary action for launch review notes.
+
 ## v1.0.61 — Email Test Draft
 - Bumped app version to 1.0.61 build 66.
 - Added a Prepare Test Draft action in Email settings to verify the Apple Mail sender, signature links, and attachment handling without fulfilling a purchase.
