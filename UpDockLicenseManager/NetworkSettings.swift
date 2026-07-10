@@ -86,10 +86,23 @@ final class NetworkSettings {
         serverBaseURL + "/operations-status.php"
     }
 
+    var testLicenseEmailURL: String {
+        serverBaseURL + "/test-license-email.php"
+    }
+
     var authenticatedOperationsStatusURL: String {
         authenticatedURL(
             baseURL: operationsStatusURL,
             queryItems: []
+        )
+    }
+
+    func authenticatedTestLicenseEmailURL(email: String) -> String {
+        authenticatedURL(
+            baseURL: testLicenseEmailURL,
+            queryItems: [
+                URLQueryItem(name: "email", value: email)
+            ]
         )
     }
 

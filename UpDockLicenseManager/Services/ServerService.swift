@@ -95,6 +95,17 @@ final class ServerService {
     return try JSONDecoder().decode(OperationsStatusResponse.self, from: data)
   }
 
+  func sendTestLicenseEmail(
+    settings: NetworkSettings,
+    recipient: String
+  ) async throws -> ServerEmailTestResponse {
+    let data = try await NetworkService.shared.get(
+      from: settings.authenticatedTestLicenseEmailURL(email: recipient)
+    )
+
+    return try JSONDecoder().decode(ServerEmailTestResponse.self, from: data)
+  }
+
   func runActivationLimitTest(
     settings: NetworkSettings,
     serial: String,
@@ -173,6 +184,15 @@ final class ServerService {
       )
     }
   }
+}
+
+struct ServerEmailTestResponse: Codable {
+  var status: String
+  var apiVersion: Int?
+  var sent: Bool
+  var recipient: String
+  var attachment: String?
+  var message: String?
 }
 
 final class ActivationRegistryService {

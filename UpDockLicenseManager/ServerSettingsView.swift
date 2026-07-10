@@ -30,6 +30,7 @@ private enum ProductionReadinessStatus {
 struct ServerSettingsView: View {
   @State private var settings = NetworkSettings()
   @State private var paddleSettings = PaddleSettings()
+  @State private var emailSettings = EmailSettings()
   @State private var managerToken = KeychainSettingsStore.shared.managerToken
   @State private var showingToken = false
   @State private var healthResponse: HealthResponse?
@@ -43,6 +44,8 @@ struct ServerSettingsView: View {
   @State private var operationsStatusError: String?
   @State private var operationsStatusCheckedAt: Date?
   @State private var isFetchingOperationsStatus = false
+  @State private var isSendingServerEmailTest = false
+  @State private var serverEmailTestMessage = ""
   @State private var showingManagerTokenSyncAlert = false
   @State private var managerTokenConfigUpdateMessage = ""
 
@@ -331,6 +334,36 @@ struct ServerSettingsView: View {
         }
       }
 
+      Section("Server Email Test") {
+        LabeledContent("Recipient") {
+          Text(serverEmailTestRecipient)
+            .textSelection(.enabled)
+        }
+
+        Button {
+          Task {
+            await sendServerEmailTest()
+          }
+        } label: {
+          if isSendingServerEmailTest {
+            ProgressView()
+          } else {
+            Label("Send Test License Email", systemImage: "paperplane")
+          }
+        }
+        .disabled(isSendingServerEmailTest || serverEmailTestRecipient.isEmpty)
+
+        Text("Sends a fake license attachment through the private server email path. It does not create or fulfill a real license.")
+          .foregroundStyle(.secondary)
+
+        if !serverEmailTestMessage.isEmpty {
+          Text(serverEmailTestMessage)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .textSelection(.enabled)
+        }
+      }
+
       Section("Activation Test") {
         TextField("Serial", text: $activationTestSerial)
           .textFieldStyle(.roundedBorder)
@@ -477,6 +510,10 @@ struct ServerSettingsView: View {
 
   private var operationsStatusURL: String {
     settings.authenticatedOperationsStatusURL(token: managerToken)
+  }
+
+  private var serverEmailTestRecipient: String {
+    emailSettings.signatureEmail.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 
   private var productionReadinessItems: [ProductionReadinessItem] {
@@ -757,6 +794,27 @@ struct ServerSettingsView: View {
     }
 
     isFetchingOperationsStatus = false
+  }
+
+  private func sendServerEmailTest() async {
+    isSendingServerEmailTest = true
+    serverEmailTestMessage = ""
+
+    do {
+      let response = try await ServerService.shared.sendTestLicenseEmail(
+        settings: settings,
+        recipient: serverEmailTestRecipient
+      )
+
+      let attachment = response.attachment.map { " Attachment: \($0)." } ?? ""
+      serverEmailTestMessage = response.sent
+        ? "Sent test email to \(response.recipient).\(attachment)"
+        : "Server reported that the test email was not sent."
+    } catch {
+      serverEmailTestMessage = error.localizedDescription
+    }
+
+    isSendingServerEmailTest = false
   }
 
   private func saveManagerToken() {

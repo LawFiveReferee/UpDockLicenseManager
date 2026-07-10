@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.64 — Server Email Test
+- Bumped app version to 1.0.64 build 69.
+- Added a Server Settings action that sends a fake license attachment through the protected server email test endpoint.
+- The test uses the configured customer service email and does not create or fulfill a real license.
+
 ## v1.0.63 — Server Signing Export
 - Bumped app version to 1.0.63 build 68.
 - Added a guarded Signing settings action that copies the private signing key as a PHP config line for server-side auto-fulfillment.
