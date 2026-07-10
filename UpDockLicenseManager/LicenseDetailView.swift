@@ -184,6 +184,47 @@ struct LicenseDetailView: View {
           }
         }
 
+        card {
+          VStack(alignment: .leading, spacing: 14) {
+            Text("Email Delivery")
+              .font(.headline)
+
+            Label(emailDeliveryTitle, systemImage: emailDeliverySymbol)
+              .foregroundStyle(emailDeliveryStyle)
+
+            detailRow("Recipient", editableLicense.email)
+
+            if let attemptedAt = editableLicense.emailDeliveryAttemptedAt {
+              detailRow(emailDeliveryDateLabel, attemptedAt.formatted(date: .abbreviated, time: .shortened))
+            } else {
+              detailRow(emailDeliveryDateLabel, "Never")
+            }
+
+            if !editableLicense.emailDeliveryError.isEmpty {
+              Label(editableLicense.emailDeliveryError, systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.red)
+            }
+
+            HStack {
+              Button {
+                prepareEmailDelivery()
+              } label: {
+                if isPreparingEmailDelivery {
+                  ProgressView()
+                } else {
+                  Label(emailDeliveryButtonTitle, systemImage: "envelope")
+                }
+              }
+              .disabled(isPreparingEmailDelivery || editableLicense.email.isEmpty)
+
+              Button("Mark Sent", systemImage: "paperplane") {
+                markEmailSent()
+              }
+              .disabled(editableLicense.emailDeliveryStatus == .sent || editableLicense.email.isEmpty)
+            }
+          }
+        }
+
         if hasPaddleTransaction {
           card {
             VStack(alignment: .leading, spacing: 14) {
@@ -263,47 +304,6 @@ struct LicenseDetailView: View {
                 Label(editableLicense.activationRegistryError, systemImage: "exclamationmark.triangle")
                   .foregroundStyle(.red)
               }
-            }
-          }
-        }
-
-        card {
-          VStack(alignment: .leading, spacing: 14) {
-            Text("Email Delivery")
-              .font(.headline)
-
-            Label(emailDeliveryTitle, systemImage: emailDeliverySymbol)
-              .foregroundStyle(emailDeliveryStyle)
-
-            detailRow("Recipient", editableLicense.email)
-
-            if let attemptedAt = editableLicense.emailDeliveryAttemptedAt {
-              detailRow(emailDeliveryDateLabel, attemptedAt.formatted(date: .abbreviated, time: .shortened))
-            } else {
-              detailRow(emailDeliveryDateLabel, "Never")
-            }
-
-            if !editableLicense.emailDeliveryError.isEmpty {
-              Label(editableLicense.emailDeliveryError, systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.red)
-            }
-
-            HStack {
-              Button {
-                prepareEmailDelivery()
-              } label: {
-                if isPreparingEmailDelivery {
-                  ProgressView()
-                } else {
-                  Label(emailDeliveryButtonTitle, systemImage: "envelope")
-                }
-              }
-              .disabled(isPreparingEmailDelivery || editableLicense.email.isEmpty)
-
-              Button("Mark Sent", systemImage: "paperplane") {
-                markEmailSent()
-              }
-              .disabled(editableLicense.emailDeliveryStatus == .sent || editableLicense.email.isEmpty)
             }
           }
         }

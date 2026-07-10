@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.65 — Email Card Placement
+- Bumped app version to 1.0.65 build 70.
+- Moved the Email Delivery card directly below Workflow Diagnostics in the license detail column.
+
 ## v1.0.64 — Server Email Test
 - Bumped app version to 1.0.64 build 69.
 - Added a Server Settings action that sends a fake license attachment through the protected server email test endpoint.
