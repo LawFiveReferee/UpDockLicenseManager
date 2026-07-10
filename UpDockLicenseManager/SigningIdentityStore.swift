@@ -80,6 +80,13 @@ enum SigningIdentityStore {
         let privateKey = try loadOrCreatePrivateKey()
         return privateKey.publicKey.rawRepresentation.base64EncodedString()
     }
+
+    static func serverAutomationPrivateKeyConfigLine() throws -> String {
+        let privateKey = try loadOrCreatePrivateKey()
+        let privateKeyBase64 = privateKey.rawRepresentation.base64EncodedString()
+
+        return "const UPDOCK_LICENSE_SIGNING_PRIVATE_KEY_BASE64 = '\(privateKeyBase64)';"
+    }
     
     static func exportPublicKeySwiftFile(to url: URL) throws {
         let publicKey = try publicKeyBase64()

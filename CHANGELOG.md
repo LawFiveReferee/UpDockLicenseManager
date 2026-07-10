@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.63 — Server Signing Export
+- Bumped app version to 1.0.63 build 68.
+- Added a guarded Signing settings action that copies the private signing key as a PHP config line for server-side auto-fulfillment.
+- The private key is not displayed in the UI and the action includes a confirmation warning.
+
 ## v1.0.62 — Launch Checklist
 - Bumped app version to 1.0.62 build 67.
 - Added a Launch settings tab with automatic checks for live Paddle, server, manager token, and email sender configuration.

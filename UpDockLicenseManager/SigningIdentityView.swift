@@ -11,6 +11,8 @@ import UniformTypeIdentifiers
 struct SigningIdentityView: View {
     @State private var publicKeyBase64 = ""
     @State private var errorMessage: String?
+    @State private var statusMessage = ""
+    @State private var showingServerKeyConfirmation = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -43,11 +45,31 @@ struct SigningIdentityView: View {
                 exportSwiftFile()
             }
             .disabled(publicKeyBase64.isEmpty)
+
+            Divider()
+
+            Text("Server Automation")
+                .font(.subheadline.bold())
+
+            Text("Copies the private signing key as a PHP config line for updock-private/paddle-config.php. Only use this on the private server configuration.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Button("Copy Server Signing Config Line…", systemImage: "key.fill") {
+                showingServerKeyConfirmation = true
+            }
+            .disabled(publicKeyBase64.isEmpty)
             
             Button("Refresh") {
                 loadPublicKey()
             }
             
+            if !statusMessage.isEmpty {
+                Text(statusMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
             
             if let errorMessage {
                 Text(errorMessage)
@@ -60,6 +82,14 @@ struct SigningIdentityView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .onAppear {
             loadPublicKey()
+        }
+        .alert("Copy Private Signing Key?", isPresented: $showingServerKeyConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Copy Config Line") {
+                copyServerSigningConfigLine()
+            }
+        } message: {
+            Text("This copies the private license signing key to the clipboard. Paste it only into the private server paddle-config.php file, then clear the clipboard when finished.")
         }
     }
     
@@ -93,5 +123,18 @@ struct SigningIdentityView: View {
     private func copyPublicKey() {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(publicKeyBase64, forType: .string)
+    }
+
+    private func copyServerSigningConfigLine() {
+        do {
+            let configLine = try SigningIdentityStore.serverAutomationPrivateKeyConfigLine()
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(configLine, forType: .string)
+            statusMessage = "Copied private signing config line. Paste it into updock-private/paddle-config.php, sync privately, then clear the clipboard."
+            errorMessage = nil
+        } catch {
+            statusMessage = ""
+            errorMessage = error.localizedDescription
+        }
     }
 }
