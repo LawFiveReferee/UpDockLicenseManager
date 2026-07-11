@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.73 — Marketing Consent Contacts
+- Bumped app version to 1.0.73 build 78.
+- Synced Paddle marketing consent into license records for auto-fulfilled and manually fulfilled purchases.
+- Added a Marketing settings tab that lists opted-in purchaser contacts and copies them as CSV.
+
 ## v1.0.72 — Launch Checklist Discount Wording
 - Bumped app version to 1.0.72 build 77.
 - Updated the launch checklist wording to cover live discounted checkout testing rather than only 100% discount codes.

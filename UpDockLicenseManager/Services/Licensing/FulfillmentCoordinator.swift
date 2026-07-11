@@ -176,6 +176,7 @@ final class FulfillmentCoordinator {
       paddleProductID: item?.product?.id ?? item?.price?.productID ?? "",
       paddlePriceID: item?.price?.id ?? "",
       paddleStatus: transaction?.status ?? "",
+      paddleMarketingConsent: customer?.marketingConsent ?? false,
       fulfilledAt: Date(),
       fulfillmentArchiveStatus: .archived,
       fulfillmentArchiveCheckedAt: Date(),

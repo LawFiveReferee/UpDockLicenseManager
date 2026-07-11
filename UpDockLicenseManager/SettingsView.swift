@@ -12,6 +12,7 @@ import AppKit
 struct SettingsView: View {
     @State private var settings = GeneralSettings()
     @State private var emailSettings = EmailSettings()
+    @State private var licenseStore = LicenseStore()
     
     var body: some View {
         TabView {
@@ -40,12 +41,154 @@ struct SettingsView: View {
                     Label("Email", systemImage: "envelope")
                 }
 
+            MarketingContactsView(store: licenseStore)
+                .tabItem {
+                    Label("Marketing", systemImage: "person.crop.circle.badge.checkmark")
+                }
+
             LaunchChecklistView()
                 .tabItem {
                     Label("Launch", systemImage: "checklist")
                 }
         }
         .frame(width: 680, height: 500)
+    }
+}
+
+struct MarketingContactsView: View {
+    @Bindable var store: LicenseStore
+    @State private var statusMessage = ""
+
+    private var contacts: [MarketingContact] {
+        MarketingContact.make(from: store.licenses)
+    }
+
+    var body: some View {
+        Form {
+            Section("Opt-In Contacts") {
+                LabeledContent("Contacts") {
+                    Text("\(contacts.count)")
+                }
+
+                HStack {
+                    Button("Refresh") {
+                        store.licenses = LicenseStore().licenses
+                        statusMessage = "Reloaded local licenses."
+                    }
+
+                    Button("Copy CSV") {
+                        copyCSV()
+                    }
+                    .disabled(contacts.isEmpty)
+                }
+
+                Text("Only purchasers with Paddle marketing consent are included.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if !statusMessage.isEmpty {
+                    Text(statusMessage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if !contacts.isEmpty {
+                Section("Contacts") {
+                    ForEach(contacts) { contact in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(contact.name.isEmpty ? "Unknown Customer" : contact.name)
+                                .font(.headline)
+
+                            Text(contact.email)
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+
+                            if !contact.paddleCustomerID.isEmpty {
+                                Text(contact.paddleCustomerID)
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(.secondary)
+                                    .textSelection(.enabled)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+
+    private func copyCSV() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(MarketingContact.csv(from: contacts), forType: .string)
+        statusMessage = "Copied \(contacts.count) opted-in \(contacts.count == 1 ? "contact" : "contacts")."
+    }
+}
+
+struct MarketingContact: Identifiable, Hashable {
+    var email: String
+    var name: String
+    var paddleCustomerID: String
+    var latestPurchaseAt: Date?
+
+    var id: String {
+        email.lowercased()
+    }
+
+    static func make(from licenses: [LicenseRecord]) -> [MarketingContact] {
+        var contactsByEmail: [String: MarketingContact] = [:]
+
+        for license in licenses where license.paddleMarketingConsent {
+            let email = license.email.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            guard !email.isEmpty else {
+                continue
+            }
+
+            let key = email.lowercased()
+            let existing = contactsByEmail[key]
+            let latestPurchaseAt = [existing?.latestPurchaseAt, license.fulfilledAt, license.issuedAt]
+                .compactMap { $0 }
+                .max()
+
+            contactsByEmail[key] = MarketingContact(
+                email: email,
+                name: preferred(existing?.name, license.name),
+                paddleCustomerID: preferred(existing?.paddleCustomerID, license.paddleCustomerID),
+                latestPurchaseAt: latestPurchaseAt
+            )
+        }
+
+        return contactsByEmail.values.sorted {
+            $0.email.localizedCaseInsensitiveCompare($1.email) == .orderedAscending
+        }
+    }
+
+    static func csv(from contacts: [MarketingContact]) -> String {
+        let rows = contacts.map { contact in
+            [
+                csvEscape(contact.email),
+                csvEscape(contact.name),
+                csvEscape(contact.paddleCustomerID),
+                csvEscape(contact.latestPurchaseAt?.formatted(.iso8601) ?? "")
+            ].joined(separator: ",")
+        }
+
+        return (["Email,Name,Paddle Customer ID,Latest Purchase At"] + rows).joined(separator: "\n")
+    }
+
+    private static func preferred(_ existing: String?, _ replacement: String) -> String {
+        let existingValue = existing?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let replacementValue = replacement.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return existingValue.isEmpty ? replacementValue : existingValue
+    }
+
+    private static func csvEscape(_ value: String) -> String {
+        let escaped = value.replacingOccurrences(of: "\"", with: "\"\"")
+        return "\"\(escaped)\""
     }
 }
 

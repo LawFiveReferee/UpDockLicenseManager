@@ -123,6 +123,14 @@ struct PaddleCustomerData: Codable, Hashable {
   let id: String?
   let email: String?
   let name: String?
+  let marketingConsent: Bool?
+
+  enum CodingKeys: String, CodingKey {
+    case id
+    case email
+    case name
+    case marketingConsent = "marketing_consent"
+  }
 }
 
 struct PaddlePayment: Codable, Hashable {

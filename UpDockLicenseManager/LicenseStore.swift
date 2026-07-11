@@ -28,12 +28,21 @@ final class LicenseStore {
   }
 
   func importMissing(_ importedLicenses: [LicenseRecord]) -> [LicenseRecord] {
-    let existingSerials = Set(licenses.map { $0.serial.lowercased() })
-    let newLicenses = importedLicenses.filter {
-      !existingSerials.contains($0.serial.lowercased())
+    var updatedLicenses = licenses
+    var newLicenses: [LicenseRecord] = []
+
+    for importedLicense in importedLicenses {
+      let serial = importedLicense.serial.lowercased()
+
+      if let existingIndex = updatedLicenses.firstIndex(where: { $0.serial.lowercased() == serial }) {
+        updatedLicenses[existingIndex].mergeServerMetadata(from: importedLicense)
+      } else {
+        newLicenses.append(importedLicense)
+      }
     }
 
-    licenses.insert(contentsOf: newLicenses, at: 0)
+    updatedLicenses.insert(contentsOf: newLicenses, at: 0)
+    licenses = updatedLicenses
 
     return newLicenses
   }
@@ -118,6 +127,7 @@ final class LicenseStore {
       "Activation Registry Status",
       "Activation Registry Checked At",
       "Activation Registry Error",
+      "Marketing Consent",
       "Notes"
     ].joined(separator: ","))
 
@@ -138,6 +148,7 @@ final class LicenseStore {
         csvEscape(license.activationRegistryStatus.rawValue),
         csvEscape(license.activationRegistryCheckedAt?.formatted(.iso8601) ?? ""),
         csvEscape(license.activationRegistryError),
+        csvEscape(license.paddleMarketingConsent ? "Yes" : "No"),
         csvEscape(license.notes)
       ].joined(separator: ","))
     }

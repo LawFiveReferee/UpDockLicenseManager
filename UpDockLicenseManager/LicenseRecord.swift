@@ -74,6 +74,7 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
   var paddleProductID: String
   var paddlePriceID: String
   var paddleStatus: String
+  var paddleMarketingConsent: Bool
   var fulfilledAt: Date?
   var fulfillmentArchiveStatus: FulfillmentArchiveStatus
   var fulfillmentArchiveCheckedAt: Date?
@@ -103,6 +104,7 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     paddleProductID: String = "",
     paddlePriceID: String = "",
     paddleStatus: String = "",
+    paddleMarketingConsent: Bool = false,
     fulfilledAt: Date? = nil,
     fulfillmentArchiveStatus: FulfillmentArchiveStatus = .unknown,
     fulfillmentArchiveCheckedAt: Date? = nil,
@@ -131,6 +133,7 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     self.paddleProductID = paddleProductID
     self.paddlePriceID = paddlePriceID
     self.paddleStatus = paddleStatus
+    self.paddleMarketingConsent = paddleMarketingConsent
     self.fulfilledAt = fulfilledAt
     self.fulfillmentArchiveStatus = fulfillmentArchiveStatus
     self.fulfillmentArchiveCheckedAt = fulfillmentArchiveCheckedAt
@@ -168,6 +171,24 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
       && !isRevoked
   }
 
+  mutating func mergeServerMetadata(from serverLicense: LicenseRecord) {
+    if serverLicense.paddleMarketingConsent {
+      paddleMarketingConsent = true
+    }
+
+    if paddleCustomerID.isEmpty {
+      paddleCustomerID = serverLicense.paddleCustomerID
+    }
+
+    if paddleTransactionID.isEmpty {
+      paddleTransactionID = serverLicense.paddleTransactionID
+    }
+
+    if paddleEmail.isEmpty {
+      paddleEmail = serverLicense.paddleEmail
+    }
+  }
+
   private enum CodingKeys: String, CodingKey {
     case id
     case serial
@@ -187,6 +208,7 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     case paddleProductID
     case paddlePriceID
     case paddleStatus
+    case paddleMarketingConsent
     case fulfilledAt
     case fulfillmentArchiveStatus
     case fulfillmentArchiveCheckedAt
@@ -220,6 +242,7 @@ struct LicenseRecord: Identifiable, Codable, Hashable {
     paddleProductID = try container.decodeIfPresent(String.self, forKey: .paddleProductID) ?? ""
     paddlePriceID = try container.decodeIfPresent(String.self, forKey: .paddlePriceID) ?? ""
     paddleStatus = try container.decodeIfPresent(String.self, forKey: .paddleStatus) ?? ""
+    paddleMarketingConsent = try container.decodeIfPresent(Bool.self, forKey: .paddleMarketingConsent) ?? false
     fulfilledAt = try container.decodeIfPresent(Date.self, forKey: .fulfilledAt)
     fulfillmentArchiveStatus = try container.decodeIfPresent(
       FulfillmentArchiveStatus.self,

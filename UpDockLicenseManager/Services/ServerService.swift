@@ -375,6 +375,7 @@ struct DeliveredServerLicense: Decodable, Identifiable, Hashable {
   var seatAllowance: Int?
   var paddleCustomerID: String
   var paddleTransactionID: String
+  var paddleMarketingConsent: Bool?
   var paddleEmail: String
   var fulfilledAt: String?
   var file: String
@@ -397,6 +398,7 @@ struct DeliveredServerLicense: Decodable, Identifiable, Hashable {
       paddleTransactionID: paddleTransactionID,
       paddleEmail: paddleEmail.isEmpty ? email : paddleEmail,
       paddleStatus: "completed",
+      paddleMarketingConsent: paddleMarketingConsent ?? false,
       fulfilledAt: deliveredDate(from: fulfilledAt),
       fulfillmentArchiveStatus: .archived,
       fulfillmentArchiveCheckedAt: Date(),
