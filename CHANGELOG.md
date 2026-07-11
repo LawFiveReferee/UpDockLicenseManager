@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.75 — Remove Legacy Simulation URL
+- Bumped app version to 1.0.75 build 80.
+- Removed unused network URL helpers for the retired public `simulate.php` endpoint.
+
 ## v1.0.74 — Marketing Contact Copy
 - Bumped app version to 1.0.74 build 79.
 - Marketing contacts can now be selected and copied, or copied all at once.

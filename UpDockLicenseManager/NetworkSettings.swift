@@ -126,10 +126,6 @@ final class NetworkSettings {
         )
     }
 
-    var simulateURL: String {
-        serverBaseURL + "/simulate.php"
-    }
-
     func authenticatedFulfilledURL(transactionID: String) -> String {
         let token = KeychainSettingsStore.shared.managerToken
 
@@ -144,11 +140,6 @@ final class NetworkSettings {
 
     func authenticatedPendingURLString() -> String {
         authenticatedPendingURL
-    }
-
-    func authenticatedSimulateURL(count: Int) -> String {
-        let token = KeychainSettingsStore.shared.managerToken
-        return simulateURL + "?token=" + token + "&count=\(count)"
     }
 
     func activationRegisterURL(
