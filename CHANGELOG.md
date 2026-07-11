@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.71 — Marketing Discount Codes
+- Bumped app version to 1.0.71 build 76.
+- Reworked Paddle discount code generation as a marketing tool instead of a development-only test tool.
+- Added percentage or dollar amount discounts, configurable usage limits, and an explicit optional product/price restriction list.
+
 ## v1.0.70 — Paddle Test Discount Codes
 - Bumped app version to 1.0.70 build 75.
 - Added a development-only Paddle settings tool that creates one-use 100% discount codes through the Paddle Discounts API.

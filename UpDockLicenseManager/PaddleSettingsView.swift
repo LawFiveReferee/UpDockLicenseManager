@@ -5,8 +5,8 @@ import UniformTypeIdentifiers
 private let paddlePrivateConfigBookmarkKey = "localPrivateConfigBookmark"
 
 struct PaddleSettingsView: View {
-  @AppStorage("showDevelopmentTools") private var showDevelopmentTools = false
   @AppStorage("paddle.generatedDiscountCodes") private var generatedDiscountCodes = ""
+  @AppStorage("paddle.discountRestrictIDs") private var discountRestrictIDs = ""
   @State private var settings = PaddleSettings()
   @State private var fulfillmentPolicy = PaddleFulfillmentPolicyStore()
   @State private var siteLicensePricing = SiteLicensePricingStore()
@@ -17,6 +17,12 @@ struct PaddleSettingsView: View {
   @State private var showingAPIKey = false
   @State private var savedMessage = ""
   @State private var discountCodeCount = 10
+  @State private var discountKind = PaddleDiscountKind.percentage
+  @State private var discountPercent = 100.0
+  @State private var discountFlatAmount = 5.0
+  @State private var discountCurrencyCode = "USD"
+  @State private var discountUsageLimit = 1
+  @State private var restrictDiscountToConfiguredIDs = true
   @State private var isGeneratingDiscountCodes = false
   @State private var discountCodeMessage = ""
 
@@ -220,8 +226,67 @@ struct PaddleSettingsView: View {
           .foregroundStyle(.secondary)
       }
 
-      if showDevelopmentTools {
-        Section("Test Discount Codes") {
+      Section("Marketing Discount Codes") {
+        Picker("Discount Type", selection: $discountKind) {
+          ForEach(PaddleDiscountKind.allCases) { kind in
+            Text(kind.label).tag(kind)
+          }
+        }
+        .pickerStyle(.segmented)
+
+        if discountKind == .percentage {
+          HStack(spacing: 8) {
+            TextField(
+              "Percent",
+              value: $discountPercent,
+              format: .number.precision(.fractionLength(0...2))
+            )
+            .frame(width: 88)
+
+            Text("%")
+              .foregroundStyle(.secondary)
+          }
+        } else {
+          HStack(spacing: 8) {
+            TextField(
+              "Amount",
+              value: $discountFlatAmount,
+              format: .number.precision(.fractionLength(2))
+            )
+            .frame(width: 88)
+
+            TextField("Currency", text: $discountCurrencyCode)
+              .frame(width: 72)
+          }
+        }
+
+        Stepper(
+          "Uses Per Code: \(discountUsageLimit)",
+          value: $discountUsageLimit,
+          in: 1...10_000
+        )
+
+        Toggle("Restrict to Product/Price IDs", isOn: $restrictDiscountToConfiguredIDs)
+
+        if restrictDiscountToConfiguredIDs {
+          TextField(
+            "Product or Price IDs",
+            text: $discountRestrictIDs,
+            axis: .vertical
+          )
+          .lineLimit(2...5)
+          .textFieldStyle(.roundedBorder)
+
+          HStack {
+            Button("Use Current Checkout IDs") {
+              discountRestrictIDs = configuredDiscountRestrictIDs.joined(separator: "\n")
+            }
+
+            Text("\(discountRestrictionIDs.count) restriction \(discountRestrictionIDs.count == 1 ? "ID" : "IDs") configured")
+              .foregroundStyle(.secondary)
+          }
+        }
+
           Stepper(
             "Codes to Generate: \(discountCodeCount)",
             value: $discountCodeCount,
@@ -229,11 +294,7 @@ struct PaddleSettingsView: View {
           )
 
           LabeledContent("Discount") {
-            Text("100% off, one use each")
-          }
-
-          LabeledContent("Restricted To") {
-            Text(discountPriceIDs.isEmpty ? "No price IDs configured" : "\(discountPriceIDs.count) UpDock Pro price IDs")
+            Text(discountSummary)
           }
 
           HStack {
@@ -248,7 +309,7 @@ struct PaddleSettingsView: View {
                 Label("Generate Codes", systemImage: "tag")
               }
             }
-            .disabled(isGeneratingDiscountCodes || apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || discountPriceIDs.isEmpty)
+            .disabled(!canGenerateDiscountCodes)
 
             Button("Copy Stored Codes") {
               copyGeneratedDiscountCodes()
@@ -277,7 +338,6 @@ struct PaddleSettingsView: View {
               .textSelection(.enabled)
           }
         }
-      }
 
       Section("Notification Secret") {
         if showingNotificationSecret {
@@ -374,17 +434,55 @@ struct PaddleSettingsView: View {
     }
   }
 
-  private var discountPriceIDs: [String] {
-    let allPriceIDs = [settings.defaultPriceID] + siteLicensePricing.tiers.map(\.priceID)
+  private var configuredDiscountRestrictIDs: [String] {
+    let allIDs = [settings.defaultProductID, settings.defaultPriceID]
+      + siteLicensePricing.tiers.flatMap { [$0.productID, $0.priceID] }
 
     return Array(
       Set(
-        allPriceIDs
+        allIDs
           .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
           .filter { !$0.isEmpty }
       )
     )
     .sorted()
+  }
+
+  private var discountRestrictionIDs: [String] {
+    discountRestrictIDs
+      .components(separatedBy: CharacterSet(charactersIn: ", \n\t"))
+      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
+  }
+
+  private var discountSummary: String {
+    switch discountKind {
+    case .percentage:
+      return "\(discountPercent.formatted(.number.precision(.fractionLength(0...2))))% off, \(discountUsageLimit) \(discountUsageLimit == 1 ? "use" : "uses") per code"
+    case .flat:
+      return "\(discountCurrencyCode.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()) \(discountFlatAmount.formatted(.number.precision(.fractionLength(2)))) off, \(discountUsageLimit) \(discountUsageLimit == 1 ? "use" : "uses") per code"
+    }
+  }
+
+  private var canGenerateDiscountCodes: Bool {
+    guard !isGeneratingDiscountCodes else {
+      return false
+    }
+
+    guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+      return false
+    }
+
+    if restrictDiscountToConfiguredIDs && discountRestrictionIDs.isEmpty {
+      return false
+    }
+
+    switch discountKind {
+    case .percentage:
+      return discountPercent > 0 && discountPercent <= 100
+    case .flat:
+      return discountFlatAmount > 0 && !discountCurrencyCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
   }
 
   private func cleanedStoredAPIKey() -> String {
@@ -485,11 +583,18 @@ struct PaddleSettingsView: View {
       let discounts = try await generator.generateTestCodes(
         count: discountCodeCount,
         environmentName: settings.environment.rawValue,
-        restrictedPriceIDs: discountPriceIDs
+        specification: PaddleDiscountSpecification(
+          kind: discountKind,
+          percentage: discountPercent,
+          flatAmount: discountFlatAmount,
+          currencyCode: discountCurrencyCode,
+          usageLimit: discountUsageLimit,
+          restrictedIDs: restrictDiscountToConfiguredIDs ? discountRestrictionIDs : []
+        )
       )
       let timestamp = Date().formatted(date: .abbreviated, time: .standard)
       let newLines = discounts.map { discount in
-        "\(discount.code)  \(discount.id)  \(settings.environment.rawValue)  \(timestamp)"
+        "\(discount.code)  \(discount.id)  \(settings.environment.rawValue)  \(discountSummary)  \(timestamp)"
       }
       let existing = generatedDiscountCodes.trimmingCharacters(in: .whitespacesAndNewlines)
       generatedDiscountCodes = ([existing] + newLines)
@@ -715,22 +820,20 @@ private struct PaddleDiscountCodeGenerator {
   func generateTestCodes(
     count: Int,
     environmentName: String,
-    restrictedPriceIDs: [String]
+    specification: PaddleDiscountSpecification
   ) async throws -> [PaddleCreatedDiscount] {
     guard !apiKey.isEmpty else {
       throw PaddleDiscountCodeError.missingAPIKey
     }
 
-    guard !restrictedPriceIDs.isEmpty else {
-      throw PaddleDiscountCodeError.missingPriceIDs
-    }
+    try specification.validate()
 
     var discounts: [PaddleCreatedDiscount] = []
 
     for index in 1...count {
       let request = try makeCreateDiscountRequest(
-        description: "UpDock \(environmentName) test discount \(index)",
-        restrictedPriceIDs: restrictedPriceIDs
+        description: "UpDock \(environmentName) \(specification.description) discount \(index)",
+        specification: specification
       )
       let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -765,7 +868,7 @@ private struct PaddleDiscountCodeGenerator {
 
   private func makeCreateDiscountRequest(
     description: String,
-    restrictedPriceIDs: [String]
+    specification: PaddleDiscountSpecification
   ) throws -> URLRequest {
     guard let url = URL(string: apiBaseURL + "/discounts") else {
       throw PaddleDiscountCodeError.invalidURL
@@ -774,15 +877,16 @@ private struct PaddleDiscountCodeGenerator {
     let payload = PaddleCreateDiscountRequest(
       description: description,
       enabledForCheckout: true,
-      type: "percentage",
+      type: specification.apiType,
       mode: "standard",
-      amount: "100",
+      amount: specification.apiAmount,
+      currencyCode: specification.apiCurrencyCode,
       recur: false,
-      usageLimit: 1,
-      restrictTo: restrictedPriceIDs,
+      usageLimit: specification.usageLimit,
+      restrictTo: specification.apiRestrictedIDs,
       customData: [
         "created_by": "UpDock License Manager",
-        "purpose": "test_checkout"
+        "purpose": "marketing_discount"
       ]
     )
     let encoder = JSONEncoder()
@@ -798,15 +902,105 @@ private struct PaddleDiscountCodeGenerator {
   }
 }
 
+private struct PaddleDiscountSpecification {
+  var kind: PaddleDiscountKind
+  var percentage: Double
+  var flatAmount: Double
+  var currencyCode: String
+  var usageLimit: Int
+  var restrictedIDs: [String]
+
+  var apiType: String {
+    switch kind {
+    case .percentage:
+      return "percentage"
+    case .flat:
+      return "flat"
+    }
+  }
+
+  var apiAmount: String {
+    switch kind {
+    case .percentage:
+      return String(format: "%.2f", percentage)
+    case .flat:
+      return String(Int((flatAmount * 100).rounded()))
+    }
+  }
+
+  var apiCurrencyCode: String? {
+    switch kind {
+    case .percentage:
+      return nil
+    case .flat:
+      return currencyCode.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+    }
+  }
+
+  var apiRestrictedIDs: [String]? {
+    let ids = Array(Set(restrictedIDs)).sorted()
+    return ids.isEmpty ? nil : ids
+  }
+
+  var description: String {
+    switch kind {
+    case .percentage:
+      return "\(percentage.formatted(.number.precision(.fractionLength(0...2)))) percent"
+    case .flat:
+      return "\(apiCurrencyCode ?? "USD") \(flatAmount.formatted(.number.precision(.fractionLength(2))))"
+    }
+  }
+
+  func validate() throws {
+    switch kind {
+    case .percentage:
+      guard percentage > 0 && percentage <= 100 else {
+        throw PaddleDiscountCodeError.invalidPercentage
+      }
+    case .flat:
+      guard flatAmount > 0 else {
+        throw PaddleDiscountCodeError.invalidFlatAmount
+      }
+
+      guard !(apiCurrencyCode ?? "").isEmpty else {
+        throw PaddleDiscountCodeError.missingCurrencyCode
+      }
+    }
+
+    guard usageLimit >= 1 else {
+      throw PaddleDiscountCodeError.invalidUsageLimit
+    }
+  }
+}
+
+private enum PaddleDiscountKind: String, CaseIterable, Identifiable {
+  case percentage
+  case flat
+
+  var id: String {
+    rawValue
+  }
+
+  var label: String {
+    switch self {
+    case .percentage:
+      return "Percent"
+    case .flat:
+      return "Dollar Amount"
+    }
+  }
+}
+
 private struct PaddleCreateDiscountRequest: Encodable {
   var description: String
   var enabledForCheckout: Bool
   var type: String
   var mode: String
   var amount: String
+  var currencyCode: String?
   var recur: Bool
   var usageLimit: Int
-  var restrictTo: [String]
+  var restrictTo: [String]?
   var customData: [String: String]
 }
 
@@ -834,7 +1028,10 @@ private struct PaddleCreatedDiscount: Hashable {
 
 private enum PaddleDiscountCodeError: LocalizedError {
   case missingAPIKey
-  case missingPriceIDs
+  case invalidPercentage
+  case invalidFlatAmount
+  case missingCurrencyCode
+  case invalidUsageLimit
   case invalidURL
   case invalidResponse
   case missingReturnedCode
@@ -844,8 +1041,14 @@ private enum PaddleDiscountCodeError: LocalizedError {
     switch self {
     case .missingAPIKey:
       return "Save a Paddle API key before generating discount codes."
-    case .missingPriceIDs:
-      return "Configure at least one UpDock Pro price ID before generating restricted discount codes."
+    case .invalidPercentage:
+      return "Percentage discounts must be greater than 0 and no more than 100."
+    case .invalidFlatAmount:
+      return "Dollar amount discounts must be greater than 0."
+    case .missingCurrencyCode:
+      return "Enter a currency code for dollar amount discounts."
+    case .invalidUsageLimit:
+      return "Usage limit must be at least 1."
     case .invalidURL:
       return "The Paddle API URL is invalid."
     case .invalidResponse:
