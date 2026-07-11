@@ -238,7 +238,7 @@ struct LaunchChecklistView: View {
                 Toggle("Paddle business and identity verification is complete", isOn: $businessVerified)
                 Toggle("Live website is deployed at updockapp.com", isOn: $liveSiteDeployed)
                 Toggle("Webhook destination subscribes only to transaction.completed", isOn: $webhookOneEvent)
-                Toggle("Live 100% discount checkout test passed", isOn: $liveDiscountTest)
+                Toggle("Live discounted checkout test passed", isOn: $liveDiscountTest)
                 Toggle("Pending Purchases received the live test purchase", isOn: $pendingPurchaseVerified)
                 Toggle("Fulfillment created the expected license and archived the transaction", isOn: $fulfillmentVerified)
                 Toggle("License email draft was verified in Apple Mail", isOn: $emailDraftVerified)
@@ -282,7 +282,7 @@ struct LaunchChecklistView: View {
             manualSummary("Business and identity verification complete", businessVerified),
             manualSummary("Live website deployed", liveSiteDeployed),
             manualSummary("Webhook limited to transaction.completed", webhookOneEvent),
-            manualSummary("Live 100% discount checkout test passed", liveDiscountTest),
+            manualSummary("Live discounted checkout test passed", liveDiscountTest),
             manualSummary("Pending purchase verified", pendingPurchaseVerified),
             manualSummary("Fulfillment verified", fulfillmentVerified),
             manualSummary("License email draft verified", emailDraftVerified)

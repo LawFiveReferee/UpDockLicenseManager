@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.72 — Launch Checklist Discount Wording
+- Bumped app version to 1.0.72 build 77.
+- Updated the launch checklist wording to cover live discounted checkout testing rather than only 100% discount codes.
+
 ## v1.0.71 — Marketing Discount Codes
 - Bumped app version to 1.0.71 build 76.
 - Reworked Paddle discount code generation as a marketing tool instead of a development-only test tool.
