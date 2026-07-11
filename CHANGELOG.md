@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.69 — Development Tools Gate
+- Bumped app version to 1.0.69 build 74.
+- Added a General setting to show or hide development tools.
+- Hidden by default: Signing Test, Development toolbar menu, column width readout, Pending Purchases developer actions, Server Email Test, and Activation Test.
+
 ## v1.0.68 — Automatic Server Sync
 - Bumped app version to 1.0.68 build 73.
 - Server-delivered licenses now sync automatically on app launch and when the app becomes active.

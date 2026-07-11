@@ -88,6 +88,7 @@ enum RecoveryReportActionError: LocalizedError {
 struct ContentView: View {
   @Environment(\.scenePhase) private var scenePhase
   @AppStorage("showToolbarTextLabels") private var showToolbarTextLabels = false
+  @AppStorage("showDevelopmentTools") private var showDevelopmentTools = false
 
   @State private var columnVisibility: NavigationSplitViewVisibility = .all
   @State private var store = LicenseStore()
@@ -187,7 +188,9 @@ struct ContentView: View {
         mainColumnWidths = widths
       }
       .overlay(alignment: .bottomTrailing) {
-        mainColumnWidthReadout
+        if showDevelopmentTools {
+          mainColumnWidthReadout
+        }
       }
       .toolbar {
 
@@ -195,6 +198,7 @@ struct ContentView: View {
         LicenseToolbarContent(
           selectedLicense: selectedLicense,
           showsTextLabels: showToolbarTextLabels,
+          showsDevelopmentTools: showDevelopmentTools,
           sortOption: $sortOption,
           onNew: {
             showingNewLicenseSheet = true

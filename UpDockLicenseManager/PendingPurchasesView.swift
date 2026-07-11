@@ -43,6 +43,7 @@ struct PendingPurchasesView: View {
   @State private var networkSettings = NetworkSettings()
   @State private var purchases: [PendingPaddlePurchase] = []
   @State private var selectedPurchaseIDs: Set<PendingPaddlePurchase.ID> = []
+  @AppStorage("showDevelopmentTools") private var showDevelopmentTools = false
   @AppStorage("prepareEmailDraftsAfterFulfillment") private var prepareEmailDraftsAfterFulfillment = false
 
   @State private var isLoading = false
@@ -74,52 +75,9 @@ struct PendingPurchasesView: View {
     .frame(width: 1000, height: 680)
     .toolbar {
       ToolbarItemGroup {
-        Menu {
-          Section("Generate") {
-            Button("Generate 1") {
-              Task { await generateTestPurchases(count: 1) }
-            }
-
-            Button("Generate 5") {
-              Task { await generateTestPurchases(count: 5) }
-            }
-
-            Button("Generate 10") {
-              Task { await generateTestPurchases(count: 10) }
-            }
-
-            Button("Generate 100") {
-              Task { await generateTestPurchases(count: 100) }
-            }
-          }
-
-          Divider()
-
-          Section("Clear Test Purchases") {
-            Button("Clear Pending Tests") {
-              Task { await clearPendingTests() }
-            }
-
-            Button("Clear Fulfilled Tests") {
-              Task { await clearFulfilledTests() }
-            }
-
-            Button("Clear All Tests") {
-              Task { await clearAllTests() }
-            }
-          }
-
-          Divider()
-
-          Section("Diagnostics") {
-            Button("Check Webhook Log") {
-              Task { await checkWebhookLog() }
-            }
-          }
-        } label: {
-          Label("Developer", systemImage: "hammer")
+        if showDevelopmentTools {
+          pendingDeveloperMenu
         }
-        .disabled(isWorking)
 
         Button {
           Task { await fulfillSelectedPurchases() }
@@ -146,6 +104,55 @@ struct PendingPurchasesView: View {
     .sheet(isPresented: $showingWebhookLog) {
       WebhookLogView(entries: webhookLogEntries)
     }
+  }
+
+  private var pendingDeveloperMenu: some View {
+    Menu {
+      Section("Generate") {
+        Button("Generate 1") {
+          Task { await generateTestPurchases(count: 1) }
+        }
+
+        Button("Generate 5") {
+          Task { await generateTestPurchases(count: 5) }
+        }
+
+        Button("Generate 10") {
+          Task { await generateTestPurchases(count: 10) }
+        }
+
+        Button("Generate 100") {
+          Task { await generateTestPurchases(count: 100) }
+        }
+      }
+
+      Divider()
+
+      Section("Clear Test Purchases") {
+        Button("Clear Pending Tests") {
+          Task { await clearPendingTests() }
+        }
+
+        Button("Clear Fulfilled Tests") {
+          Task { await clearFulfilledTests() }
+        }
+
+        Button("Clear All Tests") {
+          Task { await clearAllTests() }
+        }
+      }
+
+      Divider()
+
+      Section("Diagnostics") {
+        Button("Check Webhook Log") {
+          Task { await checkWebhookLog() }
+        }
+      }
+    } label: {
+      Label("Developer", systemImage: "hammer")
+    }
+    .disabled(isWorking)
   }
 
   private var purchaseList: some View {

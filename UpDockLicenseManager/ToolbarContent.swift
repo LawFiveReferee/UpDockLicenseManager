@@ -10,6 +10,7 @@ import SwiftUI
 struct LicenseToolbarContent: ToolbarContent {
   let selectedLicense: LicenseRecord?
   let showsTextLabels: Bool
+  let showsDevelopmentTools: Bool
   @Binding var sortOption: LicenseSortOption
 
   let onNew: () -> Void
@@ -38,12 +39,14 @@ struct LicenseToolbarContent: ToolbarContent {
       }
       .help("Settings")
 
-      Button {
-        LicenseService.runSigningSelfTest()
-      } label: {
-        toolbarLabel("Signing Test", systemImage: "checkmark.seal")
+      if showsDevelopmentTools {
+        Button {
+          LicenseService.runSigningSelfTest()
+        } label: {
+          toolbarLabel("Signing Test", systemImage: "checkmark.seal")
+        }
+        .help("Signing Test")
       }
-      .help("Signing Test")
     }
 
     ToolbarItemGroup {
@@ -172,14 +175,16 @@ struct LicenseToolbarContent: ToolbarContent {
       }
       .help("Export")
 
-      Menu {
-        Button("Remove All Local Licenses…", role: .destructive) {
-          onRemoveAllDevelopmentLicenses()
+      if showsDevelopmentTools {
+        Menu {
+          Button("Remove All Local Licenses…", role: .destructive) {
+            onRemoveAllDevelopmentLicenses()
+          }
+        } label: {
+          toolbarLabel("Development", systemImage: "hammer")
         }
-      } label: {
-        toolbarLabel("Development", systemImage: "hammer")
+        .help("Development")
       }
-      .help("Development")
     }
   }
 

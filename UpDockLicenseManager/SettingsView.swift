@@ -168,6 +168,7 @@ struct GeneralSettingsView: View {
 
             Section("Interface") {
                 Toggle("Show text labels in the main toolbar", isOn: $settings.showToolbarTextLabels)
+                Toggle("Show development tools", isOn: $settings.showDevelopmentTools)
             }
         }
         .formStyle(.grouped)

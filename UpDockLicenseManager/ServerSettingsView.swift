@@ -28,6 +28,7 @@ private enum ProductionReadinessStatus {
 }
 
 struct ServerSettingsView: View {
+  @AppStorage("showDevelopmentTools") private var showDevelopmentTools = false
   @State private var settings = NetworkSettings()
   @State private var paddleSettings = PaddleSettings()
   @State private var emailSettings = EmailSettings()
@@ -399,124 +400,126 @@ struct ServerSettingsView: View {
         }
       }
 
-      Section("Server Email Test") {
-        LabeledContent("Recipient") {
-          Text(serverEmailTestRecipient)
-            .textSelection(.enabled)
-        }
-
-        Button {
-          Task {
-            await sendServerEmailTest()
+      if showDevelopmentTools {
+        Section("Server Email Test") {
+          LabeledContent("Recipient") {
+            Text(serverEmailTestRecipient)
+              .textSelection(.enabled)
           }
-        } label: {
-          if isSendingServerEmailTest {
-            ProgressView()
-          } else {
-            Label("Send Test License Email", systemImage: "paperplane")
-          }
-        }
-        .disabled(isSendingServerEmailTest || serverEmailTestRecipient.isEmpty)
 
-        Text("Sends a fake license attachment through the private server email path. It does not create or fulfill a real license.")
-          .foregroundStyle(.secondary)
-
-        if !serverEmailTestMessage.isEmpty {
-          Text(serverEmailTestMessage)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .textSelection(.enabled)
-        }
-      }
-
-      Section("Activation Test") {
-        TextField("Serial", text: $activationTestSerial)
-          .textFieldStyle(.roundedBorder)
-
-        LabeledContent("Seat Allowance") {
-          Text("2")
-        }
-
-        activationURLRow(
-          "Register",
-          settings.activationRegisterURL(
-            serial: activationTestSerial,
-            seatAllowance: 2
-          )
-        )
-
-        activationURLRow(
-          "Activate Mac 1",
-          settings.activationURL(
-            serial: activationTestSerial,
-            machineID: "mac-1",
-            machineName: "Mac 1"
-          )
-        )
-
-        activationURLRow(
-          "Activate Mac 2",
-          settings.activationURL(
-            serial: activationTestSerial,
-            machineID: "mac-2",
-            machineName: "Mac 2"
-          )
-        )
-
-        activationURLRow(
-          "Activate Mac 3",
-          settings.activationURL(
-            serial: activationTestSerial,
-            machineID: "mac-3",
-            machineName: "Mac 3"
-          )
-        )
-
-        activationURLRow(
-          "Deactivate Mac 1",
-          settings.deactivationURL(
-            serial: activationTestSerial,
-            machineID: "mac-1"
-          )
-        )
-
-        activationURLRow(
-          "Status",
-          settings.activationStatusURL(serial: activationTestSerial)
-        )
-
-        HStack {
           Button {
             Task {
-              await runActivationLimitTest()
+              await sendServerEmailTest()
             }
           } label: {
-            if isRunningActivationTest {
+            if isSendingServerEmailTest {
               ProgressView()
             } else {
-              Label("Run 2-Seat Test", systemImage: "checklist")
+              Label("Send Test License Email", systemImage: "paperplane")
             }
           }
-          .disabled(isRunningActivationTest)
+          .disabled(isSendingServerEmailTest || serverEmailTestRecipient.isEmpty)
 
-          Text("The third activation should be rejected.")
+          Text("Sends a fake license attachment through the private server email path. It does not create or fulfill a real license.")
             .foregroundStyle(.secondary)
+
+          if !serverEmailTestMessage.isEmpty {
+            Text(serverEmailTestMessage)
+              .font(.caption)
+              .foregroundStyle(.secondary)
+              .textSelection(.enabled)
+          }
         }
 
-        if !activationTestSteps.isEmpty {
-          ForEach(activationTestSteps) { step in
-            HStack {
-              Label(
-                step.title,
-                systemImage: step.passed ? "checkmark.circle" : "xmark.circle"
-              )
-              .foregroundStyle(step.passed ? AnyShapeStyle(.green) : AnyShapeStyle(.red))
+        Section("Activation Test") {
+          TextField("Serial", text: $activationTestSerial)
+            .textFieldStyle(.roundedBorder)
 
-              Spacer()
+          LabeledContent("Seat Allowance") {
+            Text("2")
+          }
 
-              Text("HTTP \(step.statusCode.map(String.init) ?? "—") / expected \(step.expectedStatusCode)")
-                .font(.caption.monospaced())
-                .foregroundStyle(.secondary)
+          activationURLRow(
+            "Register",
+            settings.activationRegisterURL(
+              serial: activationTestSerial,
+              seatAllowance: 2
+            )
+          )
+
+          activationURLRow(
+            "Activate Mac 1",
+            settings.activationURL(
+              serial: activationTestSerial,
+              machineID: "mac-1",
+              machineName: "Mac 1"
+            )
+          )
+
+          activationURLRow(
+            "Activate Mac 2",
+            settings.activationURL(
+              serial: activationTestSerial,
+              machineID: "mac-2",
+              machineName: "Mac 2"
+            )
+          )
+
+          activationURLRow(
+            "Activate Mac 3",
+            settings.activationURL(
+              serial: activationTestSerial,
+              machineID: "mac-3",
+              machineName: "Mac 3"
+            )
+          )
+
+          activationURLRow(
+            "Deactivate Mac 1",
+            settings.deactivationURL(
+              serial: activationTestSerial,
+              machineID: "mac-1"
+            )
+          )
+
+          activationURLRow(
+            "Status",
+            settings.activationStatusURL(serial: activationTestSerial)
+          )
+
+          HStack {
+            Button {
+              Task {
+                await runActivationLimitTest()
+              }
+            } label: {
+              if isRunningActivationTest {
+                ProgressView()
+              } else {
+                Label("Run 2-Seat Test", systemImage: "checklist")
+              }
+            }
+            .disabled(isRunningActivationTest)
+
+            Text("The third activation should be rejected.")
+              .foregroundStyle(.secondary)
+          }
+
+          if !activationTestSteps.isEmpty {
+            ForEach(activationTestSteps) { step in
+              HStack {
+                Label(
+                  step.title,
+                  systemImage: step.passed ? "checkmark.circle" : "xmark.circle"
+                )
+                .foregroundStyle(step.passed ? AnyShapeStyle(.green) : AnyShapeStyle(.red))
+
+                Spacer()
+
+                Text("HTTP \(step.statusCode.map(String.init) ?? "—") / expected \(step.expectedStatusCode)")
+                  .font(.caption.monospaced())
+                  .foregroundStyle(.secondary)
+              }
             }
           }
         }
