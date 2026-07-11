@@ -302,6 +302,7 @@ struct OperationsStatusCounts: Decodable {
   var pendingTransactions: Int
   var fulfilledTransactions: Int
   var registeredLicenses: Int
+  var deliveredLicenses: Int?
   var activeActivations: Int
 }
 
@@ -309,6 +310,7 @@ struct OperationsStatusLatest: Decodable {
   var pendingTransactions: [OperationsStatusFileSummary]
   var fulfilledTransactions: [OperationsStatusFileSummary]
   var registeredLicenses: [OperationsStatusFileSummary]
+  var deliveredLicenses: [OperationsStatusFileSummary]?
   var webhookEvents: [OperationsStatusWebhookEvent]
 }
 
@@ -339,6 +341,7 @@ struct OperationsStatusStorage: Decodable {
   var transactionsWritable: Bool
   var fulfilledWritable: Bool
   var licensesWritable: Bool
+  var deliveredLicensesWritable: Bool?
   var activationsWritable: Bool
   var webhookLogWritable: Bool
 }

@@ -218,6 +218,42 @@ struct ServerSettingsView: View {
               writableLabel(activationsWritable)
             }
           }
+
+          if let deliveredLicensesWritable = healthResponse.deliveredLicensesWritable {
+            LabeledContent("Delivered Licenses Folder") {
+              writableLabel(deliveredLicensesWritable)
+            }
+          }
+
+          if let webhookLogWritable = healthResponse.webhookLogWritable {
+            LabeledContent("Webhook Log") {
+              writableLabel(webhookLogWritable)
+            }
+          }
+
+          if let autoFulfillment = healthResponse.autoFulfillment {
+            LabeledContent("Auto-Fulfillment") {
+              writableLabel(autoFulfillment.enabled ?? false)
+            }
+
+            if let signingKeyConfigured = autoFulfillment.signingKeyConfigured {
+              LabeledContent("Server Signing Key") {
+                writableLabel(signingKeyConfigured)
+              }
+            }
+
+            if let sodiumAvailable = autoFulfillment.sodiumAvailable {
+              LabeledContent("Sodium") {
+                writableLabel(sodiumAvailable)
+              }
+            }
+
+            if let mailAvailable = autoFulfillment.mailAvailable {
+              LabeledContent("Server Mail") {
+                writableLabel(mailAvailable)
+              }
+            }
+          }
         }
 
         if let healthError {
@@ -263,6 +299,10 @@ struct ServerSettingsView: View {
             Text("\(operationsStatus.counts.registeredLicenses)")
           }
 
+          LabeledContent("Delivered Licenses") {
+            Text("\(operationsStatus.counts.deliveredLicenses ?? 0)")
+          }
+
           LabeledContent("Active Activations") {
             Text("\(operationsStatus.counts.activeActivations)")
           }
@@ -275,8 +315,33 @@ struct ServerSettingsView: View {
           storageRow("Transactions", operationsStatus.storage.transactionsWritable)
           storageRow("Fulfilled", operationsStatus.storage.fulfilledWritable)
           storageRow("Licenses", operationsStatus.storage.licensesWritable)
+          storageRow("Delivered Licenses", operationsStatus.storage.deliveredLicensesWritable ?? true)
           storageRow("Activations", operationsStatus.storage.activationsWritable)
           storageRow("Webhook Log", operationsStatus.storage.webhookLogWritable)
+
+          if let deliveredLicenses = operationsStatus.latest.deliveredLicenses,
+             !deliveredLicenses.isEmpty {
+            Divider()
+
+            Text("Latest Delivered Licenses")
+              .font(.headline)
+
+            ForEach(deliveredLicenses.prefix(5)) { license in
+              VStack(alignment: .leading, spacing: 4) {
+                Text(license.id)
+                  .font(.system(.caption, design: .monospaced))
+                  .textSelection(.enabled)
+
+                HStack {
+                  Text(license.updatedAt)
+                  Text(license.file)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+              }
+            }
+          }
 
           if !operationsStatus.latest.webhookEvents.isEmpty {
             Divider()
@@ -972,6 +1037,7 @@ struct ServerSettingsView: View {
       && healthResponse.fulfilledWritable
       && (healthResponse.licensesWritable ?? true)
       && (healthResponse.activationsWritable ?? true)
+      && (healthResponse.deliveredLicensesWritable ?? true)
       && (healthResponse.webhookLogWritable ?? true)
   }
 

@@ -9,23 +9,38 @@ import Foundation
 
 struct HealthResponse: Codable {
 
-    let status: String
+  let status: String
 
-    let php: String
+  let php: String
 
-    let time: String
+  let time: String
 
-    let transactionsWritable: Bool
+  let transactionsWritable: Bool
 
-    let fulfilledWritable: Bool
+  let fulfilledWritable: Bool
 
-    let licensesWritable: Bool?
+  let licensesWritable: Bool?
 
-    let activationsWritable: Bool?
+  let activationsWritable: Bool?
 
-    let privateConfigLoaded: Bool?
+  let deliveredLicensesWritable: Bool?
 
-    let paddleApiMode: String?
+  let privateConfigLoaded: Bool?
 
-    let webhookLogWritable: Bool?
+  let paddleApiMode: String?
+
+  let webhookLogWritable: Bool?
+
+  let autoFulfillment: AutoFulfillmentHealth?
+}
+
+struct AutoFulfillmentHealth: Codable {
+
+  let enabled: Bool?
+
+  let signingKeyConfigured: Bool?
+
+  let sodiumAvailable: Bool?
+
+  let mailAvailable: Bool?
 }

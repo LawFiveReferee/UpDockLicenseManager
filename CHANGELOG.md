@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.66 — Server Delivered License Visibility
+- Bumped app version to 1.0.66 build 71.
+- Server Operations now shows delivered-license counts, latest delivered license files, and delivered-license storage status.
+- Connection checks now display delivered-license and auto-fulfillment readiness flags returned by the server health endpoint.
+
 ## v1.0.65 — Email Card Placement
 - Bumped app version to 1.0.65 build 70.
 - Moved the Email Delivery card directly below Workflow Diagnostics in the license detail column.
