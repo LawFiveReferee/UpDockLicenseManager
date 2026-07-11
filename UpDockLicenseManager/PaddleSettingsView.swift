@@ -5,6 +5,8 @@ import UniformTypeIdentifiers
 private let paddlePrivateConfigBookmarkKey = "localPrivateConfigBookmark"
 
 struct PaddleSettingsView: View {
+  @AppStorage("showDevelopmentTools") private var showDevelopmentTools = false
+  @AppStorage("paddle.generatedDiscountCodes") private var generatedDiscountCodes = ""
   @State private var settings = PaddleSettings()
   @State private var fulfillmentPolicy = PaddleFulfillmentPolicyStore()
   @State private var siteLicensePricing = SiteLicensePricingStore()
@@ -14,6 +16,9 @@ struct PaddleSettingsView: View {
   @State private var showingNotificationSecret = false
   @State private var showingAPIKey = false
   @State private var savedMessage = ""
+  @State private var discountCodeCount = 10
+  @State private var isGeneratingDiscountCodes = false
+  @State private var discountCodeMessage = ""
 
   var body: some View {
     Form {
@@ -215,6 +220,65 @@ struct PaddleSettingsView: View {
           .foregroundStyle(.secondary)
       }
 
+      if showDevelopmentTools {
+        Section("Test Discount Codes") {
+          Stepper(
+            "Codes to Generate: \(discountCodeCount)",
+            value: $discountCodeCount,
+            in: 1...20
+          )
+
+          LabeledContent("Discount") {
+            Text("100% off, one use each")
+          }
+
+          LabeledContent("Restricted To") {
+            Text(discountPriceIDs.isEmpty ? "No price IDs configured" : "\(discountPriceIDs.count) UpDock Pro price IDs")
+          }
+
+          HStack {
+            Button {
+              Task {
+                await generateDiscountCodes()
+              }
+            } label: {
+              if isGeneratingDiscountCodes {
+                ProgressView()
+              } else {
+                Label("Generate Codes", systemImage: "tag")
+              }
+            }
+            .disabled(isGeneratingDiscountCodes || apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || discountPriceIDs.isEmpty)
+
+            Button("Copy Stored Codes") {
+              copyGeneratedDiscountCodes()
+            }
+            .disabled(generatedDiscountCodes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+            Button("Clear Stored Codes") {
+              generatedDiscountCodes = ""
+              discountCodeMessage = "Stored discount codes cleared from this app."
+            }
+            .disabled(generatedDiscountCodes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+          }
+
+          Text("Requires a Paddle API key with discount.write permission. Codes are created in the selected Paddle environment.")
+            .foregroundStyle(.secondary)
+
+          if !discountCodeMessage.isEmpty {
+            Text(discountCodeMessage)
+              .foregroundStyle(.secondary)
+              .textSelection(.enabled)
+          }
+
+          if !generatedDiscountCodes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            Text(generatedDiscountCodes)
+              .font(.caption.monospaced())
+              .textSelection(.enabled)
+          }
+        }
+      }
+
       Section("Notification Secret") {
         if showingNotificationSecret {
           TextField(
@@ -310,6 +374,19 @@ struct PaddleSettingsView: View {
     }
   }
 
+  private var discountPriceIDs: [String] {
+    let allPriceIDs = [settings.defaultPriceID] + siteLicensePricing.tiers.map(\.priceID)
+
+    return Array(
+      Set(
+        allPriceIDs
+          .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+          .filter { !$0.isEmpty }
+      )
+    )
+    .sorted()
+  }
+
   private func cleanedStoredAPIKey() -> String {
     let storedAPIKey = KeychainSettingsStore.shared.paddleAPIKey
 
@@ -394,6 +471,42 @@ struct PaddleSettingsView: View {
     NSPasteboard.general.clearContents()
     NSPasteboard.general.setString(checkoutHTMLBlock, forType: .string)
     savedMessage = "Checkout HTML copied. Paste it over the existing pro.html purchase block, then sync public web files."
+  }
+
+  private func generateDiscountCodes() async {
+    isGeneratingDiscountCodes = true
+    discountCodeMessage = ""
+
+    do {
+      let generator = PaddleDiscountCodeGenerator(
+        apiBaseURL: paddleAPIBaseURL,
+        apiKey: apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+      )
+      let discounts = try await generator.generateTestCodes(
+        count: discountCodeCount,
+        environmentName: settings.environment.rawValue,
+        restrictedPriceIDs: discountPriceIDs
+      )
+      let timestamp = Date().formatted(date: .abbreviated, time: .standard)
+      let newLines = discounts.map { discount in
+        "\(discount.code)  \(discount.id)  \(settings.environment.rawValue)  \(timestamp)"
+      }
+      let existing = generatedDiscountCodes.trimmingCharacters(in: .whitespacesAndNewlines)
+      generatedDiscountCodes = ([existing] + newLines)
+        .filter { !$0.isEmpty }
+        .joined(separator: "\n")
+      discountCodeMessage = "Generated \(discounts.count) Paddle discount \(discounts.count == 1 ? "code" : "codes")."
+    } catch {
+      discountCodeMessage = error.localizedDescription
+    }
+
+    isGeneratingDiscountCodes = false
+  }
+
+  private func copyGeneratedDiscountCodes() {
+    NSPasteboard.general.clearContents()
+    NSPasteboard.general.setString(generatedDiscountCodes, forType: .string)
+    discountCodeMessage = "Stored discount codes copied."
   }
 
   private var checkoutHTMLBlock: String {
@@ -591,6 +704,156 @@ struct PaddleSettingsView: View {
       )
     } catch {
       savedMessage = "Updated \(configURL.lastPathComponent), but could not remember file access: \(error.localizedDescription)"
+    }
+  }
+}
+
+private struct PaddleDiscountCodeGenerator {
+  var apiBaseURL: String
+  var apiKey: String
+
+  func generateTestCodes(
+    count: Int,
+    environmentName: String,
+    restrictedPriceIDs: [String]
+  ) async throws -> [PaddleCreatedDiscount] {
+    guard !apiKey.isEmpty else {
+      throw PaddleDiscountCodeError.missingAPIKey
+    }
+
+    guard !restrictedPriceIDs.isEmpty else {
+      throw PaddleDiscountCodeError.missingPriceIDs
+    }
+
+    var discounts: [PaddleCreatedDiscount] = []
+
+    for index in 1...count {
+      let request = try makeCreateDiscountRequest(
+        description: "UpDock \(environmentName) test discount \(index)",
+        restrictedPriceIDs: restrictedPriceIDs
+      )
+      let (data, response) = try await URLSession.shared.data(for: request)
+
+      guard let httpResponse = response as? HTTPURLResponse else {
+        throw PaddleDiscountCodeError.invalidResponse
+      }
+
+      guard (200...299).contains(httpResponse.statusCode) else {
+        let errorResponse = try? JSONDecoder().decode(PaddleAPIErrorResponse.self, from: data)
+        throw PaddleDiscountCodeError.apiError(
+          statusCode: httpResponse.statusCode,
+          detail: errorResponse?.error.detail ?? String(data: data, encoding: .utf8) ?? "Unknown Paddle API error"
+        )
+      }
+
+      let decoded = try JSONDecoder().decode(PaddleCreateDiscountResponse.self, from: data)
+
+      guard let code = decoded.data.code, !code.isEmpty else {
+        throw PaddleDiscountCodeError.missingReturnedCode
+      }
+
+      discounts.append(
+        PaddleCreatedDiscount(
+          id: decoded.data.id,
+          code: code
+        )
+      )
+    }
+
+    return discounts
+  }
+
+  private func makeCreateDiscountRequest(
+    description: String,
+    restrictedPriceIDs: [String]
+  ) throws -> URLRequest {
+    guard let url = URL(string: apiBaseURL + "/discounts") else {
+      throw PaddleDiscountCodeError.invalidURL
+    }
+
+    let payload = PaddleCreateDiscountRequest(
+      description: description,
+      enabledForCheckout: true,
+      type: "percentage",
+      mode: "standard",
+      amount: "100",
+      recur: false,
+      usageLimit: 1,
+      restrictTo: restrictedPriceIDs,
+      customData: [
+        "created_by": "UpDock License Manager",
+        "purpose": "test_checkout"
+      ]
+    )
+    let encoder = JSONEncoder()
+    encoder.keyEncodingStrategy = .convertToSnakeCase
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.httpBody = try encoder.encode(payload)
+
+    return request
+  }
+}
+
+private struct PaddleCreateDiscountRequest: Encodable {
+  var description: String
+  var enabledForCheckout: Bool
+  var type: String
+  var mode: String
+  var amount: String
+  var recur: Bool
+  var usageLimit: Int
+  var restrictTo: [String]
+  var customData: [String: String]
+}
+
+private struct PaddleCreateDiscountResponse: Decodable {
+  var data: PaddleDiscountResponseData
+}
+
+private struct PaddleDiscountResponseData: Decodable {
+  var id: String
+  var code: String?
+}
+
+private struct PaddleAPIErrorResponse: Decodable {
+  var error: PaddleAPIErrorDetail
+}
+
+private struct PaddleAPIErrorDetail: Decodable {
+  var detail: String
+}
+
+private struct PaddleCreatedDiscount: Hashable {
+  var id: String
+  var code: String
+}
+
+private enum PaddleDiscountCodeError: LocalizedError {
+  case missingAPIKey
+  case missingPriceIDs
+  case invalidURL
+  case invalidResponse
+  case missingReturnedCode
+  case apiError(statusCode: Int, detail: String)
+
+  var errorDescription: String? {
+    switch self {
+    case .missingAPIKey:
+      return "Save a Paddle API key before generating discount codes."
+    case .missingPriceIDs:
+      return "Configure at least one UpDock Pro price ID before generating restricted discount codes."
+    case .invalidURL:
+      return "The Paddle API URL is invalid."
+    case .invalidResponse:
+      return "Paddle returned an invalid response."
+    case .missingReturnedCode:
+      return "Paddle created a discount but did not return a checkout code."
+    case .apiError(let statusCode, let detail):
+      return "Paddle API returned HTTP \(statusCode): \(detail)"
     }
   }
 }

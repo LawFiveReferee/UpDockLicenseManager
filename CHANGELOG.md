@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.70 — Paddle Test Discount Codes
+- Bumped app version to 1.0.70 build 75.
+- Added a development-only Paddle settings tool that creates one-use 100% discount codes through the Paddle Discounts API.
+- Generated codes are restricted to configured UpDock Pro price IDs and stored locally for copying.
+
 ## v1.0.69 — Development Tools Gate
 - Bumped app version to 1.0.69 build 74.
 - Added a General setting to show or hide development tools.
