@@ -115,6 +115,9 @@ struct ContentView: View {
   @State private var showingAuditLog = false
   @State private var showingRecoveryReport = false
   @State private var mainColumnWidths: [MainWindowColumn: CGFloat] = [:]
+  @State private var isSyncingServerLicenses = false
+  @State private var serverLicenseSyncMessage = ""
+  @State private var showingServerLicenseSyncResult = false
 
   var body: some View {
     GeometryReader { proxy in
@@ -210,6 +213,12 @@ struct ContentView: View {
           onShowPendingPurchases: {
             showingPendingPurchases = true
           },
+          onSyncServerLicenses: {
+            Task {
+              await syncServerDeliveredLicenses()
+            }
+          },
+          isSyncingServerLicenses: isSyncingServerLicenses,
           onShowAuditLog: {
             showingAuditLog = true
           },
@@ -348,6 +357,11 @@ struct ContentView: View {
     } message: {
       Text(inspectionError ?? "Unknown error")
     }
+    .alert("Server License Sync", isPresented: $showingServerLicenseSyncResult) {
+      Button("OK") {}
+    } message: {
+      Text(serverLicenseSyncMessage)
+    }
     .alert("Remove All Local Licenses?", isPresented: $showingRemoveAllDevelopmentLicensesConfirmation) {
       Button("Cancel", role: .cancel) {}
 
@@ -406,6 +420,43 @@ struct ContentView: View {
     selectedFilter = .all
     selectedLicense = lastDeletedLicense
     self.lastDeletedLicense = nil
+  }
+
+  private func syncServerDeliveredLicenses() async {
+    isSyncingServerLicenses = true
+
+    do {
+      let settings = NetworkSettings()
+      let managerToken = KeychainSettingsStore.shared.managerToken
+      let response = try await ServerService.shared.fetchDeliveredLicenses(
+        settings: settings,
+        managerToken: managerToken
+      )
+      let imported = response.licenses.map { $0.makeLicenseRecord() }
+      let newLicenses = store.importMissing(imported)
+
+      for license in newLicenses {
+        recordAudit(
+          .paddleFulfilled,
+          license: license,
+          message: "Imported server-delivered license."
+        )
+      }
+
+      if let newest = newLicenses.first {
+        selectedFilter = .all
+        selectedLicense = newest
+      }
+
+      serverLicenseSyncMessage = newLicenses.isEmpty
+        ? "No new server-delivered licenses to import."
+        : "Imported \(newLicenses.count) server-delivered \(newLicenses.count == 1 ? "license" : "licenses")."
+    } catch {
+      serverLicenseSyncMessage = error.localizedDescription
+    }
+
+    showingServerLicenseSyncResult = true
+    isSyncingServerLicenses = false
   }
 
   private var filteredLicenses: [LicenseRecord] {

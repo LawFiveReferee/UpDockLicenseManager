@@ -106,6 +106,17 @@ final class ServerService {
     return try JSONDecoder().decode(ServerEmailTestResponse.self, from: data)
   }
 
+  func fetchDeliveredLicenses(
+    settings: NetworkSettings,
+    managerToken: String
+  ) async throws -> DeliveredLicensesResponse {
+    let data = try await NetworkService.shared.get(
+      from: settings.authenticatedDeliveredLicensesURL(token: managerToken)
+    )
+
+    return try JSONDecoder().decode(DeliveredLicensesResponse.self, from: data)
+  }
+
   func runActivationLimitTest(
     settings: NetworkSettings,
     serial: String,
@@ -344,4 +355,73 @@ struct OperationsStatusStorage: Decodable {
   var deliveredLicensesWritable: Bool?
   var activationsWritable: Bool
   var webhookLogWritable: Bool
+}
+
+struct DeliveredLicensesResponse: Decodable {
+  var status: String
+  var apiVersion: Int?
+  var generatedAt: String
+  var licenses: [DeliveredServerLicense]
+}
+
+struct DeliveredServerLicense: Decodable, Identifiable, Hashable {
+  var serial: String
+  var type: String
+  var product: String
+  var name: String
+  var email: String
+  var issuedAt: String
+  var expiresAt: String?
+  var seatAllowance: Int?
+  var paddleCustomerID: String
+  var paddleTransactionID: String
+  var paddleEmail: String
+  var fulfilledAt: String?
+  var file: String
+  var updatedAt: String
+
+  var id: String { serial }
+
+  func makeLicenseRecord() -> LicenseRecord {
+    LicenseRecord(
+      serial: serial,
+      type: UpDockLicenseType(rawValue: type) ?? .commercial,
+      product: product.isEmpty ? "UpDock Pro" : product,
+      name: name,
+      email: email,
+      issuedAt: deliveredDate(from: issuedAt) ?? Date(),
+      expiresAt: deliveredDate(from: expiresAt),
+      notes: "Imported from server-delivered license \(file).",
+      seatAllowance: seatAllowance,
+      paddleCustomerID: paddleCustomerID,
+      paddleTransactionID: paddleTransactionID,
+      paddleEmail: paddleEmail.isEmpty ? email : paddleEmail,
+      paddleStatus: "completed",
+      fulfilledAt: deliveredDate(from: fulfilledAt),
+      fulfillmentArchiveStatus: .archived,
+      fulfillmentArchiveCheckedAt: Date(),
+      emailDeliveryStatus: .sent,
+      emailDeliveryAttemptedAt: deliveredDate(from: fulfilledAt),
+      activationRegistryStatus: seatAllowance == nil ? .unknown : .registered,
+      activationRegistryCheckedAt: Date()
+    )
+  }
+
+  private func deliveredDate(from value: String?) -> Date? {
+    guard let value,
+          !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+      return nil
+    }
+
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+    if let date = formatter.date(from: value) {
+      return date
+    }
+
+    formatter.formatOptions = [.withInternetDateTime]
+
+    return formatter.date(from: value)
+  }
 }

@@ -90,6 +90,10 @@ final class NetworkSettings {
         serverBaseURL + "/test-license-email.php"
     }
 
+    var deliveredLicensesURL: String {
+        serverBaseURL + "/delivered-licenses.php"
+    }
+
     var authenticatedOperationsStatusURL: String {
         authenticatedURL(
             baseURL: operationsStatusURL,
@@ -103,6 +107,14 @@ final class NetworkSettings {
             queryItems: [
                 URLQueryItem(name: "email", value: email)
             ]
+        )
+    }
+
+    func authenticatedDeliveredLicensesURL(token: String) -> String {
+        authenticatedURL(
+            baseURL: deliveredLicensesURL,
+            token: token,
+            queryItems: []
         )
     }
 

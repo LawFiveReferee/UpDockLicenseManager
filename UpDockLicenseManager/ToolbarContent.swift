@@ -25,6 +25,8 @@ struct LicenseToolbarContent: ToolbarContent {
   let onExportAndRevealLicenseFile: () -> Void
   let onExportAndEmailLicenseFile: () -> Void
   let onShowPendingPurchases: () -> Void
+  let onSyncServerLicenses: () -> Void
+  let isSyncingServerLicenses: Bool
   let onShowAuditLog: () -> Void
   let onShowRecoveryReport: () -> Void
   let onRemoveAllDevelopmentLicenses: () -> Void
@@ -66,6 +68,18 @@ struct LicenseToolbarContent: ToolbarContent {
         toolbarLabel("Pending Purchases", systemImage: "tray.full")
       }
       .help("Pending Purchases")
+
+      Button {
+        onSyncServerLicenses()
+      } label: {
+        if isSyncingServerLicenses {
+          ProgressView()
+        } else {
+          toolbarLabel("Sync Server", systemImage: "arrow.triangle.2.circlepath")
+        }
+      }
+      .disabled(isSyncingServerLicenses)
+      .help("Sync Server Licenses")
 
       Button {
         onShowAuditLog()

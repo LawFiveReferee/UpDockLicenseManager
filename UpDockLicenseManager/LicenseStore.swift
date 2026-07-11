@@ -27,6 +27,17 @@ final class LicenseStore {
     licenses.insert(license, at: 0)
   }
 
+  func importMissing(_ importedLicenses: [LicenseRecord]) -> [LicenseRecord] {
+    let existingSerials = Set(licenses.map { $0.serial.lowercased() })
+    let newLicenses = importedLicenses.filter {
+      !existingSerials.contains($0.serial.lowercased())
+    }
+
+    licenses.insert(contentsOf: newLicenses, at: 0)
+
+    return newLicenses
+  }
+
   func delete(_ licensesToDelete: [LicenseRecord]) {
     let ids = Set(licensesToDelete.map(\.id))
     licenses.removeAll { ids.contains($0.id) }

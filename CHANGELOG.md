@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.67 — Server License Sync
+- Bumped app version to 1.0.67 build 72.
+- Added a main toolbar action to sync server-delivered licenses into the local license list.
+- Imported server licenses are de-duplicated by serial number and marked as email sent, fulfilled, and activation registered when appropriate.
+
 ## v1.0.66 — Server Delivered License Visibility
 - Bumped app version to 1.0.66 build 71.
 - Server Operations now shows delivered-license counts, latest delivered license files, and delivered-license storage status.
