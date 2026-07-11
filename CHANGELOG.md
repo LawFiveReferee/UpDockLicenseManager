@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.74 — Marketing Contact Copy
+- Bumped app version to 1.0.74 build 79.
+- Marketing contacts can now be selected and copied, or copied all at once.
+- Marketing contact copy now uses tab-separated `Name<TAB>Email` rows.
+
 ## v1.0.73 — Marketing Consent Contacts
 - Bumped app version to 1.0.73 build 78.
 - Synced Paddle marketing consent into license records for auto-fulfilled and manually fulfilled purchases.

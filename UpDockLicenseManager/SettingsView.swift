@@ -58,6 +58,7 @@ struct SettingsView: View {
 struct MarketingContactsView: View {
     @Bindable var store: LicenseStore
     @State private var statusMessage = ""
+    @State private var selectedContactIDs: Set<MarketingContact.ID> = []
 
     private var contacts: [MarketingContact] {
         MarketingContact.make(from: store.licenses)
@@ -73,16 +74,22 @@ struct MarketingContactsView: View {
                 HStack {
                     Button("Refresh") {
                         store.licenses = LicenseStore().licenses
+                        selectedContactIDs = []
                         statusMessage = "Reloaded local licenses."
                     }
 
-                    Button("Copy CSV") {
-                        copyCSV()
+                    Button("Copy Selected") {
+                        copyTSV(contacts.filter { selectedContactIDs.contains($0.id) })
+                    }
+                    .disabled(selectedContactIDs.isEmpty)
+
+                    Button("Copy All") {
+                        copyTSV(contacts)
                     }
                     .disabled(contacts.isEmpty)
                 }
 
-                Text("Only purchasers with Paddle marketing consent are included.")
+                Text("Only purchasers with Paddle marketing consent are included. Copy uses tab-separated rows: Name, Email.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -95,24 +102,29 @@ struct MarketingContactsView: View {
 
             if !contacts.isEmpty {
                 Section("Contacts") {
-                    ForEach(contacts) { contact in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(contact.name.isEmpty ? "Unknown Customer" : contact.name)
-                                .font(.headline)
+                    List(contacts, selection: $selectedContactIDs) { contact in
+                        HStack(alignment: .firstTextBaseline, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(contact.name.isEmpty ? "Unknown Customer" : contact.name)
+                                    .font(.headline)
 
-                            Text(contact.email)
-                                .font(.caption.monospaced())
-                                .foregroundStyle(.secondary)
-                                .textSelection(.enabled)
-
-                            if !contact.paddleCustomerID.isEmpty {
-                                Text(contact.paddleCustomerID)
+                                Text(contact.email)
                                     .font(.caption.monospaced())
                                     .foregroundStyle(.secondary)
                                     .textSelection(.enabled)
+
+                                if !contact.paddleCustomerID.isEmpty {
+                                    Text(contact.paddleCustomerID)
+                                        .font(.caption.monospaced())
+                                        .foregroundStyle(.secondary)
+                                        .textSelection(.enabled)
+                                }
                             }
+
+                            Spacer()
                         }
                     }
+                    .frame(minHeight: 180)
                 }
             }
         }
@@ -120,10 +132,10 @@ struct MarketingContactsView: View {
         .padding()
     }
 
-    private func copyCSV() {
+    private func copyTSV(_ contactsToCopy: [MarketingContact]) {
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(MarketingContact.csv(from: contacts), forType: .string)
-        statusMessage = "Copied \(contacts.count) opted-in \(contacts.count == 1 ? "contact" : "contacts")."
+        NSPasteboard.general.setString(MarketingContact.tsv(from: contactsToCopy), forType: .string)
+        statusMessage = "Copied \(contactsToCopy.count) opted-in \(contactsToCopy.count == 1 ? "contact" : "contacts")."
     }
 }
 
@@ -166,17 +178,12 @@ struct MarketingContact: Identifiable, Hashable {
         }
     }
 
-    static func csv(from contacts: [MarketingContact]) -> String {
-        let rows = contacts.map { contact in
-            [
-                csvEscape(contact.email),
-                csvEscape(contact.name),
-                csvEscape(contact.paddleCustomerID),
-                csvEscape(contact.latestPurchaseAt?.formatted(.iso8601) ?? "")
-            ].joined(separator: ",")
-        }
-
-        return (["Email,Name,Paddle Customer ID,Latest Purchase At"] + rows).joined(separator: "\n")
+    static func tsv(from contacts: [MarketingContact]) -> String {
+        contacts
+            .map { contact in
+                "\(tabEscape(contact.name))\t\(tabEscape(contact.email))"
+            }
+            .joined(separator: "\n")
     }
 
     private static func preferred(_ existing: String?, _ replacement: String) -> String {
@@ -186,9 +193,11 @@ struct MarketingContact: Identifiable, Hashable {
         return existingValue.isEmpty ? replacementValue : existingValue
     }
 
-    private static func csvEscape(_ value: String) -> String {
-        let escaped = value.replacingOccurrences(of: "\"", with: "\"\"")
-        return "\"\(escaped)\""
+    private static func tabEscape(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "\t", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
     }
 }
 
