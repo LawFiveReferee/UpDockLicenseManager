@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.68 — Automatic Server Sync
+- Bumped app version to 1.0.68 build 73.
+- Server-delivered licenses now sync automatically on app launch and when the app becomes active.
+- Automatic sync runs silently and de-duplicates by serial; the toolbar sync button still shows an import result.
+
 ## v1.0.67 — Server License Sync
 - Bumped app version to 1.0.67 build 72.
 - Added a main toolbar action to sync server-delivered licenses into the local license list.

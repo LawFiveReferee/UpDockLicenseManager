@@ -86,6 +86,7 @@ enum RecoveryReportActionError: LocalizedError {
 }
 
 struct ContentView: View {
+  @Environment(\.scenePhase) private var scenePhase
   @AppStorage("showToolbarTextLabels") private var showToolbarTextLabels = false
 
   @State private var columnVisibility: NavigationSplitViewVisibility = .all
@@ -118,6 +119,7 @@ struct ContentView: View {
   @State private var isSyncingServerLicenses = false
   @State private var serverLicenseSyncMessage = ""
   @State private var showingServerLicenseSyncResult = false
+  @State private var lastAutomaticServerLicenseSyncAt: Date?
 
   var body: some View {
     GeometryReader { proxy in
@@ -215,7 +217,7 @@ struct ContentView: View {
           },
           onSyncServerLicenses: {
             Task {
-              await syncServerDeliveredLicenses()
+              await syncServerDeliveredLicenses(showsResult: true, selectsImportedLicense: true)
             }
           },
           isSyncingServerLicenses: isSyncingServerLicenses,
@@ -235,6 +237,16 @@ struct ContentView: View {
     }
     .frame(minWidth: 825, minHeight: 650)
     .searchable(text: $searchText, placement: .toolbar, prompt: "Search licenses")
+    .task {
+      await syncServerDeliveredLicensesIfNeeded()
+    }
+    .onChange(of: scenePhase) { _, newPhase in
+      guard newPhase == .active else { return }
+
+      Task {
+        await syncServerDeliveredLicensesIfNeeded()
+      }
+    }
     .sheet(isPresented: $showingNewLicenseSheet) {
       NewLicenseSheet { license in
         store.add(license)
@@ -422,7 +434,26 @@ struct ContentView: View {
     self.lastDeletedLicense = nil
   }
 
-  private func syncServerDeliveredLicenses() async {
+  private func syncServerDeliveredLicensesIfNeeded() async {
+    let now = Date()
+
+    if let lastAutomaticServerLicenseSyncAt,
+       now.timeIntervalSince(lastAutomaticServerLicenseSyncAt) < 10 {
+      return
+    }
+
+    lastAutomaticServerLicenseSyncAt = now
+    await syncServerDeliveredLicenses(showsResult: false, selectsImportedLicense: false)
+  }
+
+  private func syncServerDeliveredLicenses(
+    showsResult: Bool,
+    selectsImportedLicense: Bool
+  ) async {
+    guard !isSyncingServerLicenses else {
+      return
+    }
+
     isSyncingServerLicenses = true
 
     do {
@@ -443,19 +474,26 @@ struct ContentView: View {
         )
       }
 
-      if let newest = newLicenses.first {
+      if selectsImportedLicense, let newest = newLicenses.first {
         selectedFilter = .all
         selectedLicense = newest
       }
 
-      serverLicenseSyncMessage = newLicenses.isEmpty
-        ? "No new server-delivered licenses to import."
-        : "Imported \(newLicenses.count) server-delivered \(newLicenses.count == 1 ? "license" : "licenses")."
+      if showsResult {
+        serverLicenseSyncMessage = newLicenses.isEmpty
+          ? "No new server-delivered licenses to import."
+          : "Imported \(newLicenses.count) server-delivered \(newLicenses.count == 1 ? "license" : "licenses")."
+      }
     } catch {
-      serverLicenseSyncMessage = error.localizedDescription
+      if showsResult {
+        serverLicenseSyncMessage = error.localizedDescription
+      }
     }
 
-    showingServerLicenseSyncResult = true
+    if showsResult {
+      showingServerLicenseSyncResult = true
+    }
+
     isSyncingServerLicenses = false
   }
 
