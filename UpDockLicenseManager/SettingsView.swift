@@ -157,6 +157,11 @@ struct MarketingContactsView: View {
                     .foregroundStyle(.secondary)
                     .frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
 
+                Text("Opt-ins")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+                    .frame(width: 64, alignment: .trailing)
+
                 Text("Last Purchase")
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
@@ -222,6 +227,12 @@ struct MarketingContactsView: View {
                 .font(.body.monospaced())
                 .foregroundStyle(.secondary)
                 .frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
+                .lineLimit(1)
+                .textSelection(.enabled)
+
+            Text("\(contact.optInPurchaseCount ?? 1)")
+                .foregroundStyle(.secondary)
+                .frame(width: 64, alignment: .trailing)
                 .lineLimit(1)
                 .textSelection(.enabled)
 

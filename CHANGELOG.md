@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.82 — Marketing Opt-In Counts
+- Bumped app version to 1.0.82 build 87.
+- Marketing contacts now show how many opted-in purchases contributed to each unique email row.
+- Marketing contact copy remains tab-separated `Name<TAB>Email` text.
+
 ## v1.0.81 — Marketing Contact Updates
 - Bumped app version to 1.0.81 build 86.
 - Marketing contacts now visibly update existing email rows when a newer opted-in purchase is imported.
