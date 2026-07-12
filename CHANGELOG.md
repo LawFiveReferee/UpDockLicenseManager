@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.86 — Marketing Unsubscribe Sync
+- Bumped app version to 1.0.86 build 91.
+- Marketing refresh now fetches the server unsubscribe list and removes matching emails from both Pro Purchasers and Subscribers.
+
 ## v1.0.85 — Subscriber Marketing List
 - Bumped app version to 1.0.85 build 90.
 - Marketing settings now maintain separate Pro Purchasers and Subscribers lists.

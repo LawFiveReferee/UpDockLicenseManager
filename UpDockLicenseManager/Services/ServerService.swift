@@ -131,6 +131,20 @@ final class ServerService {
     return try decoder.decode(MarketingSubscribersResponse.self, from: data)
   }
 
+  func fetchMarketingUnsubscribed(
+    settings: NetworkSettings,
+    managerToken: String
+  ) async throws -> MarketingUnsubscribedResponse {
+    let data = try await NetworkService.shared.get(
+      from: settings.authenticatedMarketingUnsubscribedURL(token: managerToken)
+    )
+
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+
+    return try decoder.decode(MarketingUnsubscribedResponse.self, from: data)
+  }
+
   func runActivationLimitTest(
     settings: NetworkSettings,
     serial: String,
@@ -229,6 +243,19 @@ struct MarketingSubscribersResponse: Codable {
 
 struct MarketingSubscriber: Codable, Hashable {
   var name: String
+  var email: String
+  var createdAt: Date?
+  var updatedAt: Date?
+}
+
+struct MarketingUnsubscribedResponse: Codable {
+  var status: String
+  var apiVersion: Int
+  var generatedAt: Date?
+  var unsubscribed: [MarketingUnsubscribeRecord]
+}
+
+struct MarketingUnsubscribeRecord: Codable, Hashable {
   var email: String
   var createdAt: Date?
   var updatedAt: Date?

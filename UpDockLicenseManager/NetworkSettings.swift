@@ -98,6 +98,10 @@ final class NetworkSettings {
         serverBaseURL + "/marketing-subscribers.php"
     }
 
+    var marketingUnsubscribedURL: String {
+        serverBaseURL + "/marketing-unsubscribed.php"
+    }
+
     var authenticatedOperationsStatusURL: String {
         authenticatedURL(
             baseURL: operationsStatusURL,
@@ -125,6 +129,14 @@ final class NetworkSettings {
     func authenticatedMarketingSubscribersURL(token: String) -> String {
         authenticatedURL(
             baseURL: marketingSubscribersURL,
+            token: token,
+            queryItems: []
+        )
+    }
+
+    func authenticatedMarketingUnsubscribedURL(token: String) -> String {
+        authenticatedURL(
+            baseURL: marketingUnsubscribedURL,
             token: token,
             queryItems: []
         )

@@ -283,6 +283,12 @@ struct MarketingContactsView: View {
                 managerToken: managerToken
             )
             subscriberResult = contactStore.importSubscribers(response.subscribers)
+
+            let unsubscribedResponse = try await ServerService.shared.fetchMarketingUnsubscribed(
+                settings: settings,
+                managerToken: managerToken
+            )
+            contactStore.applyUnsubscribed(unsubscribedResponse.unsubscribed)
         } catch {
             subscriberError = error.localizedDescription
         }

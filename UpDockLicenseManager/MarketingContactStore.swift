@@ -159,6 +159,19 @@ final class MarketingContactStore {
     )
   }
 
+  func applyUnsubscribed(_ records: [MarketingUnsubscribeRecord]) {
+    let unsubscribedEmails = Set(
+      records.map { $0.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+    )
+
+    guard !unsubscribedEmails.isEmpty else {
+      return
+    }
+
+    contacts.removeAll { unsubscribedEmails.contains($0.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) }
+    subscribers.removeAll { unsubscribedEmails.contains($0.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) }
+  }
+
   func reloadFromDisk() {
     load()
   }
