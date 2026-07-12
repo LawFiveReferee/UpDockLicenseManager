@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.84 — Marketing Table Width
+- Bumped app version to 1.0.84 build 89.
+- Marketing contacts now show a clearer opted-in contact count below the heading.
+- Removed the Opt-ins column and changed Last Purchase to a compact date-only format.
+
 ## v1.0.83 — Marketing Contact Identity
 - Bumped app version to 1.0.83 build 88.
 - Marketing contacts now use name plus email as the unique row identity, allowing personalized entries for separate opted-in purchases that share an email address.

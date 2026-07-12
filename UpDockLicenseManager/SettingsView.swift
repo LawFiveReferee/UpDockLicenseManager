@@ -84,7 +84,11 @@ struct MarketingContactsView: View {
                 Text("Marketing Contacts")
                     .font(.title3.bold())
 
-                Text("\(contacts.count) opted-in \(contacts.count == 1 ? "contact" : "contacts"). Copy uses tab-separated rows: Name, Email.")
+                Text("\(contacts.count) opted-in \(contacts.count == 1 ? "contact" : "contacts").")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text("Copy uses tab-separated rows: Name, Email.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -157,15 +161,10 @@ struct MarketingContactsView: View {
                     .foregroundStyle(.secondary)
                     .frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
 
-                Text("Opt-ins")
-                    .font(.caption.bold())
-                    .foregroundStyle(.secondary)
-                    .frame(width: 64, alignment: .trailing)
-
                 Text("Last Purchase")
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
-                    .frame(width: 150, alignment: .leading)
+                    .frame(width: 96, alignment: .leading)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
@@ -230,15 +229,9 @@ struct MarketingContactsView: View {
                 .lineLimit(1)
                 .textSelection(.enabled)
 
-            Text("\(contact.optInPurchaseCount ?? 1)")
-                .foregroundStyle(.secondary)
-                .frame(width: 64, alignment: .trailing)
-                .lineLimit(1)
-                .textSelection(.enabled)
-
             Text(formattedPurchaseDate(contact.latestPurchaseAt))
                 .foregroundStyle(.secondary)
-                .frame(width: 150, alignment: .leading)
+                .frame(width: 96, alignment: .leading)
                 .lineLimit(1)
                 .textSelection(.enabled)
         }
@@ -274,7 +267,7 @@ struct MarketingContactsView: View {
             return "—"
         }
 
-        return date.formatted(date: .abbreviated, time: .shortened)
+        return date.formatted(.dateTime.month().day().year())
     }
 
     private func deleteSelectedContacts() {

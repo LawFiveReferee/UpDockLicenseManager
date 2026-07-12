@@ -31,10 +31,6 @@ final class MarketingContactStore {
     let optedInLicenses = licenses
       .filter(\.paddleMarketingConsent)
       .sorted { purchaseDate(for: $0) < purchaseDate(for: $1) }
-    let optInPurchaseCounts = Dictionary(grouping: optedInLicenses) { license in
-      MarketingContact.id(name: license.name, email: license.email)
-    }
-    .mapValues(\.count)
 
     for license in optedInLicenses {
       let email = license.email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -55,7 +51,6 @@ final class MarketingContactStore {
         email: email,
         name: shouldUseLicenseDetails ? preferred(license.name, existing?.name) : preferred(existing?.name, license.name),
         paddleCustomerID: shouldUseLicenseDetails ? preferred(license.paddleCustomerID, existing?.paddleCustomerID) : preferred(existing?.paddleCustomerID, license.paddleCustomerID),
-        optInPurchaseCount: optInPurchaseCounts[key] ?? existing?.optInPurchaseCount,
         latestPurchaseAt: latestPurchaseAt
       )
 
@@ -96,7 +91,6 @@ final class MarketingContactStore {
       email: "sample-\(timestamp)@example.com",
       name: "Sample Marketing Contact",
       paddleCustomerID: "sample",
-      optInPurchaseCount: 1,
       latestPurchaseAt: Date()
     )
 
@@ -158,7 +152,6 @@ struct MarketingContact: Identifiable, Codable, Hashable {
   var email: String
   var name: String
   var paddleCustomerID: String
-  var optInPurchaseCount: Int?
   var latestPurchaseAt: Date?
 
   var id: String {
