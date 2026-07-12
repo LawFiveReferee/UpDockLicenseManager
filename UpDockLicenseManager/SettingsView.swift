@@ -156,6 +156,11 @@ struct MarketingContactsView: View {
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
                     .frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
+
+                Text("Last Purchase")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+                    .frame(width: 150, alignment: .leading)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
@@ -219,6 +224,12 @@ struct MarketingContactsView: View {
                 .frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
                 .lineLimit(1)
                 .textSelection(.enabled)
+
+            Text(formattedPurchaseDate(contact.latestPurchaseAt))
+                .foregroundStyle(.secondary)
+                .frame(width: 150, alignment: .leading)
+                .lineLimit(1)
+                .textSelection(.enabled)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
@@ -228,11 +239,11 @@ struct MarketingContactsView: View {
     private func refreshContacts() {
         licenseStore.reloadFromDisk()
         contactStore.reloadFromDisk()
-        let importedCount = contactStore.importOptedIn(from: licenseStore.licenses)
+        let importResult = contactStore.importOptedIn(from: licenseStore.licenses)
         selectedContactIDs = []
-        statusMessage = importedCount == 0
+        statusMessage = importResult.changedCount == 0
             ? "Reloaded marketing contacts."
-            : "Reloaded and added \(importedCount) opted-in \(importedCount == 1 ? "contact" : "contacts")."
+            : "Reloaded marketing contacts: added \(importResult.addedCount), updated \(importResult.updatedCount)."
     }
 
     private func copyTSV(_ contactsToCopy: [MarketingContact]) {
@@ -245,6 +256,14 @@ struct MarketingContactsView: View {
         contactStore.addSampleContact()
         selectedContactIDs = []
         statusMessage = "Added sample marketing contact."
+    }
+
+    private func formattedPurchaseDate(_ date: Date?) -> String {
+        guard let date else {
+            return "—"
+        }
+
+        return date.formatted(date: .abbreviated, time: .shortened)
     }
 
     private func deleteSelectedContacts() {

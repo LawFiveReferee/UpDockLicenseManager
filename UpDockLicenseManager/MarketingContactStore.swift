@@ -23,11 +23,16 @@ final class MarketingContactStore {
   }
 
   @discardableResult
-  func importOptedIn(from licenses: [LicenseRecord]) -> Int {
-    let existingContacts = contacts
+  func importOptedIn(from licenses: [LicenseRecord]) -> MarketingContactImportResult {
     var contactsByEmail = Dictionary(uniqueKeysWithValues: contacts.map { ($0.id, $0) })
+    var addedCount = 0
+    var updatedContactIDs: Set<MarketingContact.ID> = []
 
-    for license in licenses where license.paddleMarketingConsent {
+    let optedInLicenses = licenses
+      .filter(\.paddleMarketingConsent)
+      .sorted { purchaseDate(for: $0) < purchaseDate(for: $1) }
+
+    for license in optedInLicenses {
       let email = license.email.trimmingCharacters(in: .whitespacesAndNewlines)
 
       guard !email.isEmpty else {
@@ -36,23 +41,38 @@ final class MarketingContactStore {
 
       let key = email.lowercased()
       let existing = contactsByEmail[key]
+      let purchaseAt = purchaseDate(for: license)
       let latestPurchaseAt = [existing?.latestPurchaseAt, license.fulfilledAt, license.issuedAt]
         .compactMap { $0 }
         .max()
+      let shouldUseLicenseDetails = existing == nil || purchaseAt >= (existing?.latestPurchaseAt ?? .distantPast)
 
-      contactsByEmail[key] = MarketingContact(
+      let updatedContact = MarketingContact(
         email: email,
-        name: preferred(existing?.name, license.name),
-        paddleCustomerID: preferred(existing?.paddleCustomerID, license.paddleCustomerID),
+        name: shouldUseLicenseDetails ? preferred(license.name, existing?.name) : preferred(existing?.name, license.name),
+        paddleCustomerID: shouldUseLicenseDetails ? preferred(license.paddleCustomerID, existing?.paddleCustomerID) : preferred(existing?.paddleCustomerID, license.paddleCustomerID),
         latestPurchaseAt: latestPurchaseAt
       )
+
+      if let existing {
+        if existing != updatedContact {
+          updatedContactIDs.insert(key)
+        }
+      } else {
+        addedCount += 1
+      }
+
+      contactsByEmail[key] = updatedContact
     }
 
     contacts = contactsByEmail.values.sorted {
       $0.email.localizedCaseInsensitiveCompare($1.email) == .orderedAscending
     }
 
-    return contacts.filter { !existingContacts.contains($0) }.count
+    return MarketingContactImportResult(
+      addedCount: addedCount,
+      updatedCount: updatedContactIDs.count
+    )
   }
 
   func delete(ids: Set<MarketingContact.ID>) {
@@ -101,11 +121,24 @@ final class MarketingContactStore {
     }
   }
 
-  private func preferred(_ existing: String?, _ replacement: String) -> String {
-    let existingValue = existing?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    let replacementValue = replacement.trimmingCharacters(in: .whitespacesAndNewlines)
+  private func purchaseDate(for license: LicenseRecord) -> Date {
+    license.fulfilledAt ?? license.issuedAt ?? .distantPast
+  }
 
-    return existingValue.isEmpty ? replacementValue : existingValue
+  private func preferred(_ primary: String?, _ fallback: String?) -> String {
+    let primaryValue = primary?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    let fallbackValue = fallback?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+    return primaryValue.isEmpty ? fallbackValue : primaryValue
+  }
+}
+
+struct MarketingContactImportResult {
+  var addedCount: Int
+  var updatedCount: Int
+
+  var changedCount: Int {
+    addedCount + updatedCount
   }
 }
 

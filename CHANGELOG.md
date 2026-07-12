@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.81 — Marketing Contact Updates
+- Bumped app version to 1.0.81 build 86.
+- Marketing contacts now visibly update existing email rows when a newer opted-in purchase is imported.
+- Added a Last Purchase column and refresh status that reports added and updated marketing contacts.
+
 ## v1.0.80 — Marketing Consent Visibility
 - Bumped app version to 1.0.80 build 85.
 - License detail now shows the imported marketing-updates consent value for web purchases.
