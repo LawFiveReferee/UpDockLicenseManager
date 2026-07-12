@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.77 — Shared License Store
+- Bumped app version to 1.0.77 build 82.
+- Settings and the main window now share the same `LicenseStore` instance.
+- Fixed Marketing contacts losing previous entries when the Settings store showed or saved stale license data.
+
 ## v1.0.76 — Marketing Contacts Table
 - Bumped app version to 1.0.76 build 81.
 - Reworked Marketing contacts into a table-style view with row checkboxes and a header select-all checkbox.

@@ -12,7 +12,7 @@ import AppKit
 struct SettingsView: View {
     @State private var settings = GeneralSettings()
     @State private var emailSettings = EmailSettings()
-    @State private var licenseStore = LicenseStore()
+    let store: LicenseStore
     
     var body: some View {
         TabView {
@@ -41,7 +41,7 @@ struct SettingsView: View {
                     Label("Email", systemImage: "envelope")
                 }
 
-            MarketingContactsView(store: licenseStore)
+            MarketingContactsView(store: store)
                 .tabItem {
                     Label("Marketing", systemImage: "person.crop.circle.badge.checkmark")
                 }
@@ -214,7 +214,7 @@ struct MarketingContactsView: View {
     }
 
     private func refreshContacts() {
-        store.licenses = LicenseStore().licenses
+        store.reloadFromDisk()
         selectedContactIDs = []
         statusMessage = "Reloaded local licenses."
     }

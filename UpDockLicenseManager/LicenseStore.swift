@@ -58,6 +58,10 @@ final class LicenseStore {
     return removedCount
   }
 
+  func reloadFromDisk() {
+    load()
+  }
+
   func exportJSON(to url: URL) throws {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]

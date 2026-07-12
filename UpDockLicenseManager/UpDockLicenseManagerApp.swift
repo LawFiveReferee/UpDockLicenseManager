@@ -9,13 +9,15 @@ import SwiftUI
 
 @main
 struct UpDockLicenseManagerApp: App {
-       var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
-        
-        Settings {
-            SettingsView()
-        }
+  @State private var licenseStore = LicenseStore()
+
+  var body: some Scene {
+    WindowGroup {
+      ContentView(store: licenseStore)
     }
+    
+    Settings {
+      SettingsView(store: licenseStore)
+    }
+  }
 }

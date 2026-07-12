@@ -90,8 +90,9 @@ struct ContentView: View {
   @AppStorage("showToolbarTextLabels") private var showToolbarTextLabels = false
   @AppStorage("showDevelopmentTools") private var showDevelopmentTools = false
 
+  let store: LicenseStore
+
   @State private var columnVisibility: NavigationSplitViewVisibility = .all
-  @State private var store = LicenseStore()
   @State private var auditLog = AuditLogStore()
 
   @State private var selectedFilter: LicenseSidebarFilter = .all
