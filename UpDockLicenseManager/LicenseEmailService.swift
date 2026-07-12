@@ -65,6 +65,7 @@ enum LicenseEmailService {
         let customerLine = customerID.isEmpty
             ? ""
             : "\nPaddle customer ID: \(customerID)"
+        let marketingLine = "\nMarketing updates: \(license.paddleMarketingConsent ? "Yes" : "No")"
         let seatLine: String
 
         let expirationLine: String
@@ -92,7 +93,7 @@ enum LicenseEmailService {
 
         Serial: \(license.serial)
         Issued: \(license.issuedAt.formatted(date: .long, time: .omitted))
-        \(seatLine)\(purchaseLine)\(customerLine)
+        \(seatLine)\(marketingLine)\(purchaseLine)\(customerLine)
 
         \(expirationLine)
 

@@ -235,6 +235,7 @@ struct LicenseDetailView: View {
                 .foregroundStyle(fulfillmentArchiveStyle)
 
               detailRow("Transaction ID", editableLicense.paddleTransactionID)
+              detailRow("Marketing Updates", editableLicense.paddleMarketingConsent ? "Yes" : "No")
               if let paddleSeatBadgeText {
                 detailRow("Seat", paddleSeatBadgeText)
               }

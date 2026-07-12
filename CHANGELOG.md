@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.80 — Marketing Consent Visibility
+- Bumped app version to 1.0.80 build 85.
+- License detail now shows the imported marketing-updates consent value for web purchases.
+- App-generated license emails now include the marketing-updates consent value.
+
 ## v1.0.79 — Marketing Store Test Contact
 - Bumped app version to 1.0.79 build 84.
 - Added a hidden development-only Marketing tab button for inserting a sample contact into the persistent marketing contact store.
