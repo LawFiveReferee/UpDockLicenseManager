@@ -59,6 +59,22 @@ final class MarketingContactStore {
     contacts.removeAll { ids.contains($0.id) }
   }
 
+  func addSampleContact() {
+    let timestamp = Int(Date().timeIntervalSince1970)
+    let sample = MarketingContact(
+      email: "sample-\(timestamp)@example.com",
+      name: "Sample Marketing Contact",
+      paddleCustomerID: "sample",
+      latestPurchaseAt: Date()
+    )
+
+    var updatedContacts = contacts.filter { $0.id != sample.id }
+    updatedContacts.append(sample)
+    contacts = updatedContacts.sorted {
+      $0.email.localizedCaseInsensitiveCompare($1.email) == .orderedAscending
+    }
+  }
+
   func reloadFromDisk() {
     load()
   }

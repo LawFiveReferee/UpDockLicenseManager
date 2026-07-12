@@ -60,6 +60,7 @@ struct SettingsView: View {
 }
 
 struct MarketingContactsView: View {
+    @AppStorage("showDevelopmentTools") private var showDevelopmentTools = false
     @Bindable var licenseStore: LicenseStore
     @Bindable var contactStore: MarketingContactStore
     @State private var statusMessage = ""
@@ -93,6 +94,12 @@ struct MarketingContactsView: View {
             HStack {
                 Button("Refresh") {
                     refreshContacts()
+                }
+
+                if showDevelopmentTools {
+                    Button("Add Sample") {
+                        addSampleContact()
+                    }
                 }
 
                 if !statusMessage.isEmpty {
@@ -232,6 +239,12 @@ struct MarketingContactsView: View {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(MarketingContact.tsv(from: contactsToCopy), forType: .string)
         statusMessage = "Copied \(contactsToCopy.count) opted-in \(contactsToCopy.count == 1 ? "contact" : "contacts")."
+    }
+
+    private func addSampleContact() {
+        contactStore.addSampleContact()
+        selectedContactIDs = []
+        statusMessage = "Added sample marketing contact."
     }
 
     private func deleteSelectedContacts() {

@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.79 — Marketing Store Test Contact
+- Bumped app version to 1.0.79 build 84.
+- Added a hidden development-only Marketing tab button for inserting a sample contact into the persistent marketing contact store.
+
 ## v1.0.78 — Persistent Marketing Contacts
 - Bumped app version to 1.0.78 build 83.
 - Marketing contacts are now saved in their own persistent contact store.
