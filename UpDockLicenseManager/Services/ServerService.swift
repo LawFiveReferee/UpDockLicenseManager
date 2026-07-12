@@ -117,6 +117,20 @@ final class ServerService {
     return try JSONDecoder().decode(DeliveredLicensesResponse.self, from: data)
   }
 
+  func fetchMarketingSubscribers(
+    settings: NetworkSettings,
+    managerToken: String
+  ) async throws -> MarketingSubscribersResponse {
+    let data = try await NetworkService.shared.get(
+      from: settings.authenticatedMarketingSubscribersURL(token: managerToken)
+    )
+
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+
+    return try decoder.decode(MarketingSubscribersResponse.self, from: data)
+  }
+
   func runActivationLimitTest(
     settings: NetworkSettings,
     serial: String,
@@ -204,6 +218,20 @@ struct ServerEmailTestResponse: Codable {
   var recipient: String
   var attachment: String?
   var message: String?
+}
+
+struct MarketingSubscribersResponse: Codable {
+  var status: String
+  var apiVersion: Int
+  var generatedAt: Date?
+  var subscribers: [MarketingSubscriber]
+}
+
+struct MarketingSubscriber: Codable, Hashable {
+  var name: String
+  var email: String
+  var createdAt: Date?
+  var updatedAt: Date?
 }
 
 final class ActivationRegistryService {

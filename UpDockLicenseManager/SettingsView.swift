@@ -65,9 +65,16 @@ struct MarketingContactsView: View {
     @Bindable var contactStore: MarketingContactStore
     @State private var statusMessage = ""
     @State private var selectedContactIDs: Set<MarketingContact.ID> = []
+    @State private var selectedList: MarketingContactList = .proPurchasers
+    @State private var isRefreshing = false
 
     private var contacts: [MarketingContact] {
-        contactStore.contacts
+        switch selectedList {
+        case .proPurchasers:
+            contactStore.contacts
+        case .subscribers:
+            contactStore.subscribers
+        }
     }
 
     private var selectedContacts: [MarketingContact] {
@@ -84,7 +91,7 @@ struct MarketingContactsView: View {
                 Text("Marketing Contacts")
                     .font(.title3.bold())
 
-                Text("\(contacts.count) opted-in \(contacts.count == 1 ? "contact" : "contacts").")
+                Text("\(contacts.count) \(selectedList.countLabel(for: contacts.count)).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -93,12 +100,26 @@ struct MarketingContactsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Picker("List", selection: $selectedList) {
+                ForEach(MarketingContactList.allCases) { list in
+                    Text(list.rawValue).tag(list)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: selectedList) {
+                selectedContactIDs = []
+                statusMessage = ""
+            }
+
             marketingContactsTable
 
             HStack {
                 Button("Refresh") {
-                    refreshContacts()
+                    Task {
+                        await refreshContacts()
+                    }
                 }
+                .disabled(isRefreshing)
 
                 if showDevelopmentTools {
                     Button("Add Sample") {
@@ -176,7 +197,7 @@ struct MarketingContactsView: View {
                 ContentUnavailableView(
                     "No Opt-In Contacts",
                     systemImage: "person.crop.circle.badge.questionmark",
-                    description: Text("Contacts appear here after synced Paddle purchases include marketing consent.")
+                    description: Text(selectedList.emptyMessage)
                 )
                 .frame(maxWidth: .infinity, minHeight: 220)
             } else {
@@ -240,14 +261,41 @@ struct MarketingContactsView: View {
         .background(selectedContactIDs.contains(contact.id) ? Color.accentColor.opacity(0.12) : Color.clear)
     }
 
-    private func refreshContacts() {
+    private func refreshContacts() async {
+        guard !isRefreshing else {
+            return
+        }
+
+        isRefreshing = true
+        defer { isRefreshing = false }
+
         licenseStore.reloadFromDisk()
         contactStore.reloadFromDisk()
-        let importResult = contactStore.importOptedIn(from: licenseStore.licenses)
+        let purchaserResult = contactStore.importOptedIn(from: licenseStore.licenses)
+        var subscriberResult = MarketingContactImportResult(addedCount: 0, updatedCount: 0)
+        var subscriberError = ""
+
+        do {
+            let settings = NetworkSettings()
+            let managerToken = KeychainSettingsStore.shared.managerToken
+            let response = try await ServerService.shared.fetchMarketingSubscribers(
+                settings: settings,
+                managerToken: managerToken
+            )
+            subscriberResult = contactStore.importSubscribers(response.subscribers)
+        } catch {
+            subscriberError = error.localizedDescription
+        }
+
         selectedContactIDs = []
-        statusMessage = importResult.changedCount == 0
-            ? "Reloaded marketing contacts."
-            : "Reloaded marketing contacts: added \(importResult.addedCount), updated \(importResult.updatedCount)."
+
+        if !subscriberError.isEmpty {
+            statusMessage = "Reloaded purchasers. Subscriber sync failed: \(subscriberError)"
+        } else {
+            statusMessage = selectedList == .proPurchasers
+                ? refreshStatus(prefix: "Purchasers", result: purchaserResult)
+                : refreshStatus(prefix: "Subscribers", result: subscriberResult)
+        }
     }
 
     private func copyTSV(_ contactsToCopy: [MarketingContact]) {
@@ -257,7 +305,13 @@ struct MarketingContactsView: View {
     }
 
     private func addSampleContact() {
-        contactStore.addSampleContact()
+        switch selectedList {
+        case .proPurchasers:
+            contactStore.addSampleContact()
+        case .subscribers:
+            contactStore.addSampleSubscriber()
+        }
+
         selectedContactIDs = []
         statusMessage = "Added sample marketing contact."
     }
@@ -277,21 +331,62 @@ struct MarketingContactsView: View {
             return
         }
 
-        for index in licenseStore.licenses.indices {
-            let licenseKey = MarketingContact.id(
-                name: licenseStore.licenses[index].name,
-                email: licenseStore.licenses[index].email
-            )
+        if selectedList == .proPurchasers {
+            for index in licenseStore.licenses.indices {
+                let licenseKey = MarketingContact.id(
+                    name: licenseStore.licenses[index].name,
+                    email: licenseStore.licenses[index].email
+                )
 
-            if selectedKeys.contains(licenseKey) {
-                licenseStore.licenses[index].paddleMarketingConsent = false
+                if selectedKeys.contains(licenseKey) {
+                    licenseStore.licenses[index].paddleMarketingConsent = false
+                }
             }
         }
 
-        contactStore.delete(ids: selectedKeys)
+        switch selectedList {
+        case .proPurchasers:
+            contactStore.delete(ids: selectedKeys)
+        case .subscribers:
+            contactStore.deleteSubscribers(ids: selectedKeys)
+        }
+
         let deletedCount = selectedContactIDs.count
         selectedContactIDs = []
         statusMessage = "Removed \(deletedCount) \(deletedCount == 1 ? "contact" : "contacts") from the Marketing list."
+    }
+
+    private func refreshStatus(prefix: String, result: MarketingContactImportResult) -> String {
+        result.changedCount == 0
+            ? "Reloaded \(prefix.lowercased())."
+            : "\(prefix): added \(result.addedCount), updated \(result.updatedCount)."
+    }
+}
+
+private enum MarketingContactList: String, CaseIterable, Identifiable {
+    case proPurchasers = "Pro Purchasers"
+    case subscribers = "Subscribers"
+
+    var id: String {
+        rawValue
+    }
+
+    var emptyMessage: String {
+        switch self {
+        case .proPurchasers:
+            "Contacts appear here after synced Paddle purchases include marketing consent."
+        case .subscribers:
+            "Contacts appear here after website visitors subscribe to UpDock updates."
+        }
+    }
+
+    func countLabel(for count: Int) -> String {
+        switch self {
+        case .proPurchasers:
+            return "opted-in \(count == 1 ? "Pro purchaser" : "Pro purchasers")"
+        case .subscribers:
+            return "\(count == 1 ? "subscriber" : "subscribers")"
+        }
     }
 }
 

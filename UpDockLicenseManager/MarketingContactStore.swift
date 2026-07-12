@@ -5,11 +5,18 @@ import Observation
 final class MarketingContactStore {
   var contacts: [MarketingContact] = [] {
     didSet {
-      save()
+      saveContacts()
+    }
+  }
+
+  var subscribers: [MarketingContact] = [] {
+    didSet {
+      saveSubscribers()
     }
   }
 
   private let fileURL: URL
+  private let subscribersFileURL: URL
 
   init() {
     let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
@@ -18,6 +25,7 @@ final class MarketingContactStore {
     try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 
     self.fileURL = folder.appendingPathComponent("marketing-contacts.json")
+    self.subscribersFileURL = folder.appendingPathComponent("marketing-subscribers.json")
 
     load()
   }
@@ -65,15 +73,7 @@ final class MarketingContactStore {
       contactsByID[key] = updatedContact
     }
 
-    contacts = contactsByID.values.sorted {
-      let emailComparison = $0.email.localizedCaseInsensitiveCompare($1.email)
-
-      if emailComparison == .orderedSame {
-        return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
-      }
-
-      return emailComparison == .orderedAscending
-    }
+    contacts = sorted(Array(contactsByID.values))
 
     return MarketingContactImportResult(
       addedCount: addedCount,
@@ -83,6 +83,10 @@ final class MarketingContactStore {
 
   func delete(ids: Set<MarketingContact.ID>) {
     contacts.removeAll { ids.contains($0.id) }
+  }
+
+  func deleteSubscribers(ids: Set<MarketingContact.ID>) {
+    subscribers.removeAll { ids.contains($0.id) }
   }
 
   func addSampleContact() {
@@ -96,9 +100,63 @@ final class MarketingContactStore {
 
     var updatedContacts = contacts.filter { $0.id != sample.id }
     updatedContacts.append(sample)
-    contacts = updatedContacts.sorted {
-      $0.email.localizedCaseInsensitiveCompare($1.email) == .orderedAscending
+    contacts = sorted(updatedContacts)
+  }
+
+  func addSampleSubscriber() {
+    let timestamp = Int(Date().timeIntervalSince1970)
+    let sample = MarketingContact(
+      email: "subscriber-\(timestamp)@example.com",
+      name: "Sample Subscriber",
+      paddleCustomerID: "",
+      latestPurchaseAt: Date()
+    )
+
+    var updatedSubscribers = subscribers.filter { $0.id != sample.id }
+    updatedSubscribers.append(sample)
+    subscribers = sorted(updatedSubscribers)
+  }
+
+  @discardableResult
+  func importSubscribers(_ incomingSubscribers: [MarketingSubscriber]) -> MarketingContactImportResult {
+    let existingSubscribers = Dictionary(uniqueKeysWithValues: subscribers.map { ($0.id, $0) })
+    var subscribersByID = existingSubscribers
+    var addedCount = 0
+    var updatedContactIDs: Set<MarketingContact.ID> = []
+
+    for subscriber in incomingSubscribers {
+      let email = subscriber.email.trimmingCharacters(in: .whitespacesAndNewlines)
+
+      guard !email.isEmpty else {
+        continue
+      }
+
+      let key = MarketingContact.id(name: subscriber.name, email: email)
+      let existing = subscribersByID[key]
+      let updatedContact = MarketingContact(
+        email: email,
+        name: preferred(subscriber.name, existing?.name),
+        paddleCustomerID: "",
+        latestPurchaseAt: subscriber.updatedAt ?? subscriber.createdAt ?? existing?.latestPurchaseAt
+      )
+
+      if let existing {
+        if existing != updatedContact {
+          updatedContactIDs.insert(key)
+        }
+      } else {
+        addedCount += 1
+      }
+
+      subscribersByID[key] = updatedContact
     }
+
+    subscribers = sorted(Array(subscribersByID.values))
+
+    return MarketingContactImportResult(
+      addedCount: addedCount,
+      updatedCount: updatedContactIDs.count
+    )
   }
 
   func reloadFromDisk() {
@@ -106,6 +164,11 @@ final class MarketingContactStore {
   }
 
   private func load() {
+    loadContacts()
+    loadSubscribers()
+  }
+
+  private func loadContacts() {
     guard FileManager.default.fileExists(atPath: fileURL.path) else { return }
 
     do {
@@ -116,7 +179,18 @@ final class MarketingContactStore {
     }
   }
 
-  private func save() {
+  private func loadSubscribers() {
+    guard FileManager.default.fileExists(atPath: subscribersFileURL.path) else { return }
+
+    do {
+      let data = try Data(contentsOf: subscribersFileURL)
+      subscribers = try JSONDecoder().decode([MarketingContact].self, from: data)
+    } catch {
+      print("Failed to load marketing subscribers:", error)
+    }
+  }
+
+  private func saveContacts() {
     do {
       let encoder = JSONEncoder()
       encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -124,6 +198,29 @@ final class MarketingContactStore {
       try data.write(to: fileURL, options: [.atomic])
     } catch {
       print("Failed to save marketing contacts:", error)
+    }
+  }
+
+  private func saveSubscribers() {
+    do {
+      let encoder = JSONEncoder()
+      encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+      let data = try encoder.encode(subscribers)
+      try data.write(to: subscribersFileURL, options: [.atomic])
+    } catch {
+      print("Failed to save marketing subscribers:", error)
+    }
+  }
+
+  private func sorted(_ contacts: [MarketingContact]) -> [MarketingContact] {
+    contacts.sorted {
+      let emailComparison = $0.email.localizedCaseInsensitiveCompare($1.email)
+
+      if emailComparison == .orderedSame {
+        return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+      }
+
+      return emailComparison == .orderedAscending
     }
   }
 

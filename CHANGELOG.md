@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.85 — Subscriber Marketing List
+- Bumped app version to 1.0.85 build 90.
+- Marketing settings now maintain separate Pro Purchasers and Subscribers lists.
+- Refresh now imports opted-in Pro purchasers from licenses and website subscribers from the protected server endpoint.
+
 ## v1.0.84 — Marketing Table Width
 - Bumped app version to 1.0.84 build 89.
 - Marketing contacts now show a clearer opted-in contact count below the heading.

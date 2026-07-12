@@ -94,6 +94,10 @@ final class NetworkSettings {
         serverBaseURL + "/delivered-licenses.php"
     }
 
+    var marketingSubscribersURL: String {
+        serverBaseURL + "/marketing-subscribers.php"
+    }
+
     var authenticatedOperationsStatusURL: String {
         authenticatedURL(
             baseURL: operationsStatusURL,
@@ -113,6 +117,14 @@ final class NetworkSettings {
     func authenticatedDeliveredLicensesURL(token: String) -> String {
         authenticatedURL(
             baseURL: deliveredLicensesURL,
+            token: token,
+            queryItems: []
+        )
+    }
+
+    func authenticatedMarketingSubscribersURL(token: String) -> String {
+        authenticatedURL(
+            baseURL: marketingSubscribersURL,
             token: token,
             queryItems: []
         )
