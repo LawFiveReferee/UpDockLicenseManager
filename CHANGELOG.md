@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.76 — Marketing Contacts Table
+- Bumped app version to 1.0.76 build 81.
+- Reworked Marketing contacts into a table-style view with row checkboxes and a header select-all checkbox.
+- Added bottom action placement for Refresh, Delete, Copy Selected, and Copy All.
+
 ## v1.0.75 — Remove Legacy Simulation URL
 - Bumped app version to 1.0.75 build 80.
 - Removed unused network URL helpers for the retired public `simulate.php` endpoint.

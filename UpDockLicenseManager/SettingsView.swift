@@ -64,78 +64,183 @@ struct MarketingContactsView: View {
         MarketingContact.make(from: store.licenses)
     }
 
+    private var selectedContacts: [MarketingContact] {
+        contacts.filter { selectedContactIDs.contains($0.id) }
+    }
+
+    private var allContactsSelected: Bool {
+        !contacts.isEmpty && selectedContactIDs.isSuperset(of: contacts.map(\.id))
+    }
+
     var body: some View {
-        Form {
-            Section("Opt-In Contacts") {
-                LabeledContent("Contacts") {
-                    Text("\(contacts.count)")
-                }
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Marketing Contacts")
+                    .font(.title3.bold())
 
-                HStack {
-                    Button("Refresh") {
-                        store.licenses = LicenseStore().licenses
-                        selectedContactIDs = []
-                        statusMessage = "Reloaded local licenses."
-                    }
-
-                    Button("Copy Selected") {
-                        copyTSV(contacts.filter { selectedContactIDs.contains($0.id) })
-                    }
-                    .disabled(selectedContactIDs.isEmpty)
-
-                    Button("Copy All") {
-                        copyTSV(contacts)
-                    }
-                    .disabled(contacts.isEmpty)
-                }
-
-                Text("Only purchasers with Paddle marketing consent are included. Copy uses tab-separated rows: Name, Email.")
+                Text("\(contacts.count) opted-in \(contacts.count == 1 ? "contact" : "contacts"). Copy uses tab-separated rows: Name, Email.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            marketingContactsTable
+
+            HStack {
+                Button("Refresh") {
+                    refreshContacts()
+                }
 
                 if !statusMessage.isEmpty {
                     Text(statusMessage)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
-            }
 
-            if !contacts.isEmpty {
-                Section("Contacts") {
-                    List(contacts, selection: $selectedContactIDs) { contact in
-                        HStack(alignment: .firstTextBaseline, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(contact.name.isEmpty ? "Unknown Customer" : contact.name)
-                                    .font(.headline)
+                Spacer()
 
-                                Text(contact.email)
-                                    .font(.caption.monospaced())
-                                    .foregroundStyle(.secondary)
-                                    .textSelection(.enabled)
-
-                                if !contact.paddleCustomerID.isEmpty {
-                                    Text(contact.paddleCustomerID)
-                                        .font(.caption.monospaced())
-                                        .foregroundStyle(.secondary)
-                                        .textSelection(.enabled)
-                                }
-                            }
-
-                            Spacer()
-                        }
-                    }
-                    .frame(minHeight: 180)
+                Button("Delete", role: .destructive) {
+                    deleteSelectedContacts()
                 }
+                .disabled(selectedContactIDs.isEmpty)
+
+                Button("Copy Selected") {
+                    copyTSV(selectedContacts)
+                }
+                .disabled(selectedContactIDs.isEmpty)
+
+                Button("Copy All") {
+                    copyTSV(contacts)
+                }
+                .disabled(contacts.isEmpty)
             }
         }
-        .formStyle(.grouped)
         .padding()
+    }
+
+    private var marketingContactsTable: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Toggle(
+                    "",
+                    isOn: Binding(
+                        get: { allContactsSelected },
+                        set: { isSelected in
+                            selectedContactIDs = isSelected ? Set(contacts.map(\.id)) : []
+                        }
+                    )
+                )
+                .labelsHidden()
+                .disabled(contacts.isEmpty)
+                .frame(width: 28)
+                .accessibilityLabel("Select all marketing contacts")
+
+                Text("Name")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 180, maxWidth: .infinity, alignment: .leading)
+
+                Text("Email")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(.quaternary)
+
+            Divider()
+
+            if contacts.isEmpty {
+                ContentUnavailableView(
+                    "No Opt-In Contacts",
+                    systemImage: "person.crop.circle.badge.questionmark",
+                    description: Text("Contacts appear here after synced Paddle purchases include marketing consent.")
+                )
+                .frame(maxWidth: .infinity, minHeight: 220)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(contacts) { contact in
+                            marketingContactRow(contact)
+                            Divider()
+                        }
+                    }
+                }
+                .frame(minHeight: 220)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(.quaternary)
+        }
+    }
+
+    private func marketingContactRow(_ contact: MarketingContact) -> some View {
+        HStack(spacing: 12) {
+            Toggle(
+                "",
+                isOn: Binding(
+                    get: { selectedContactIDs.contains(contact.id) },
+                    set: { isSelected in
+                        if isSelected {
+                            selectedContactIDs.insert(contact.id)
+                        } else {
+                            selectedContactIDs.remove(contact.id)
+                        }
+                    }
+                )
+            )
+            .labelsHidden()
+            .frame(width: 28)
+            .accessibilityLabel("Select \(contact.name.isEmpty ? contact.email : contact.name)")
+
+            Text(contact.name.isEmpty ? "Unknown Customer" : contact.name)
+                .frame(minWidth: 180, maxWidth: .infinity, alignment: .leading)
+                .lineLimit(1)
+                .textSelection(.enabled)
+
+            Text(contact.email)
+                .font(.body.monospaced())
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
+                .lineLimit(1)
+                .textSelection(.enabled)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(selectedContactIDs.contains(contact.id) ? Color.accentColor.opacity(0.12) : Color.clear)
+    }
+
+    private func refreshContacts() {
+        store.licenses = LicenseStore().licenses
+        selectedContactIDs = []
+        statusMessage = "Reloaded local licenses."
     }
 
     private func copyTSV(_ contactsToCopy: [MarketingContact]) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(MarketingContact.tsv(from: contactsToCopy), forType: .string)
         statusMessage = "Copied \(contactsToCopy.count) opted-in \(contactsToCopy.count == 1 ? "contact" : "contacts")."
+    }
+
+    private func deleteSelectedContacts() {
+        let selectedEmails = selectedContactIDs
+
+        guard !selectedEmails.isEmpty else {
+            return
+        }
+
+        for index in store.licenses.indices {
+            if selectedEmails.contains(store.licenses[index].email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) {
+                store.licenses[index].paddleMarketingConsent = false
+            }
+        }
+
+        let deletedCount = selectedContactIDs.count
+        selectedContactIDs = []
+        statusMessage = "Removed \(deletedCount) \(deletedCount == 1 ? "contact" : "contacts") from the Marketing list."
     }
 }
 
