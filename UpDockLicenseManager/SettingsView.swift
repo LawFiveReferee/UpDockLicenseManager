@@ -278,19 +278,24 @@ struct MarketingContactsView: View {
     }
 
     private func deleteSelectedContacts() {
-        let selectedEmails = selectedContactIDs
+        let selectedKeys = selectedContactIDs
 
-        guard !selectedEmails.isEmpty else {
+        guard !selectedKeys.isEmpty else {
             return
         }
 
         for index in licenseStore.licenses.indices {
-            if selectedEmails.contains(licenseStore.licenses[index].email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) {
+            let licenseKey = MarketingContact.id(
+                name: licenseStore.licenses[index].name,
+                email: licenseStore.licenses[index].email
+            )
+
+            if selectedKeys.contains(licenseKey) {
                 licenseStore.licenses[index].paddleMarketingConsent = false
             }
         }
 
-        contactStore.delete(ids: selectedEmails)
+        contactStore.delete(ids: selectedKeys)
         let deletedCount = selectedContactIDs.count
         selectedContactIDs = []
         statusMessage = "Removed \(deletedCount) \(deletedCount == 1 ? "contact" : "contacts") from the Marketing list."

@@ -24,7 +24,7 @@ final class MarketingContactStore {
 
   @discardableResult
   func importOptedIn(from licenses: [LicenseRecord]) -> MarketingContactImportResult {
-    var contactsByEmail = Dictionary(uniqueKeysWithValues: contacts.map { ($0.id, $0) })
+    var contactsByID = Dictionary(uniqueKeysWithValues: contacts.map { ($0.id, $0) })
     var addedCount = 0
     var updatedContactIDs: Set<MarketingContact.ID> = []
 
@@ -32,7 +32,7 @@ final class MarketingContactStore {
       .filter(\.paddleMarketingConsent)
       .sorted { purchaseDate(for: $0) < purchaseDate(for: $1) }
     let optInPurchaseCounts = Dictionary(grouping: optedInLicenses) { license in
-      license.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+      MarketingContact.id(name: license.name, email: license.email)
     }
     .mapValues(\.count)
 
@@ -43,8 +43,8 @@ final class MarketingContactStore {
         continue
       }
 
-      let key = email.lowercased()
-      let existing = contactsByEmail[key]
+      let key = MarketingContact.id(name: license.name, email: email)
+      let existing = contactsByID[key]
       let purchaseAt = purchaseDate(for: license)
       let latestPurchaseAt = [existing?.latestPurchaseAt, license.fulfilledAt, license.issuedAt]
         .compactMap { $0 }
@@ -67,11 +67,17 @@ final class MarketingContactStore {
         addedCount += 1
       }
 
-      contactsByEmail[key] = updatedContact
+      contactsByID[key] = updatedContact
     }
 
-    contacts = contactsByEmail.values.sorted {
-      $0.email.localizedCaseInsensitiveCompare($1.email) == .orderedAscending
+    contacts = contactsByID.values.sorted {
+      let emailComparison = $0.email.localizedCaseInsensitiveCompare($1.email)
+
+      if emailComparison == .orderedSame {
+        return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+      }
+
+      return emailComparison == .orderedAscending
     }
 
     return MarketingContactImportResult(
@@ -128,7 +134,7 @@ final class MarketingContactStore {
   }
 
   private func purchaseDate(for license: LicenseRecord) -> Date {
-    license.fulfilledAt ?? license.issuedAt ?? .distantPast
+    license.fulfilledAt ?? license.issuedAt
   }
 
   private func preferred(_ primary: String?, _ fallback: String?) -> String {
@@ -156,7 +162,11 @@ struct MarketingContact: Identifiable, Codable, Hashable {
   var latestPurchaseAt: Date?
 
   var id: String {
-    email.lowercased()
+    Self.id(name: name, email: email)
+  }
+
+  static func id(name: String, email: String) -> String {
+    "\(normalized(email))\t\(normalized(name))"
   }
 
   static func tsv(from contacts: [MarketingContact]) -> String {
@@ -172,5 +182,11 @@ struct MarketingContact: Identifiable, Codable, Hashable {
       .replacingOccurrences(of: "\t", with: " ")
       .replacingOccurrences(of: "\r", with: " ")
       .replacingOccurrences(of: "\n", with: " ")
+  }
+
+  private static func normalized(_ value: String) -> String {
+    value
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
   }
 }
