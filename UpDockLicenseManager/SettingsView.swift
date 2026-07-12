@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var settings = GeneralSettings()
     @State private var emailSettings = EmailSettings()
     let store: LicenseStore
+    let marketingContactStore: MarketingContactStore
     
     var body: some View {
         TabView {
@@ -41,7 +42,10 @@ struct SettingsView: View {
                     Label("Email", systemImage: "envelope")
                 }
 
-            MarketingContactsView(store: store)
+            MarketingContactsView(
+                licenseStore: store,
+                contactStore: marketingContactStore
+            )
                 .tabItem {
                     Label("Marketing", systemImage: "person.crop.circle.badge.checkmark")
                 }
@@ -56,12 +60,13 @@ struct SettingsView: View {
 }
 
 struct MarketingContactsView: View {
-    @Bindable var store: LicenseStore
+    @Bindable var licenseStore: LicenseStore
+    @Bindable var contactStore: MarketingContactStore
     @State private var statusMessage = ""
     @State private var selectedContactIDs: Set<MarketingContact.ID> = []
 
     private var contacts: [MarketingContact] {
-        MarketingContact.make(from: store.licenses)
+        contactStore.contacts
     }
 
     private var selectedContacts: [MarketingContact] {
@@ -214,9 +219,13 @@ struct MarketingContactsView: View {
     }
 
     private func refreshContacts() {
-        store.reloadFromDisk()
+        licenseStore.reloadFromDisk()
+        contactStore.reloadFromDisk()
+        let importedCount = contactStore.importOptedIn(from: licenseStore.licenses)
         selectedContactIDs = []
-        statusMessage = "Reloaded local licenses."
+        statusMessage = importedCount == 0
+            ? "Reloaded marketing contacts."
+            : "Reloaded and added \(importedCount) opted-in \(importedCount == 1 ? "contact" : "contacts")."
     }
 
     private func copyTSV(_ contactsToCopy: [MarketingContact]) {
@@ -232,77 +241,16 @@ struct MarketingContactsView: View {
             return
         }
 
-        for index in store.licenses.indices {
-            if selectedEmails.contains(store.licenses[index].email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) {
-                store.licenses[index].paddleMarketingConsent = false
+        for index in licenseStore.licenses.indices {
+            if selectedEmails.contains(licenseStore.licenses[index].email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) {
+                licenseStore.licenses[index].paddleMarketingConsent = false
             }
         }
 
+        contactStore.delete(ids: selectedEmails)
         let deletedCount = selectedContactIDs.count
         selectedContactIDs = []
         statusMessage = "Removed \(deletedCount) \(deletedCount == 1 ? "contact" : "contacts") from the Marketing list."
-    }
-}
-
-struct MarketingContact: Identifiable, Hashable {
-    var email: String
-    var name: String
-    var paddleCustomerID: String
-    var latestPurchaseAt: Date?
-
-    var id: String {
-        email.lowercased()
-    }
-
-    static func make(from licenses: [LicenseRecord]) -> [MarketingContact] {
-        var contactsByEmail: [String: MarketingContact] = [:]
-
-        for license in licenses where license.paddleMarketingConsent {
-            let email = license.email.trimmingCharacters(in: .whitespacesAndNewlines)
-
-            guard !email.isEmpty else {
-                continue
-            }
-
-            let key = email.lowercased()
-            let existing = contactsByEmail[key]
-            let latestPurchaseAt = [existing?.latestPurchaseAt, license.fulfilledAt, license.issuedAt]
-                .compactMap { $0 }
-                .max()
-
-            contactsByEmail[key] = MarketingContact(
-                email: email,
-                name: preferred(existing?.name, license.name),
-                paddleCustomerID: preferred(existing?.paddleCustomerID, license.paddleCustomerID),
-                latestPurchaseAt: latestPurchaseAt
-            )
-        }
-
-        return contactsByEmail.values.sorted {
-            $0.email.localizedCaseInsensitiveCompare($1.email) == .orderedAscending
-        }
-    }
-
-    static func tsv(from contacts: [MarketingContact]) -> String {
-        contacts
-            .map { contact in
-                "\(tabEscape(contact.name))\t\(tabEscape(contact.email))"
-            }
-            .joined(separator: "\n")
-    }
-
-    private static func preferred(_ existing: String?, _ replacement: String) -> String {
-        let existingValue = existing?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let replacementValue = replacement.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        return existingValue.isEmpty ? replacementValue : existingValue
-    }
-
-    private static func tabEscape(_ value: String) -> String {
-        value
-            .replacingOccurrences(of: "\t", with: " ")
-            .replacingOccurrences(of: "\r", with: " ")
-            .replacingOccurrences(of: "\n", with: " ")
     }
 }
 

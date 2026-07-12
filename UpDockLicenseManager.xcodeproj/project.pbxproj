@@ -53,6 +53,7 @@
 		8338084F2FF989F1000C438F /* LicenseFileNameService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338080D2FF989F1000C438F /* LicenseFileNameService.swift */; };
 		833808502FF989F1000C438F /* LicenseGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338080E2FF989F1000C438F /* LicenseGenerator.swift */; };
 		833808512FF989F1000C438F /* PaddleSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8338081A2FF989F1000C438F /* PaddleSettings.swift */; };
+		833808522FF989F1000C438F /* MarketingContactStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833808532FF989F1000C438F /* MarketingContactStore.swift */; };
 		834D87502FF83E1000D8788F /* CHANGELOG.md in Resources */ = {isa = PBXBuildFile; fileRef = 834D874F2FF83E1000D8788F /* CHANGELOG.md */; };
 /* End PBXBuildFile section */
 
@@ -104,6 +105,7 @@
 		833808252FF989F1000C438F /* ToolbarContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarContent.swift; sourceTree = "<group>"; };
 		833808262FF989F1000C438F /* UpDockLicense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpDockLicense.swift; sourceTree = "<group>"; };
 		833808272FF989F1000C438F /* UpDockLicenseManagerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpDockLicenseManagerApp.swift; sourceTree = "<group>"; };
+		833808532FF989F1000C438F /* MarketingContactStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketingContactStore.swift; sourceTree = "<group>"; };
 		834D874F2FF83E1000D8788F /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -190,6 +192,7 @@
 				833808152FF989F1000C438F /* LicenseSidebar.swift */,
 				833808162FF989F1000C438F /* LicenseStore.swift */,
 				833808172FF989F1000C438F /* NetworkSettings.swift */,
+				833808532FF989F1000C438F /* MarketingContactStore.swift */,
 				833808182FF989F1000C438F /* NewLicenseSheet.swift */,
 				833808192FF989F1000C438F /* PaddleFulfillmentSheet.swift */,
 				8338081A2FF989F1000C438F /* PaddleSettings.swift */,
@@ -321,6 +324,7 @@
 				8338084F2FF989F1000C438F /* LicenseFileNameService.swift in Sources */,
 				833808502FF989F1000C438F /* LicenseGenerator.swift in Sources */,
 				833808512FF989F1000C438F /* PaddleSettings.swift in Sources */,
+				833808522FF989F1000C438F /* MarketingContactStore.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */
@@ -463,7 +467,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = UpDockLicenseManager/UpDockLicenseManager.entitlements;
-				CURRENT_PROJECT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
 				DEVELOPMENT_TEAM = 2JJNKVL7R4;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
@@ -496,7 +500,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.0.77;
+				MARKETING_VERSION = 1.0.78;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.stockly.updock-license-manager";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -518,7 +522,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = UpDockLicenseManager/UpDockLicenseManager.entitlements;
-				CURRENT_PROJECT_VERSION = 82;
+				CURRENT_PROJECT_VERSION = 83;
 				DEVELOPMENT_TEAM = 2JJNKVL7R4;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
@@ -551,7 +555,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.0.77;
+				MARKETING_VERSION = 1.0.78;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.stockly.updock-license-manager";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

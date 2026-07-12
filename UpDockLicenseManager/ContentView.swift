@@ -91,6 +91,7 @@ struct ContentView: View {
   @AppStorage("showDevelopmentTools") private var showDevelopmentTools = false
 
   let store: LicenseStore
+  let marketingContactStore: MarketingContactStore
 
   @State private var columnVisibility: NavigationSplitViewVisibility = .all
   @State private var auditLog = AuditLogStore()
@@ -470,6 +471,7 @@ struct ContentView: View {
       )
       let imported = response.licenses.map { $0.makeLicenseRecord() }
       let newLicenses = store.importMissing(imported)
+      marketingContactStore.importOptedIn(from: store.licenses)
 
       for license in newLicenses {
         recordAudit(

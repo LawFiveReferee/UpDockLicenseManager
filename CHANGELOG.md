@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.78 — Persistent Marketing Contacts
+- Bumped app version to 1.0.78 build 83.
+- Marketing contacts are now saved in their own persistent contact store.
+- Server sync and Marketing refresh now merge opted-in purchasers into the contact list instead of rebuilding it from the current license list.
+
 ## v1.0.77 — Shared License Store
 - Bumped app version to 1.0.77 build 82.
 - Settings and the main window now share the same `LicenseStore` instance.
