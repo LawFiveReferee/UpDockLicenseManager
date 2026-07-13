@@ -17,6 +17,8 @@ final class MarketingContactStore {
 
   private let fileURL: URL
   private let subscribersFileURL: URL
+  private let unsubscribedEmailsFileURL: URL
+  private var locallyUnsubscribedEmails: Set<String> = []
 
   init() {
     let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
@@ -26,6 +28,7 @@ final class MarketingContactStore {
 
     self.fileURL = folder.appendingPathComponent("marketing-contacts.json")
     self.subscribersFileURL = folder.appendingPathComponent("marketing-subscribers.json")
+    self.unsubscribedEmailsFileURL = folder.appendingPathComponent("marketing-unsubscribed-emails.json")
 
     load()
   }
@@ -43,7 +46,7 @@ final class MarketingContactStore {
     for license in optedInLicenses {
       let email = license.email.trimmingCharacters(in: .whitespacesAndNewlines)
 
-      guard !email.isEmpty else {
+      guard !email.isEmpty, !isLocallyUnsubscribed(email) else {
         continue
       }
 
@@ -119,6 +122,8 @@ final class MarketingContactStore {
 
   @discardableResult
   func importSubscribers(_ incomingSubscribers: [MarketingSubscriber]) -> MarketingContactImportResult {
+    removeLocalUnsubscribes(for: incomingSubscribers.map(\.email))
+
     let existingSubscribers = Dictionary(uniqueKeysWithValues: subscribers.map { ($0.id, $0) })
     var subscribersByID = existingSubscribers
     var addedCount = 0
@@ -127,7 +132,7 @@ final class MarketingContactStore {
     for subscriber in incomingSubscribers {
       let email = subscriber.email.trimmingCharacters(in: .whitespacesAndNewlines)
 
-      guard !email.isEmpty else {
+      guard !email.isEmpty, !isLocallyUnsubscribed(email) else {
         continue
       }
 
@@ -172,6 +177,9 @@ final class MarketingContactStore {
       return
     }
 
+    locallyUnsubscribedEmails.formUnion(unsubscribedEmails)
+    saveLocallyUnsubscribedEmails()
+
     contacts.removeAll { unsubscribedEmails.contains($0.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) }
     subscribers.removeAll { unsubscribedEmails.contains($0.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) }
   }
@@ -181,8 +189,43 @@ final class MarketingContactStore {
   }
 
   private func load() {
+    loadLocallyUnsubscribedEmails()
     loadContacts()
     loadSubscribers()
+  }
+
+  private func isLocallyUnsubscribed(_ email: String) -> Bool {
+    locallyUnsubscribedEmails.contains(email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
+  }
+
+  private func removeLocalUnsubscribes(for emails: [String]) {
+    let normalizedEmails = Set(
+      emails
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        .filter { !$0.isEmpty }
+    )
+
+    guard !normalizedEmails.isEmpty else {
+      return
+    }
+
+    let previousCount = locallyUnsubscribedEmails.count
+    locallyUnsubscribedEmails.subtract(normalizedEmails)
+
+    if locallyUnsubscribedEmails.count != previousCount {
+      saveLocallyUnsubscribedEmails()
+    }
+  }
+
+  private func loadLocallyUnsubscribedEmails() {
+    guard FileManager.default.fileExists(atPath: unsubscribedEmailsFileURL.path) else { return }
+
+    do {
+      let data = try Data(contentsOf: unsubscribedEmailsFileURL)
+      locallyUnsubscribedEmails = Set(try JSONDecoder().decode([String].self, from: data))
+    } catch {
+      print("Failed to load marketing unsubscribed emails:", error)
+    }
   }
 
   private func loadContacts() {
@@ -226,6 +269,15 @@ final class MarketingContactStore {
       try data.write(to: subscribersFileURL, options: [.atomic])
     } catch {
       print("Failed to save marketing subscribers:", error)
+    }
+  }
+
+  private func saveLocallyUnsubscribedEmails() {
+    do {
+      let data = try JSONEncoder().encode(Array(locallyUnsubscribedEmails).sorted())
+      try data.write(to: unsubscribedEmailsFileURL, options: [.atomic])
+    } catch {
+      print("Failed to save marketing unsubscribed emails:", error)
     }
   }
 

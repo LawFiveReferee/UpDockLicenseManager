@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.93 — Persistent Local Unsubscribe Suppression
+- Bumped app version to 1.0.93 build 98.
+- Marketing refresh now remembers unsubscribed emails locally so opted-in purchaser licenses do not re-add suppressed addresses on launch.
+- Current website subscriber records clear matching local unsubscribe suppressions.
+
 ## v1.0.92 — Subscriber Resubscribe Guard
 - Bumped app version to 1.0.92 build 97.
 - Marketing refresh now preserves emails returned by the current Subscribers endpoint even if an older unsubscribe record is still present.
