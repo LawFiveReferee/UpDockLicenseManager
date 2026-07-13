@@ -283,12 +283,18 @@ struct MarketingContactsView: View {
                 managerToken: managerToken
             )
             subscriberResult = contactStore.importSubscribers(response.subscribers)
+            let currentSubscriberEmails = Set(
+                response.subscribers.map { $0.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            )
 
             let unsubscribedResponse = try await ServerService.shared.fetchMarketingUnsubscribed(
                 settings: settings,
                 managerToken: managerToken
             )
-            contactStore.applyUnsubscribed(unsubscribedResponse.unsubscribed)
+            contactStore.applyUnsubscribed(
+                unsubscribedResponse.unsubscribed,
+                preservingEmails: currentSubscriberEmails
+            )
         } catch {
             subscriberError = error.localizedDescription
         }

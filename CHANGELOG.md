@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.92 — Subscriber Resubscribe Guard
+- Bumped app version to 1.0.92 build 97.
+- Marketing refresh now preserves emails returned by the current Subscribers endpoint even if an older unsubscribe record is still present.
+
 ## v1.0.91 — Partial Discount Warning
 - Bumped app version to 1.0.91 build 96.
 - Paddle discount generation now warns when a partial percentage discount leaves the single-purchase checkout below a likely card minimum.

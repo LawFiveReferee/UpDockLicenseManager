@@ -159,10 +159,14 @@ final class MarketingContactStore {
     )
   }
 
-  func applyUnsubscribed(_ records: [MarketingUnsubscribeRecord]) {
+  func applyUnsubscribed(
+    _ records: [MarketingUnsubscribeRecord],
+    preservingEmails preservedEmails: Set<String> = []
+  ) {
     let unsubscribedEmails = Set(
       records.map { $0.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
     )
+    .subtracting(preservedEmails)
 
     guard !unsubscribedEmails.isEmpty else {
       return
