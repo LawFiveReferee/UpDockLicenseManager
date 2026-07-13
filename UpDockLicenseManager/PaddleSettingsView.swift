@@ -312,7 +312,12 @@ struct PaddleSettingsView: View {
             }
             .disabled(!canGenerateDiscountCodes)
 
-            Button("Copy Stored Codes") {
+            Button("Copy Codes Only") {
+              copyGeneratedDiscountCodeValues()
+            }
+            .disabled(storedDiscountCodeValues.isEmpty)
+
+            Button("Copy Code Log") {
               copyGeneratedDiscountCodes()
             }
             .disabled(generatedDiscountCodes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -644,7 +649,23 @@ struct PaddleSettingsView: View {
   private func copyGeneratedDiscountCodes() {
     NSPasteboard.general.clearContents()
     NSPasteboard.general.setString(generatedDiscountCodes, forType: .string)
-    discountCodeMessage = "Stored discount codes copied."
+    discountCodeMessage = "Stored discount code log copied."
+  }
+
+  private var storedDiscountCodeValues: [String] {
+    generatedDiscountCodes
+      .components(separatedBy: .newlines)
+      .compactMap { line in
+        line
+          .components(separatedBy: .whitespaces)
+          .first { !$0.isEmpty && $0.range(of: #"^[A-Za-z0-9]{1,32}$"#, options: .regularExpression) != nil }
+      }
+  }
+
+  private func copyGeneratedDiscountCodeValues() {
+    NSPasteboard.general.clearContents()
+    NSPasteboard.general.setString(storedDiscountCodeValues.joined(separator: "\n"), forType: .string)
+    discountCodeMessage = "Stored checkout codes copied without IDs or notes."
   }
 
   private var checkoutHTMLBlock: String {

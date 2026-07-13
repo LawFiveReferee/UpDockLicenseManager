@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.90 — Discount Code Copy
+- Bumped app version to 1.0.90 build 95.
+- Added a code-only copy action for generated Paddle discounts so checkout receives just the valid discount code.
+- Renamed the full discount copy action to Copy Code Log to clarify that it includes IDs, notes, and timestamps.
+
 ## v1.0.89 — Discount Base Price Inclusion
 - Bumped app version to 1.0.89 build 94.
 - Current checkout discount restrictions now keep the single-purchase price while still excluding retired Paddle IDs.
