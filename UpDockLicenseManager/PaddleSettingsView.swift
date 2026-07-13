@@ -280,6 +280,7 @@ struct PaddleSettingsView: View {
           HStack {
             Button("Use Current Checkout IDs") {
               discountRestrictIDs = configuredDiscountRestrictIDs.joined(separator: "\n")
+              discountCodeMessage = "Loaded \(configuredDiscountRestrictIDs.count) current checkout price \(configuredDiscountRestrictIDs.count == 1 ? "ID" : "IDs"). Product IDs and the base tier duplicate are skipped."
             }
 
             Text("\(discountRestrictionIDs.count) restriction \(discountRestrictionIDs.count == 1 ? "ID" : "IDs") configured")
@@ -435,24 +436,41 @@ struct PaddleSettingsView: View {
   }
 
   private var configuredDiscountRestrictIDs: [String] {
-    let allIDs = [settings.defaultProductID, settings.defaultPriceID]
-      + siteLicensePricing.tiers.flatMap { [$0.productID, $0.priceID] }
+    let savedDefaultPriceID = settings.defaultPriceID.trimmingCharacters(in: .whitespacesAndNewlines)
+    let tierPriceIDs = siteLicensePricing.tiers
+      .sorted { first, second in
+        first.minimumSeats < second.minimumSeats
+      }
+      .filter { tier in
+        savedDefaultPriceID.isEmpty || tier.minimumSeats > 1
+      }
+      .map(\.priceID)
 
-    return Array(
-      Set(
-        allIDs
-          .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-          .filter { !$0.isEmpty }
-      )
-    )
-    .sorted()
+    return uniquePriceIDs([savedDefaultPriceID] + tierPriceIDs)
   }
 
   private var discountRestrictionIDs: [String] {
-    discountRestrictIDs
+    uniquePriceIDs(
+      discountRestrictIDs
       .components(separatedBy: CharacterSet(charactersIn: ", \n\t"))
       .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-      .filter { !$0.isEmpty }
+    )
+  }
+
+  private func uniquePriceIDs(_ ids: [String]) -> [String] {
+    var seenIDs = Set<String>()
+
+    return ids.compactMap { rawID in
+      let id = rawID.trimmingCharacters(in: .whitespacesAndNewlines)
+      let normalizedID = id.lowercased()
+
+      guard id.hasPrefix("pri_"), !seenIDs.contains(normalizedID) else {
+        return nil
+      }
+
+      seenIDs.insert(normalizedID)
+      return id
+    }
   }
 
   private var discountSummary: String {

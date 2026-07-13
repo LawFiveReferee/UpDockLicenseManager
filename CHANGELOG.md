@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.87 — Discount Price ID Filter
+- Bumped app version to 1.0.87 build 92.
+- Paddle discount generation now restricts discounts only to valid price IDs, skipping product IDs and the stale base-tier duplicate when a current default checkout price is configured.
+
 ## v1.0.86 — Marketing Unsubscribe Sync
 - Bumped app version to 1.0.86 build 91.
 - Marketing refresh now fetches the server unsubscribe list and removes matching emails from both Pro Purchasers and Subscribers.
