@@ -266,7 +266,7 @@ struct PaddleSettingsView: View {
           in: 1...10_000
         )
 
-        Toggle("Restrict to Product/Price IDs", isOn: $restrictDiscountToConfiguredIDs)
+        Toggle("Restrict to Current Checkout Price IDs", isOn: $restrictDiscountToConfiguredIDs)
 
         if restrictDiscountToConfiguredIDs {
           TextField(
@@ -283,7 +283,7 @@ struct PaddleSettingsView: View {
               discountCodeMessage = "Loaded \(configuredDiscountRestrictIDs.count) current checkout price \(configuredDiscountRestrictIDs.count == 1 ? "ID" : "IDs"). Product IDs and the base tier duplicate are skipped."
             }
 
-            Text("\(discountRestrictionIDs.count) restriction \(discountRestrictionIDs.count == 1 ? "ID" : "IDs") configured")
+            Text("\(eligibleDiscountRestrictionIDs.count) restriction \(eligibleDiscountRestrictionIDs.count == 1 ? "ID" : "IDs") ready")
               .foregroundStyle(.secondary)
           }
         }
@@ -449,6 +449,14 @@ struct PaddleSettingsView: View {
     return uniquePriceIDs([savedDefaultPriceID] + tierPriceIDs)
   }
 
+  private var eligibleDiscountRestrictionIDs: [String] {
+    let configuredIDs = Set(configuredDiscountRestrictIDs.map { $0.lowercased() })
+
+    return discountRestrictionIDs.filter { id in
+      configuredIDs.contains(id.lowercased())
+    }
+  }
+
   private var discountRestrictionIDs: [String] {
     uniquePriceIDs(
       discountRestrictIDs
@@ -464,13 +472,23 @@ struct PaddleSettingsView: View {
       let id = rawID.trimmingCharacters(in: .whitespacesAndNewlines)
       let normalizedID = id.lowercased()
 
-      guard id.hasPrefix("pri_"), !seenIDs.contains(normalizedID) else {
+      guard
+        id.hasPrefix("pri_"),
+        !retiredCheckoutPriceIDs.contains(normalizedID),
+        !seenIDs.contains(normalizedID)
+      else {
         return nil
       }
 
       seenIDs.insert(normalizedID)
       return id
     }
+  }
+
+  private var retiredCheckoutPriceIDs: Set<String> {
+    [
+      "pri_01kwsyz09kgvzgt79t3y9390aq"
+    ]
   }
 
   private var discountSummary: String {
@@ -491,7 +509,7 @@ struct PaddleSettingsView: View {
       return false
     }
 
-    if restrictDiscountToConfiguredIDs && discountRestrictionIDs.isEmpty {
+    if restrictDiscountToConfiguredIDs && eligibleDiscountRestrictionIDs.isEmpty {
       return false
     }
 
@@ -607,7 +625,7 @@ struct PaddleSettingsView: View {
           flatAmount: discountFlatAmount,
           currencyCode: discountCurrencyCode,
           usageLimit: discountUsageLimit,
-          restrictedIDs: restrictDiscountToConfiguredIDs ? discountRestrictionIDs : []
+          restrictedIDs: restrictDiscountToConfiguredIDs ? eligibleDiscountRestrictionIDs : []
         )
       )
       let timestamp = Date().formatted(date: .abbreviated, time: .standard)
