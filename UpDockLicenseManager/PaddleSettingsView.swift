@@ -298,6 +298,11 @@ struct PaddleSettingsView: View {
             Text(discountSummary)
           }
 
+          if !partialDiscountChargeWarning.isEmpty {
+            Text(partialDiscountChargeWarning)
+              .foregroundStyle(.orange)
+          }
+
           HStack {
             Button {
               Task {
@@ -500,6 +505,20 @@ struct PaddleSettingsView: View {
     case .flat:
       return "\(discountCurrencyCode.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()) \(discountFlatAmount.formatted(.number.precision(.fractionLength(2)))) off, \(discountUsageLimit) \(discountUsageLimit == 1 ? "use" : "uses") per code"
     }
+  }
+
+  private var partialDiscountChargeWarning: String {
+    guard discountKind == .percentage, discountPercent > 0, discountPercent < 100 else {
+      return ""
+    }
+
+    let estimatedSinglePurchaseTotal = defaultBaseUnitPrice * (1 - (discountPercent / 100))
+
+    guard estimatedSinglePurchaseTotal < 1 else {
+      return ""
+    }
+
+    return "A \(discountPercent.formatted(.number.precision(.fractionLength(0...2))))% discount leaves about \(estimatedSinglePurchaseTotal.formatted(.currency(code: "USD"))) on a single purchase. Paddle may reject non-zero checkouts below the card minimum; use 100% for free tests or 95% or lower for a payable test."
   }
 
   private var canGenerateDiscountCodes: Bool {
