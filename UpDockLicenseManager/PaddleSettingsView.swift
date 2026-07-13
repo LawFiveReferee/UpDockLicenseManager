@@ -441,9 +441,6 @@ struct PaddleSettingsView: View {
       .sorted { first, second in
         first.minimumSeats < second.minimumSeats
       }
-      .filter { tier in
-        savedDefaultPriceID.isEmpty || tier.minimumSeats > 1
-      }
       .map(\.priceID)
 
     return uniquePriceIDs([savedDefaultPriceID] + tierPriceIDs)

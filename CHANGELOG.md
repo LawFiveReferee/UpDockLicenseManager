@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.89 — Discount Base Price Inclusion
+- Bumped app version to 1.0.89 build 94.
+- Current checkout discount restrictions now keep the single-purchase price while still excluding retired Paddle IDs.
+
 ## v1.0.88 — Discount Restriction Sanitizing
 - Bumped app version to 1.0.88 build 93.
 - Paddle discount creation now sends only eligible current checkout price IDs, preventing old saved restriction text from sending retired Paddle prices.
