@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.94 — Live Purchase Workflow Docs
+- Bumped app version to 1.0.94 build 99.
+- Added a Markdown workflow overview covering the website, Paddle, server fulfillment, Purchase Manager, UpDock Pro, Supabase, and the customer purchase-to-registration path.
+
 ## v1.0.93 — Persistent Local Unsubscribe Suppression
 - Bumped app version to 1.0.93 build 98.
 - Marketing refresh now remembers unsubscribed emails locally so opted-in purchaser licenses do not re-add suppressed addresses on launch.
