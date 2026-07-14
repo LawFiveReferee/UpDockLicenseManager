@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.95 — Hardened Runtime
+- Bumped app version to 1.0.95 build 100.
+- Enabled Hardened Runtime for Mac distribution builds.
+
 ## v1.0.94 — Live Purchase Workflow Docs
 - Bumped app version to 1.0.94 build 99.
 - Added a Markdown workflow overview covering the website, Paddle, server fulfillment, Purchase Manager, UpDock Pro, Supabase, and the customer purchase-to-registration path.
