@@ -1,5 +1,10 @@
 # UpDock License Manager
 
+## v1.0.96 — Pro License Payload
+- Bumped app version to 1.0.96 build 101.
+- Added signed Pro-specific fields to exported `.updocklicense` files: bundle ID, edition, license kind, customer ID, and seat allowance.
+- Updated license inspection to show the new signed fields while preserving verification for older exported license files.
+
 ## v1.0.95 — Hardened Runtime
 - Bumped app version to 1.0.95 build 100.
 - Enabled Hardened Runtime for Mac distribution builds.
