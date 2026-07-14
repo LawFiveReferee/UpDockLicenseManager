@@ -172,6 +172,19 @@ struct LicenseDetailView: View {
 
         card {
           VStack(alignment: .leading, spacing: 14) {
+            Text("License Data")
+              .font(.headline)
+
+            VStack(alignment: .leading, spacing: 7) {
+              ForEach(licenseDataRows) { row in
+                licenseDataRow(row)
+              }
+            }
+          }
+        }
+
+        card {
+          VStack(alignment: .leading, spacing: 14) {
             Text("Workflow Diagnostics")
               .font(.headline)
 
@@ -594,6 +607,56 @@ struct LicenseDetailView: View {
     ]
   }
 
+  private var licenseDataRows: [LicenseDataRow] {
+    [
+      .group("License"),
+      .item("Record ID", editableLicense.id.uuidString, indentLevel: 1),
+      .item("Serial", editableLicense.serial, indentLevel: 1),
+      .item("Type", editableLicense.type.rawValue, indentLevel: 1),
+      .item("Product", editableLicense.product, indentLevel: 1),
+      .item("Status", editableLicense.status.rawValue, indentLevel: 1),
+      .item("Revoked", yesNo(editableLicense.isRevoked), indentLevel: 1),
+      .item("Issued At", isoString(editableLicense.issuedAt), indentLevel: 1),
+      .item("Expires At", optionalIsoString(editableLicense.expiresAt), indentLevel: 1),
+      .item("Notes", editableLicense.notes, indentLevel: 1),
+
+      .group("Customer"),
+      .item("Name", editableLicense.name, indentLevel: 1),
+      .item("Email", editableLicense.email, indentLevel: 1),
+
+      .group("Seats / Activation"),
+      .item("Seat Allowance", optionalIntString(editableLicense.seatAllowance), indentLevel: 1),
+      .item("Seats Assigned", "\(editableLicense.seatsAssigned)", indentLevel: 1),
+      .item("Seats Remaining", remainingSeatText, indentLevel: 1),
+      .item("Registry Status", editableLicense.activationRegistryStatus.rawValue, indentLevel: 1),
+      .item("Registry Checked At", optionalIsoString(editableLicense.activationRegistryCheckedAt), indentLevel: 1),
+      .item("Registry Error", editableLicense.activationRegistryError, indentLevel: 1),
+
+      .group("Paddle"),
+      .item("Customer ID", editableLicense.paddleCustomerID, indentLevel: 1),
+      .item("Transaction ID", editableLicense.paddleTransactionID, indentLevel: 1),
+      .item("Email", editableLicense.paddleEmail, indentLevel: 1),
+      .item("Product ID", editableLicense.paddleProductID, indentLevel: 1),
+      .item("Price ID", editableLicense.paddlePriceID, indentLevel: 1),
+      .item("Status", editableLicense.paddleStatus, indentLevel: 1),
+      .item("Marketing Consent", yesNo(editableLicense.paddleMarketingConsent), indentLevel: 1),
+
+      .group("Fulfillment"),
+      .item("Fulfilled At", optionalIsoString(editableLicense.fulfilledAt), indentLevel: 1),
+      .item("Archive Status", editableLicense.fulfillmentArchiveStatus.rawValue, indentLevel: 1),
+      .item("Archive Checked At", optionalIsoString(editableLicense.fulfillmentArchiveCheckedAt), indentLevel: 1),
+      .item("Related Licenses", "\(max(relatedPaddleLicenseCount, 1))", indentLevel: 1),
+
+      .group("Email Delivery"),
+      .item("Status", editableLicense.emailDeliveryStatus.rawValue, indentLevel: 1),
+      .item("Attempted At", optionalIsoString(editableLicense.emailDeliveryAttemptedAt), indentLevel: 1),
+      .item("Error", editableLicense.emailDeliveryError, indentLevel: 1),
+
+      .group("Audit"),
+      .item("Linked Events", "\(auditEvents.count)", indentLevel: 1)
+    ]
+  }
+
   private var localLicenseDiagnostic: WorkflowDiagnosticItem {
     if editableLicense.isRevoked {
       return WorkflowDiagnosticItem(
@@ -831,6 +894,44 @@ struct LicenseDetailView: View {
     }
   }
 
+  private func licenseDataRow(_ row: LicenseDataRow) -> some View {
+    HStack(alignment: .top, spacing: 10) {
+      Spacer()
+        .frame(width: CGFloat(row.indentLevel) * 18)
+
+      Text(row.label)
+        .font(row.isGroup ? .subheadline.bold() : .callout.bold())
+        .foregroundStyle(row.isGroup ? .secondary : .primary)
+        .frame(width: 150, alignment: .leading)
+
+      Text(row.value.isEmpty ? (row.isGroup ? "" : "—") : row.value)
+        .font(.callout)
+        .foregroundStyle(row.isGroup ? .secondary : .primary)
+        .textSelection(.enabled)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+  }
+
+  private func yesNo(_ value: Bool) -> String {
+    value ? "Yes" : "No"
+  }
+
+  private func optionalIntString(_ value: Int?) -> String {
+    value.map(String.init) ?? ""
+  }
+
+  private func optionalIsoString(_ date: Date?) -> String {
+    guard let date else {
+      return ""
+    }
+
+    return isoString(date)
+  }
+
+  private func isoString(_ date: Date) -> String {
+    date.formatted(.iso8601)
+  }
+
   private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
     VStack(alignment: .leading, spacing: 12) {
       content()
@@ -872,4 +973,20 @@ private struct WorkflowDiagnosticItem: Identifiable {
   var title: String
   var detail: String
   var state: WorkflowDiagnosticState
+}
+
+private struct LicenseDataRow: Identifiable {
+  var id = UUID()
+  var label: String
+  var value: String
+  var indentLevel: Int
+  var isGroup: Bool
+
+  static func group(_ label: String) -> LicenseDataRow {
+    LicenseDataRow(label: label, value: "", indentLevel: 0, isGroup: true)
+  }
+
+  static func item(_ label: String, _ value: String, indentLevel: Int) -> LicenseDataRow {
+    LicenseDataRow(label: label, value: value, indentLevel: indentLevel, isGroup: false)
+  }
 }

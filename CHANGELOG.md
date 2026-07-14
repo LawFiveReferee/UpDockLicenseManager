@@ -1,5 +1,9 @@
 # UpDock License Manager
 
+## v1.0.97 — License Data Card
+- Bumped app version to 1.0.97 build 102.
+- Added a License Data card to the selected-license detail column with grouped, selectable troubleshooting fields.
+
 ## v1.0.96 — Pro License Payload
 - Bumped app version to 1.0.96 build 101.
 - Added signed Pro-specific fields to exported `.updocklicense` files: bundle ID, edition, license kind, customer ID, and seat allowance.
